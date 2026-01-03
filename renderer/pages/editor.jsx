@@ -373,7 +373,7 @@ export default function EditorPage() {
   }
 
   return (
-    <AppShell padding="md" header={{ height: 84 }}>
+    <AppShell padding={0} header={{ height: 84 }}>
       <AppShell.Header withBorder className="editor-header" style={{ padding: 12 }}>
         <Group justify="space-between" align="center">
           <Group>
@@ -483,7 +483,7 @@ export default function EditorPage() {
         </Group>
       </AppShell.Header>
 
-      <AppShell.Main>
+      <AppShell.Main style={{ padding: 0 }}>
         <div className="editor-toolbar-wrapper">
           <Group
             className="editor-toolbar"
