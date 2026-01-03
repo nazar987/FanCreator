@@ -1,4 +1,4 @@
-
+/* Твой global.css без изменений, но убедись, что .editor-paper.paged работает как ожидается. Если страницы не нумеруются, это визуальный режим только. Для реальной нумерации добавь в будущем PDF-экспорт. */
 :root{
   --bg:#f7f8fb;
   --panel:#ffffff;
@@ -75,7 +75,7 @@ label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
 .chap-item.drag-over{ outline:2px dashed #c7d2fe }
 .chap-item.active{ outline:2px solid #c7d2fe }
 .status{ display:inline-flex; align-items:center; gap:6px }
-.badge{ padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe }
+.badge{ display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe }
 
 .editor-head{ display:flex; gap:8px; margin-bottom:8px }
 .toolbar{ display:flex; align-items:center; gap:6px; padding:6px; border:1px solid var(--stroke); border-radius:10px; background: var(--panel); margin-bottom:8px; box-shadow: var(--shadow) }
@@ -207,15 +207,261 @@ label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
   padding-left: 12px; margin: 12px 0; color: rgb(100 116 139);
 }
 
-/* Постраничный «визуальный» режим */
-.editor-paper.paged {
-  width: 794px;
-  max-width: 794px;
-  padding: 36px 48px;
-  background: white;
-  box-shadow: 0 18px 60px rgba(0,0,0,.15);
-  border-radius: 8px;
-}
-
 /* На всякий: чтобы sticky-панель не перекрывала ввод */
 .editor-paper { position: relative; z-index: 1; }
+
+/* Современная панель инструментов — тёмный/градиентный стиль */
+.editor-toolbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.88));
+  backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  margin-bottom: 16px;
+}
+
+.editor-toolbar {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+}
+
+.editor-toolbar .mantine-ActionIcon-root,
+.editor-toolbar .mantine-Button-root {
+  border-radius: 6px;
+  transition: all 0.13s ease;
+  color: #e5e7eb;
+}
+
+.editor-toolbar .mantine-ActionIcon-root:hover,
+.editor-toolbar .mantine-Button-root:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.editor-toolbar .mantine-ActionIcon-root[data-active],
+.editor-toolbar .mantine-Button-root[data-active] {
+  background: rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+}
+
+.editor-toolbar .mantine-Divider-root {
+  border-color: rgba(55, 65, 81, 0.6);
+}
+
+/* Улучшенный вид кнопки "Удалить таблицу" */
+.editor-toolbar .mantine-Button-root[color="red"] {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.editor-toolbar .mantine-Button-root[color="red"]:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* ──────────────────────────────────────────────
+   Таблицы — теперь видны всегда
+──────────────────────────────────────────────── */
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.95em;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid #dee2e6;
+  padding: 0.6em 1em;
+  vertical-align: top;
+  position: relative;
+}
+
+.ProseMirror th {
+  background: #f8f9fa;
+  font-weight: 600;
+  text-align: left;
+}
+
+.ProseMirror tr:hover td,
+.ProseMirror tr:hover th {
+  background: rgba(59,130,246,0.04);
+}
+
+/* Выделенная ячейка / таблица */
+.ProseMirror .ProseMirror-selectednode table,
+.ProseMirror-focused table.ProseMirror-selectednode {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+/* Ресайз колонок (если включён resizable) */
+.ProseMirror table colgroup col {
+  border-right: 1px solid #e9ecef;
+}
+
+/* ──────────────────────────────────────────────
+   Улучшение видимости выделения текста
+──────────────────────────────────────────────── */
+.ProseMirror-focused {
+  caret-color: var(--brand) !important;
+}
+
+.ProseMirror p::selection,
+.ProseMirror h1::selection,
+.ProseMirror h2::selection,
+.ProseMirror li::selection {
+  background: rgba(59,130,246,0.25);
+}
+
+/* ──────────────────────────────────────────────
+   Лист редактора — чуть больше воздуха
+──────────────────────────────────────────────── */
+.editor-paper {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+}
+
+/* Стили для всей верхней панели (header) */
+.editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 30; /* выше всего */
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(17, 24, 39, 0.95));
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.55);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.editor-header .mantine-Button-root,
+.editor-header .mantine-Select-root,
+.editor-header .mantine-Title-root,
+.editor-header .mantine-Text-root {
+  color: #e5e7eb;
+}
+
+.editor-header .mantine-Button-root:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.editor-header .mantine-Divider-root {
+  border-color: rgba(55, 65, 81, 0.6);
+}
+
+.editor-header .mantine-Select-input,
+.editor-header .mantine-InputWrapper-input {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(55, 65, 81, 0.8);
+  color: #e5e7eb;
+}
+
+.editor-header .mantine-Select-dropdown {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: rgba(55, 65, 81, 0.8);
+}
+
+.editor-header .mantine-Select-item {
+  color: #e5e7eb;
+}
+
+.editor-header .mantine-Select-item[data-selected] {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+/* ──────────────────────────────────────────────
+   Постраничный режим (реальное разделение + динамическая нумерация)
+   Реализовано как несколько TipTap-редакторов (по одной странице)
+──────────────────────────────────────────────── */
+
+/* фон стола (как в Google Docs) */
+body {
+  background: #f0f2f5;
+}
+
+/* контейнер редактора в постраничном режиме */
+.editor-paper.paged {
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* контейнер для списка страниц */
+.pages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+  padding: 20px 0;
+}
+
+/* одна страница */
+.page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  max-width: 210mm;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* внутренняя область с полями — именно её считаем «рабочей зоной» */
+.page-inner {
+  height: 297mm;
+  padding: 2.5cm 2cm;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ProseMirror внутри страницы */
+.page-inner .ProseMirror {
+  min-height: calc(297mm - 5cm);
+}
+
+/* номер страницы */
+.page-number {
+  position: absolute;
+  bottom: 1.2cm;
+  right: 2cm;
+  font-size: 11px;
+  color: #6b7280;
+  opacity: 0.8;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* адаптив для узких экранов */
+@media (max-width: 900px) {
+  .pages-container {
+    gap: 18px;
+    padding: 12px 0;
+  }
+  .page {
+    width: min(100%, 880px);
+    height: auto;
+    max-width: 100%;
+  }
+  .page-inner {
+    height: auto;
+    padding: 16px 14px;
+  }
+  .page-inner .ProseMirror {
+    min-height: 60vh;
+  }
+  .page-number {
+    bottom: 10px;
+    right: 12px;
+  }
+}
