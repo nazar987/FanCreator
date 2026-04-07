@@ -372,33 +372,32 @@ export default function EditorPage() {
 
   // Delete a page and renumber all subsequent pages
   const deletePage = React.useCallback((pageIndex) => {
-    setPages(prevPages => {
-      const sorted = [...prevPages].sort((a, b) => a - b)
-      const filtered = sorted.filter(p => p !== pageIndex)
-      const renumbered = filtered.map((_, idx) => idx)
+    const sorted = [...pages].sort((a, b) => a - b)
+    const filtered = sorted.filter(p => p !== pageIndex)
+    const renumbered = filtered.map((_, idx) => idx)
 
-      setEditorsMap(oldMap => {
-        const newMap = new Map()
-        filtered.forEach((oldIdx, newIdx) => {
-          const ed = oldMap.get(oldIdx)
-          if (ed) newMap.set(newIdx, ed)
-        })
-        return newMap
+    setPages(renumbered)
+
+    setEditorsMap(oldMap => {
+      const newMap = new Map()
+      filtered.forEach((oldIdx, newIdx) => {
+        const ed = oldMap.get(oldIdx)
+        if (ed) newMap.set(newIdx, ed)
       })
-
-      setPending(oldPending =>
-        oldPending
-          .map(item => {
-            const newIdx = filtered.indexOf(item.page)
-            return newIdx !== -1 ? { ...item, page: newIdx } : null
-          })
-          .filter(Boolean)
-      )
-
-      setActivePage(prev => (prev >= pageIndex ? Math.max(0, prev - 1) : prev))
-      return renumbered
+      return newMap
     })
-  }, [setEditorsMap, setPending, setActivePage])
+
+    setPending(oldPending =>
+      oldPending
+        .map(item => {
+          const newIdx = filtered.indexOf(item.page)
+          return newIdx !== -1 ? { ...item, page: newIdx } : null
+        })
+        .filter(Boolean)
+    )
+
+    setActivePage(prev => (prev >= pageIndex ? Math.max(0, prev - 1) : prev))
+  }, [pages, setEditorsMap, setPending, setActivePage])
 
   const onOverflow = (pageIndex, json) => {
     overflowToNext({
