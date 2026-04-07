@@ -85,8 +85,8 @@ ipcMain.handle('projects:create', async (_e, { title }) => {
 ipcMain.handle('projects:get', async (_e, { id }) => {
   return getProject(id)
 })
-ipcMain.handle('projects:update', async (_e, { id, patch }) => {
-  const p = getProject(id)
+ipcMain.handle('projects:update', async (_e, { id, projectId, patch }) => {
+  const p = getProject(id ?? projectId)
   if (!p) return null
   const updated = { ...p, ...patch, updatedAt: now() }
   return putProject(updated)
@@ -227,18 +227,25 @@ ipcMain.handle('search:query', async (_e, { query, projectId = null }) => {
 
 
 
-// Reorder chapters
-ipcMain.handle('chapters:reorder', async (_e, { projectId, storyId, fromIndex, toIndex }) => {
+// Reorder chapters — accepts either order array (from home.jsx) or fromIndex/toIndex
+ipcMain.handle('chapters:reorder', async (_e, { projectId, storyId, order, fromIndex, toIndex }) => {
   const p = getProject(projectId)
   if (!p) return null
   p.stories = (p.stories || []).map(s => {
     if (s.id !== storyId) return s
     const chapters = [...(s.chapters || [])]
-    const [moved] = chapters.splice(fromIndex, 1)
-    chapters.splice(toIndex, 0, moved)
-    // reassign order
-    const re = chapters.map((c, i) => ({ ...c, order: i }))
-    return { ...s, chapters: re, updatedAt: now() }
+    let reordered
+    if (Array.isArray(order)) {
+      // order is an array of chapter ids in the new sequence
+      const chMap = Object.fromEntries(chapters.map(c => [c.id, c]))
+      reordered = order.map((id, i) => chMap[id] ? { ...chMap[id], order: i } : null).filter(Boolean)
+    } else {
+      // legacy fromIndex/toIndex
+      const [moved] = chapters.splice(fromIndex, 1)
+      chapters.splice(toIndex, 0, moved)
+      reordered = chapters.map((c, i) => ({ ...c, order: i }))
+    }
+    return { ...s, chapters: reordered, updatedAt: now() }
   })
   p.updatedAt = now()
   return putProject(p)

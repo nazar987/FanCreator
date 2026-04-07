@@ -360,7 +360,45 @@ export default function EditorPage() {
     setPages((p) => (p.includes(next) ? p : [...p, next]))
     focusNextRef.current = next
     setActivePage(next)
+    // If the next page editor is already mounted, focus it immediately
+    const nextEd = editorsMap.get(next)
+    if (nextEd) {
+      requestAnimationFrame(() => {
+        nextEd.commands.focus('start')
+        focusNextRef.current = null
+      })
+    }
   }
+
+  // Delete a page and renumber all subsequent pages
+  const deletePage = React.useCallback((pageIndex) => {
+    setPages(prevPages => {
+      const sorted = [...prevPages].sort((a, b) => a - b)
+      const filtered = sorted.filter(p => p !== pageIndex)
+      const renumbered = filtered.map((_, idx) => idx)
+
+      setEditorsMap(oldMap => {
+        const newMap = new Map()
+        filtered.forEach((oldIdx, newIdx) => {
+          const ed = oldMap.get(oldIdx)
+          if (ed) newMap.set(newIdx, ed)
+        })
+        return newMap
+      })
+
+      setPending(oldPending =>
+        oldPending
+          .map(item => {
+            const newIdx = filtered.indexOf(item.page)
+            return newIdx !== -1 ? { ...item, page: newIdx } : null
+          })
+          .filter(Boolean)
+      )
+
+      setActivePage(prev => (prev >= pageIndex ? Math.max(0, prev - 1) : prev))
+      return renumbered
+    })
+  }, [setEditorsMap, setPending, setActivePage])
 
   const onOverflow = (pageIndex, json) => {
     overflowToNext({
@@ -720,9 +758,11 @@ export default function EditorPage() {
                   onUnmount={() => setEditorForPage(pIndex, null)}
                   onOverflow={(json) => onOverflow(pIndex, json)}
                   onPageBreak={() => requestPageBreak(pIndex)}
+                  onDeletePage={() => deletePage(pIndex)}
                   onUserEdit={() => {
                     if (!suspendAutosaveRef.current) scheduleAutoSave()
                   }}
+                  editorsMap={editorsMap}
                 />
               ))}
           </div>
@@ -751,7 +791,9 @@ function PageEditor({
   onUnmount,
   onOverflow,
   onPageBreak,
+  onDeletePage,
   onUserEdit,
+  editorsMap,
 }) {
   const editor = useEditor({
     extensions,
@@ -779,23 +821,58 @@ function PageEditor({
     return () => onUnmount()
   }, [editor])
 
-  const onMouseDown = () => {
+  const onMouseDown = (e) => {
     onActive()
+    // When clicking on blank page area outside ProseMirror, focus the editor
+    if (editor && !editor.view.dom.contains(e.target)) {
+      e.preventDefault()
+      editor.commands.focus('end')
+    }
   }
 
   const onKeyDown = (e) => {
     if (!editor) return
-    // Shift+Enter — разрыв строки
+
+    // Shift+Enter — hard break (перенос строки без нового абзаца)
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault()
       editor.chain().focus().setHardBreak().run()
       return
     }
-    // Ctrl/⌘+Enter — новая страница (как в Word)
+
+    // Ctrl/⌘+Enter — явный разрыв страницы
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       onPageBreak()
       return
+    }
+
+    // Enter в конце страницы → переход на следующую страницу (как в Word)
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      const { from, empty } = editor.state.selection
+      if (empty && from >= editor.state.doc.content.size - 2) {
+        e.preventDefault()
+        onPageBreak()
+        return
+      }
+    }
+
+    // Backspace в начале не-первой страницы → переход на предыдущую страницу
+    if (e.key === 'Backspace' && !e.shiftKey && !e.ctrlKey && !e.metaKey && pageIndex > 0) {
+      const { from, empty } = editor.state.selection
+      if (empty && from <= 1) {
+        e.preventDefault()
+        const prevEd = editorsMap?.get(pageIndex - 1)
+        if (prevEd) {
+          // Если текущая страница пустая — удаляем её
+          if (editor.state.doc.content.size <= 4) {
+            onDeletePage()
+          }
+          // В любом случае переводим курсор на конец предыдущей страницы
+          prevEd.commands.focus('end')
+        }
+        return
+      }
     }
   }
 

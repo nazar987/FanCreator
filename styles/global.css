@@ -425,9 +425,11 @@ body {
   overflow: hidden;
 }
 
-/* ProseMirror внутри страницы */
+/* ProseMirror внутри страницы — fill entire writable area */
 .page-inner .ProseMirror {
-  min-height: calc(297mm - 5cm);
+  height: calc(297mm - 5cm);
+  overflow: hidden;
+  cursor: text;
 }
 
 /* номер страницы */
@@ -458,10 +460,34 @@ body {
     padding: 16px 14px;
   }
   .page-inner .ProseMirror {
+    height: auto;
     min-height: 60vh;
   }
   .page-number {
     bottom: 10px;
     right: 12px;
   }
+}
+
+/* ──────────────────────────────────────────────
+   TipTap placeholder text
+──────────────────────────────────────────────── */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+/* ──────────────────────────────────────────────
+   Editor header: prevent wrapping so toolbar top:84px stays valid
+──────────────────────────────────────────────── */
+.editor-header .mantine-Group-root {
+  flex-wrap: nowrap;
+}
+
+/* page-inner cursor feedback */
+.page-inner {
+  cursor: text;
 }

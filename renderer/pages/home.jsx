@@ -70,8 +70,19 @@ export default function HomePage() {
       const upd = sorted.find(p => p.id === selectedProject.id)
       setSelectedProject(upd || null)
     }
+    return sorted
   }
   React.useEffect(() => { refresh() }, [])
+
+  // Auto-select project when returning from editor via ?projectId=...
+  React.useEffect(() => {
+    const { projectId } = router.query
+    if (!projectId || projects.length === 0) return
+    setSelectedProject(prev => {
+      if (prev?.id === projectId) return prev
+      return projects.find(p => p.id === projectId) || prev
+    })
+  }, [router.query, projects])
 
   /* ----- CRUD: Project ----- */
   const createProject = async () => {
