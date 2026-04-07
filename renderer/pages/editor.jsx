@@ -336,6 +336,36 @@ export default function EditorPage() {
     return () => clearTimeout(t)
   }, [q, pages, editorsMap])
 
+  // Delete a page and renumber all subsequent pages
+  // Must be defined BEFORE the early return to keep hook order stable
+  const deletePage = React.useCallback((pageIndex) => {
+    const sorted = [...pages].sort((a, b) => a - b)
+    const filtered = sorted.filter(p => p !== pageIndex)
+    const renumbered = filtered.map((_, idx) => idx)
+
+    setPages(renumbered)
+
+    setEditorsMap(oldMap => {
+      const newMap = new Map()
+      filtered.forEach((oldIdx, newIdx) => {
+        const ed = oldMap.get(oldIdx)
+        if (ed) newMap.set(newIdx, ed)
+      })
+      return newMap
+    })
+
+    setPending(oldPending =>
+      oldPending
+        .map(item => {
+          const newIdx = filtered.indexOf(item.page)
+          return newIdx !== -1 ? { ...item, page: newIdx } : null
+        })
+        .filter(Boolean)
+    )
+
+    setActivePage(prev => (prev >= pageIndex ? Math.max(0, prev - 1) : prev))
+  }, [pages, setEditorsMap, setPending, setActivePage])
+
   if (!data?.chapter) {
     return (
       <AppShell padding="md">
@@ -369,35 +399,6 @@ export default function EditorPage() {
       })
     }
   }
-
-  // Delete a page and renumber all subsequent pages
-  const deletePage = React.useCallback((pageIndex) => {
-    const sorted = [...pages].sort((a, b) => a - b)
-    const filtered = sorted.filter(p => p !== pageIndex)
-    const renumbered = filtered.map((_, idx) => idx)
-
-    setPages(renumbered)
-
-    setEditorsMap(oldMap => {
-      const newMap = new Map()
-      filtered.forEach((oldIdx, newIdx) => {
-        const ed = oldMap.get(oldIdx)
-        if (ed) newMap.set(newIdx, ed)
-      })
-      return newMap
-    })
-
-    setPending(oldPending =>
-      oldPending
-        .map(item => {
-          const newIdx = filtered.indexOf(item.page)
-          return newIdx !== -1 ? { ...item, page: newIdx } : null
-        })
-        .filter(Boolean)
-    )
-
-    setActivePage(prev => (prev >= pageIndex ? Math.max(0, prev - 1) : prev))
-  }, [pages, setEditorsMap, setPending, setActivePage])
 
   const onOverflow = (pageIndex, json) => {
     overflowToNext({
