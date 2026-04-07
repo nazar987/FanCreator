@@ -425,10 +425,9 @@ body {
   overflow: hidden;
 }
 
-/* ProseMirror внутри страницы — fill entire writable area */
+/* ProseMirror внутри страницы — растёт сам, клипинг делает .page-inner */
 .page-inner .ProseMirror {
-  height: calc(297mm - 5cm);
-  overflow: hidden;
+  min-height: calc(297mm - 5cm);
   cursor: text;
 }
 
