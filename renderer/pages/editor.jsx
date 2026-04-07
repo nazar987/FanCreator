@@ -794,6 +794,16 @@ function PageEditor({
   onUserEdit,
   editorsMap,
 }) {
+  // Refs so onUpdate (stale closure) always calls the latest callbacks
+  const onOverflowRef = React.useRef(onOverflow)
+  const onUserEditRef = React.useRef(onUserEdit)
+  const onDeletePageRef = React.useRef(onDeletePage)
+  const editorsMapRef = React.useRef(editorsMap)
+  React.useEffect(() => { onOverflowRef.current = onOverflow }, [onOverflow])
+  React.useEffect(() => { onUserEditRef.current = onUserEdit }, [onUserEdit])
+  React.useEffect(() => { onDeletePageRef.current = onDeletePage }, [onDeletePage])
+  React.useEffect(() => { editorsMapRef.current = editorsMap }, [editorsMap])
+
   const editor = useEditor({
     extensions,
     content: '<p></p>',
@@ -809,9 +819,18 @@ function PageEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      onUserEdit?.()
+      onUserEditRef.current?.()
+
+      // Автоудаление: если не-первая страница стала пустой → убираем её
+      if (pageIndex > 0 && editor.state.doc.content.size <= 4) {
+        onDeletePageRef.current?.()
+        editorsMapRef.current?.get(pageIndex - 1)?.commands.focus('end')
+        return
+      }
+
+      // Автоперенос: если текст вышел за край страницы → следующая страница
       const overflowJSON = findOverflowJSON(editor)
-      if (overflowJSON) onOverflow(overflowJSON)
+      if (overflowJSON) onOverflowRef.current?.(overflowJSON)
     },
   })
 
@@ -820,11 +839,17 @@ function PageEditor({
     return () => onUnmount()
   }, [editor])
 
+  // Click and Type: клик в любом месте страницы → курсор туда
   const onMouseDown = (e) => {
     onActive()
-    // When clicking on blank page area outside ProseMirror, focus the editor
-    if (editor && !editor.view.dom.contains(e.target)) {
-      e.preventDefault()
+    if (!editor || editor.view.dom.contains(e.target)) return
+    e.preventDefault()
+    // Находим ближайшую позицию к месту клика (как в Word)
+    const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })
+    if (pos != null) {
+      editor.commands.focus()
+      editor.commands.setTextSelection(pos.pos)
+    } else {
       editor.commands.focus('end')
     }
   }
