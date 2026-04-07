@@ -872,16 +872,6 @@ function PageEditor({
       return
     }
 
-    // Enter в конце страницы → переход на следующую страницу (как в Word)
-    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-      const { from, empty } = editor.state.selection
-      if (empty && from >= editor.state.doc.content.size - 2) {
-        e.preventDefault()
-        onPageBreak()
-        return
-      }
-    }
-
     // Backspace в начале не-первой страницы → переход на предыдущую страницу
     if (e.key === 'Backspace' && !e.shiftKey && !e.ctrlKey && !e.metaKey && pageIndex > 0) {
       const { from, empty } = editor.state.selection
