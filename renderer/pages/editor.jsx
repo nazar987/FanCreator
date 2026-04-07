@@ -14,6 +14,10 @@ import {
   Divider,
   Stack,
   TextInput,
+  ScrollArea,
+  Badge,
+  CloseButton,
+  NavLink,
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import {
@@ -40,6 +44,12 @@ import {
   IconAlignRight,
   IconAlignJustified,
   IconTableMinus,
+  IconSearch,
+  IconReplace,
+  IconLayoutSidebar,
+  IconChevronRight,
+  IconArrowUp,
+  IconArrowDown,
 } from '@tabler/icons-react'
 
 import { EditorContent, useEditor } from '@tiptap/react'
@@ -58,6 +68,31 @@ import { TableRow } from '@tiptap/extension-table-row'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { TableCell } from '@tiptap/extension-table-cell'
 import TextAlign from '@tiptap/extension-text-align'
+import { TextStyle } from '@tiptap/extension-text-style'
+import FontFamily from '@tiptap/extension-font-family'
+
+// Custom FontSize extension (TipTap v3 has no official one yet)
+const FontSize = TextStyle.extend({
+  name: 'fontSize',
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      fontSize: {
+        default: null,
+        parseHTML: el => el.style.fontSize || null,
+        renderHTML: attrs => attrs.fontSize ? { style: `font-size:${attrs.fontSize}` } : {},
+      },
+    }
+  },
+  addCommands() {
+    return {
+      setFontSize: size => ({ chain }) =>
+        chain().setMark('textStyle', { fontSize: size }).run(),
+      unsetFontSize: () => ({ chain }) =>
+        chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
+    }
+  },
+})
 
 function askString({ title, placeholder = '', initial = '' }) {
   return new Promise((resolve) => {
@@ -118,6 +153,19 @@ export default function EditorPage() {
   const [lineHeight, setLineHeight] = React.useState('1.5')
   const [firstIndent, setFirstIndent] = React.useState('1.25cm')
   const [pSpace, setPSpace] = React.useState('12px')
+  const [fontFamily, setFontFamily] = React.useState('Georgia')
+  const [fontSize, setFontSize] = React.useState('16px')
+
+  // Sidebar
+  const [sidebarOpen, setSidebarOpen] = React.useState(true)
+
+  // Find / Replace
+  const [showSearch, setShowSearch] = React.useState(false)
+  const [showReplace, setShowReplace] = React.useState(false)
+  const [searchQuery, setSearchQuery] = React.useState('')
+  const [replaceQuery, setReplaceQuery] = React.useState('')
+  const [searchMatches, setSearchMatches] = React.useState([]) // [{pageIdx, from, to}]
+  const [matchIdx, setMatchIdx] = React.useState(0)
 
   // --- Пагинация ---
   const [pages, setPages] = React.useState([0])
@@ -146,6 +194,9 @@ export default function EditorPage() {
       TableHeader,
       TableCell,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextStyle,
+      FontFamily,
+      FontSize,
     ],
     []
   )
@@ -294,6 +345,103 @@ export default function EditorPage() {
     setTimeout(() => setSaveState('idle'), 1200)
   }
 
+  // ── Find / Replace ──────────────────────────────────────────────────────────
+  function buildSearchMatches(query) {
+    if (!query) { setSearchMatches([]); setMatchIdx(0); return [] }
+    const q = query.toLowerCase()
+    const matches = []
+    for (const pageIdx of [...pages].sort((a, b) => a - b)) {
+      const ed = editorsMap.get(pageIdx)
+      if (!ed) continue
+      ed.state.doc.descendants((node, pos) => {
+        if (!node.isText) return
+        const text = node.text.toLowerCase()
+        let idx = 0
+        while (true) {
+          const found = text.indexOf(q, idx)
+          if (found === -1) break
+          matches.push({ pageIdx, from: pos + found, to: pos + found + q.length })
+          idx = found + 1
+        }
+      })
+    }
+    setSearchMatches(matches)
+    setMatchIdx(0)
+    return matches
+  }
+
+  function jumpToMatch(matches, idx) {
+    const m = matches[idx]
+    if (!m) return
+    const ed = editorsMap.get(m.pageIdx)
+    if (!ed) return
+    setActivePage(m.pageIdx)
+    ed.commands.focus()
+    ed.commands.setTextSelection({ from: m.from, to: m.to })
+  }
+
+  function findNext() {
+    const matches = searchMatches.length ? searchMatches : buildSearchMatches(searchQuery)
+    if (!matches.length) return
+    const next = (matchIdx + 1) % matches.length
+    setMatchIdx(next)
+    jumpToMatch(matches, next)
+  }
+
+  function findPrev() {
+    const matches = searchMatches.length ? searchMatches : buildSearchMatches(searchQuery)
+    if (!matches.length) return
+    const prev = (matchIdx - 1 + matches.length) % matches.length
+    setMatchIdx(prev)
+    jumpToMatch(matches, prev)
+  }
+
+  function doReplace() {
+    const m = searchMatches[matchIdx]
+    if (!m) return
+    const ed = editorsMap.get(m.pageIdx)
+    if (!ed) return
+    ed.chain().focus().setTextSelection({ from: m.from, to: m.to }).insertContent(replaceQuery).run()
+    const fresh = buildSearchMatches(searchQuery)
+    if (fresh.length) jumpToMatch(fresh, Math.min(matchIdx, fresh.length - 1))
+  }
+
+  function doReplaceAll() {
+    if (!searchQuery) return
+    // Traverse in reverse order to preserve positions
+    const all = [...searchMatches].reverse()
+    for (const m of all) {
+      const ed = editorsMap.get(m.pageIdx)
+      if (!ed) continue
+      ed.chain().setTextSelection({ from: m.from, to: m.to }).insertContent(replaceQuery).run()
+    }
+    buildSearchMatches(searchQuery)
+  }
+
+  // Ctrl+F / Ctrl+H / Escape global keyboard handler
+  React.useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        setShowSearch(true)
+        setShowReplace(false)
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault()
+        setShowSearch(true)
+        setShowReplace(true)
+      }
+      if (e.key === 'Escape') {
+        setShowSearch(false)
+        setShowReplace(false)
+        setSearchMatches([])
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+  // ────────────────────────────────────────────────────────────────────────────
+
   async function setLink() {
     const url = await askString({ title: 'Вставить ссылку', placeholder: 'https://…' })
     if (url === null) return
@@ -410,11 +558,22 @@ export default function EditorPage() {
     })
   }
 
+  const statusMap = { idea: { color: 'yellow', label: 'Идея' }, draft: { color: 'indigo', label: 'Черновик' }, editing: { color: 'cyan', label: 'Редактируется' }, done: { color: 'teal', label: 'Готово' } }
+
   return (
-    <AppShell padding={0} header={{ height: 84 }}>
+    <AppShell
+      padding={0}
+      header={{ height: 84 }}
+      navbar={{ width: 240, breakpoint: 'sm', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
+    >
       <AppShell.Header withBorder className="editor-header" style={{ padding: 12 }}>
         <Group justify="space-between" align="center">
           <Group>
+            <Tooltip label={sidebarOpen ? 'Скрыть панель' : 'Показать панель'}>
+              <ActionIcon variant="subtle" size="lg" onClick={() => setSidebarOpen(v => !v)}>
+                <IconLayoutSidebar size={20} />
+              </ActionIcon>
+            </Tooltip>
             <Button
               variant="subtle"
               leftSection={<IconArrowLeft size={16} />}
@@ -521,7 +680,73 @@ export default function EditorPage() {
         </Group>
       </AppShell.Header>
 
+      {/* ── Sidebar: chapters list ─────────────────────────────────────── */}
+      <AppShell.Navbar p="xs" style={{ background: 'var(--panel)', borderRight: '1px solid var(--stroke)' }}>
+        <Text fw={600} size="sm" mb="xs" px={4}>Главы</Text>
+        <ScrollArea flex={1}>
+          <Stack gap={2}>
+            {(data.story.chapters || []).map(ch => (
+              <NavLink
+                key={ch.id}
+                label={ch.title || 'Без названия'}
+                active={ch.id === chapterId}
+                rightSection={
+                  <Badge size="xs" color={statusMap[ch.status]?.color ?? 'gray'} variant="light">
+                    {statusMap[ch.status]?.label ?? ch.status}
+                  </Badge>
+                }
+                onClick={() => router.push(`/editor?projectId=${projectId}&storyId=${storyId}&chapterId=${ch.id}`)}
+                style={{ borderRadius: 8 }}
+              />
+            ))}
+          </Stack>
+        </ScrollArea>
+      </AppShell.Navbar>
+
       <AppShell.Main style={{ padding: 0 }}>
+        {/* ── Find / Replace bar ──────────────────────────────────────── */}
+        {showSearch && (
+          <div style={{ background: '#1e293b', borderBottom: '1px solid #374151', padding: '6px 16px' }}>
+            <Group gap="xs" wrap="nowrap">
+              <TextInput
+                autoFocus
+                size="xs"
+                placeholder="Найти…"
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.currentTarget.value); buildSearchMatches(e.currentTarget.value) }}
+                onKeyDown={e => { if (e.key === 'Enter') findNext(); if (e.key === 'Escape') { setShowSearch(false); setSearchMatches([]) } }}
+                style={{ width: 200 }}
+                styles={{ input: { background: '#0f172a', border: '1px solid #374151', color: '#e5e7eb' } }}
+                rightSection={searchMatches.length > 0 && (
+                  <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap', paddingRight: 4 }}>
+                    {matchIdx + 1}/{searchMatches.length}
+                  </Text>
+                )}
+              />
+              <ActionIcon size="sm" variant="subtle" onClick={findPrev} style={{ color: '#9ca3af' }}><IconArrowUp size={14} /></ActionIcon>
+              <ActionIcon size="sm" variant="subtle" onClick={findNext} style={{ color: '#9ca3af' }}><IconArrowDown size={14} /></ActionIcon>
+              {showReplace && (
+                <>
+                  <TextInput
+                    size="xs"
+                    placeholder="Заменить на…"
+                    value={replaceQuery}
+                    onChange={e => setReplaceQuery(e.currentTarget.value)}
+                    style={{ width: 180 }}
+                    styles={{ input: { background: '#0f172a', border: '1px solid #374151', color: '#e5e7eb' } }}
+                  />
+                  <Button size="xs" variant="light" onClick={doReplace}>Заменить</Button>
+                  <Button size="xs" variant="light" onClick={doReplaceAll}>Заменить всё</Button>
+                </>
+              )}
+              <Button size="xs" variant="subtle" style={{ color: '#9ca3af' }} onClick={() => setShowReplace(v => !v)}>
+                {showReplace ? 'Скрыть' : 'Заменить'}
+              </Button>
+              <CloseButton size="sm" style={{ color: '#9ca3af', marginLeft: 'auto' }} onClick={() => { setShowSearch(false); setSearchMatches([]) }} />
+            </Group>
+          </div>
+        )}
+
         <div className="editor-toolbar-wrapper">
           <Group
             className="editor-toolbar"
@@ -535,6 +760,41 @@ export default function EditorPage() {
               background: 'inherit',
             }}
           >
+            {/* Font family + size */}
+            <Group gap={4} style={{ flexShrink: 0 }}>
+              <Select
+                size="xs"
+                data={[
+                  { value: 'Georgia', label: 'Georgia' },
+                  { value: 'Times New Roman, serif', label: 'Times New Roman' },
+                  { value: 'Arial, sans-serif', label: 'Arial' },
+                  { value: 'Inter, sans-serif', label: 'Inter' },
+                  { value: 'Courier New, monospace', label: 'Courier New' },
+                  { value: 'Palatino, serif', label: 'Palatino' },
+                ]}
+                value={fontFamily}
+                onChange={v => {
+                  setFontFamily(v)
+                  cmd(ed => ed.chain().focus().setFontFamily(v).run())
+                }}
+                w={150}
+                styles={{ input: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(55,65,81,0.8)', color: '#e5e7eb', fontSize: 12 } }}
+              />
+              <Select
+                size="xs"
+                data={['10px','12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'].map(s => ({ value: s, label: s.replace('px','') }))}
+                value={fontSize}
+                onChange={v => {
+                  setFontSize(v)
+                  cmd(ed => ed.chain().focus().setFontSize(v).run())
+                }}
+                w={68}
+                styles={{ input: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(55,65,81,0.8)', color: '#e5e7eb', fontSize: 12 } }}
+              />
+            </Group>
+
+            <Divider orientation="vertical" />
+
             <Group gap={4} style={{ flexShrink: 0 }}>
               <Tooltip label="H1">
                 <ActionIcon
@@ -735,6 +995,25 @@ export default function EditorPage() {
             </Group>
 
             <Group ml="auto" gap="xs" style={{ flexShrink: 0 }}>
+              <Tooltip label="Найти (Ctrl+F) / Заменить (Ctrl+H)">
+                <ActionIcon
+                  variant={showSearch ? 'filled' : 'subtle'}
+                  size="md"
+                  onClick={() => { setShowSearch(v => !v); setShowReplace(false) }}
+                >
+                  <IconSearch size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Заменить (Ctrl+H)">
+                <ActionIcon
+                  variant={showReplace ? 'filled' : 'subtle'}
+                  size="md"
+                  onClick={() => { setShowSearch(true); setShowReplace(v => !v) }}
+                >
+                  <IconReplace size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Divider orientation="vertical" />
               <Text size="sm" c="dimmed">
                 {saveState === 'saving' ? 'Сохранение…' : saveState === 'saved' ? 'Сохранено' : 'Изменено'}
                 {' '}• {chars} символов
@@ -743,7 +1022,7 @@ export default function EditorPage() {
           </Group>
         </div>
 
-        <div className="editor-paper paged" style={{ '--lh': lineHeight, '--first-indent': firstIndent, '--p-space': pSpace }}>
+        <div className="editor-paper paged" style={{ '--lh': lineHeight, '--first-indent': firstIndent, '--p-space': pSpace, '--font-family': fontFamily, '--font-size': fontSize }}>
           <div className="pages-container">
             {pages
               .slice()
