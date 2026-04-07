@@ -1087,6 +1087,10 @@ function PageEditor({
   React.useEffect(() => { onDeletePageRef.current = onDeletePage }, [onDeletePage])
   React.useEffect(() => { editorsMapRef.current = editorsMap }, [editorsMap])
 
+  // Track whether this page ever had real content, to avoid deleting
+  // freshly-created pages whose overflow content hasn't landed yet
+  const hasHadContentRef = React.useRef(false)
+
   const editor = useEditor({
     extensions,
     content: '<p></p>',
@@ -1104,14 +1108,18 @@ function PageEditor({
     onUpdate: ({ editor }) => {
       onUserEditRef.current?.()
 
-      // Автоудаление: если не-первая страница стала пустой → убираем её
-      if (pageIndex > 0 && editor.state.doc.content.size <= 4) {
+      const size = editor.state.doc.content.size
+      // Remember once this page has real content (> empty paragraph)
+      if (size > 4) hasHadContentRef.current = true
+
+      // Auto-delete: only if this page previously had content and is now empty
+      if (pageIndex > 0 && hasHadContentRef.current && size <= 4) {
         onDeletePageRef.current?.()
         editorsMapRef.current?.get(pageIndex - 1)?.commands.focus('end')
         return
       }
 
-      // Автоперенос: если текст вышел за край страницы → следующая страница
+      // Auto-overflow: move content that exceeds the page to the next page
       const overflowJSON = findOverflowJSON(editor)
       if (overflowJSON) onOverflowRef.current?.(overflowJSON)
     },
