@@ -70,19 +70,22 @@ import { TableCell } from '@tiptap/extension-table-cell'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import FontFamily from '@tiptap/extension-font-family'
+import { Extension } from '@tiptap/core'
 
-// Custom FontSize extension (TipTap v3 has no official one yet)
-const FontSize = TextStyle.extend({
+// FontSize as a global attribute on the textStyle mark — no duplicate registration
+const FontSizeExtension = Extension.create({
   name: 'fontSize',
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      fontSize: {
-        default: null,
-        parseHTML: el => el.style.fontSize || null,
-        renderHTML: attrs => attrs.fontSize ? { style: `font-size:${attrs.fontSize}` } : {},
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: el => el.style.fontSize || null,
+          renderHTML: attrs => attrs.fontSize ? { style: `font-size:${attrs.fontSize}` } : {},
+        },
       },
-    }
+    }]
   },
   addCommands() {
     return {
@@ -196,7 +199,7 @@ export default function EditorPage() {
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
       FontFamily,
-      FontSize,
+      FontSizeExtension,
     ],
     []
   )
