@@ -6,7 +6,9 @@ import type {
   Character,
   SearchResult,
   ChapterStatus,
-  ThemeName
+  ThemeName,
+  BoardSticker,
+  BoardArrow
 } from './types'
 
 /**
@@ -68,6 +70,17 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; characterId: string }): Promise<Project | null>
+  }
+  boards: {
+    add(input: { projectId: string; title: string }): Promise<Project | null>
+    rename(input: { projectId: string; boardId: string; title: string }): Promise<Project | null>
+    delete(input: { projectId: string; boardId: string }): Promise<Project | null>
+    save(input: {
+      projectId: string
+      boardId: string
+      stickers: BoardSticker[]
+      arrows: BoardArrow[]
+    }): Promise<Project | null>
   }
   assets: {
     /** Сохраняет dataURL-картинку (например, перетащенную в редактор) в папку проекта. */

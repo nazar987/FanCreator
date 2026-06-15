@@ -31,6 +31,12 @@ const api: FanCreatorApi = {
     update: (input) => invoke('characters:update', input),
     delete: (input) => invoke('characters:delete', input)
   },
+  boards: {
+    add: (input) => invoke('boards:add', input),
+    rename: (input) => invoke('boards:rename', input),
+    delete: (input) => invoke('boards:delete', input),
+    save: (input) => invoke('boards:save', input)
+  },
   assets: {
     saveImage: (input) => invoke('assets:saveImage', input)
   },

@@ -3,7 +3,14 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
 import { Document, Packer, Paragraph } from 'docx'
-import type { Project, Story, Chapter, Character, SearchResult } from '@shared/types'
+import type {
+  Project,
+  Story,
+  Chapter,
+  Character,
+  SearchResult,
+  Board
+} from '@shared/types'
 import {
   listProjects,
   readProject,
@@ -50,7 +57,8 @@ export function registerIpc(): void {
       createdAt: now(),
       updatedAt: now(),
       stories: [],
-      characters: []
+      characters: [],
+      boards: []
     }
     return writeProject(project)
   })
@@ -238,6 +246,41 @@ export function registerIpc(): void {
   ipcMain.handle('characters:delete', (_e, { projectId, characterId }) =>
     mutate(projectId, (p) => {
       p.characters = p.characters.filter((c) => c.id !== characterId)
+    })
+  )
+
+  // ---------- Boards ----------
+  ipcMain.handle('boards:add', (_e, { projectId, title }) =>
+    mutate(projectId, (p) => {
+      const board: Board = {
+        id: uid(),
+        title,
+        stickers: [],
+        arrows: [],
+        createdAt: now(),
+        updatedAt: now()
+      }
+      p.boards.push(board)
+    })
+  )
+
+  ipcMain.handle('boards:rename', (_e, { projectId, boardId, title }) =>
+    mutate(projectId, (p) => {
+      const board = p.boards.find((item) => item.id === boardId)
+      if (board) Object.assign(board, { title, updatedAt: now() })
+    })
+  )
+
+  ipcMain.handle('boards:delete', (_e, { projectId, boardId }) =>
+    mutate(projectId, (p) => {
+      p.boards = p.boards.filter((item) => item.id !== boardId)
+    })
+  )
+
+  ipcMain.handle('boards:save', (_e, { projectId, boardId, stickers, arrows }) =>
+    mutate(projectId, (p) => {
+      const board = p.boards.find((item) => item.id === boardId)
+      if (board) Object.assign(board, { stickers, arrows, updatedAt: now() })
     })
   )
 

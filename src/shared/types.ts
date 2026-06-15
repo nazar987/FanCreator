@@ -59,6 +59,36 @@ export interface Character {
   updatedAt: number
 }
 
+export type StickerShape = 'rect' | 'rounded' | 'circle' | 'note'
+
+export interface BoardSticker {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  color: string
+  shape: StickerShape
+  text: string
+}
+
+export interface BoardArrow {
+  id: string
+  fromId: string
+  toId: string
+  color: string
+  label?: string
+}
+
+export interface Board {
+  id: string
+  title: string
+  stickers: BoardSticker[]
+  arrows: BoardArrow[]
+  createdAt: number
+  updatedAt: number
+}
+
 /** Вкладка верхнего рабочего стола (п.2, п.10). */
 export type WorkspaceTabKind =
   | 'chapter'
@@ -88,6 +118,7 @@ export interface Project {
   updatedAt: number
   stories: Story[]
   characters: Character[]
+  boards: Board[]
 }
 
 /** Лёгкое представление проекта для списка (без тяжёлого контента глав). */

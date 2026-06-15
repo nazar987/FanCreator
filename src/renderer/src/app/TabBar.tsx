@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, Plus, Library, BookPlus, FileText, Users } from 'lucide-react'
+import { X, Plus, Library, BookPlus, FileText, Users, LayoutDashboard } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
@@ -30,7 +30,39 @@ export function TabBar(): React.JSX.Element {
         label: 'Персонажи',
         icon: <Users size={15} />,
         onClick: () => openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
-      }
+      },
+      {
+        label: 'Новая доска',
+        icon: <LayoutDashboard size={15} />,
+        onClick: async () => {
+          if (!current) return
+          const title = await promptText({ title: 'Новая доска', placeholder: 'Название доски' })
+          if (!title) return
+          const project = await window.api.boards.add({ projectId: current.id, title })
+          applyProject(project)
+          const board = project?.boards[project.boards.length - 1]
+          if (board) {
+            openTab({
+              id: `board:${board.id}`,
+              kind: 'board',
+              title: board.title,
+              boardId: board.id
+            })
+          }
+        }
+      },
+      { type: 'label', label: 'Доски проекта' },
+      ...(current?.boards.map((board) => ({
+        label: board.title,
+        icon: <LayoutDashboard size={15} />,
+        onClick: () =>
+          openTab({
+            id: `board:${board.id}`,
+            kind: 'board',
+            title: board.title,
+            boardId: board.id
+          })
+      })) ?? [])
     ]
     openContextMenu(e, items)
   }
@@ -50,6 +82,8 @@ export function TabBar(): React.JSX.Element {
             <Library size={14} />
           ) : t.kind === 'characters' ? (
             <Users size={14} />
+          ) : t.kind === 'board' ? (
+            <LayoutDashboard size={14} />
           ) : (
             <FileText size={14} />
           )}
