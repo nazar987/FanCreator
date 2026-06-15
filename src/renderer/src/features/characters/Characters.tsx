@@ -2,8 +2,9 @@ import React from 'react'
 import { Plus, Trash2, UserRound } from 'lucide-react'
 import type { Character, CharacterField, Project } from '@shared/types'
 import { useStore } from '../../store/store'
-import { Button, Card, Hashtags, Input } from '../../shared/ui/components'
+import { Button, Card, Input } from '../../shared/ui/components'
 import { confirmDialog, promptText } from '../../shared/ui/dialogs'
+import { TagEditor } from '../../shared/ui/TagEditor'
 
 interface CharacterCardProps {
   character: Character
@@ -27,7 +28,7 @@ function CharacterCard({
   }, [character])
 
   const update = async (
-    patch: Partial<Pick<Character, 'name' | 'role' | 'fields'>>
+    patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields'>>
   ): Promise<void> => {
     onProjectChange(
       await window.api.characters.update({
@@ -115,9 +116,11 @@ function CharacterCard({
 
       <div className="character-control">
         <span>Теги</span>
-        {/* TODO(senior): подключить TagEditor после T2 */}
-        <Hashtags tags={character.tags} />
-        {!character.tags.length && <span className="dim">Тегов пока нет</span>}
+        <TagEditor
+          tags={character.tags}
+          placeholder="Добавить тег"
+          onChange={(tags) => update({ tags })}
+        />
       </div>
 
       <div className="character-fields">

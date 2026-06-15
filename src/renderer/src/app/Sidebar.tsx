@@ -10,7 +10,8 @@ import {
   Trash2,
   Image as ImageIcon,
   Copy,
-  CircleDot
+  CircleDot,
+  Settings2
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { Button, Input, StatusBadge, Hashtags } from '../shared/ui/components'
@@ -18,12 +19,14 @@ import { promptText, confirmDialog } from '../shared/ui/dialogs'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import type { Story, Chapter, ChapterStatus, SearchResult } from '@shared/types'
 import { STATUS_LABEL } from '../shared/ui/components'
+import { StoryProperties } from '../features/library/StoryProperties'
 
 export function Sidebar(): React.JSX.Element {
   const { current, closeProject, applyProject, openTab, activeTabId } = useStore()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const [search, setSearch] = React.useState('')
   const [results, setResults] = React.useState<SearchResult[]>([])
+  const [propertiesStory, setPropertiesStory] = React.useState<Story | null>(null)
 
   if (!current) return <aside className="sidebar" />
 
@@ -149,6 +152,7 @@ export function Sidebar(): React.JSX.Element {
 
   const storyMenu = (s: Story): MenuItem[] => [
     { label: 'Добавить главу', icon: <Plus size={15} />, onClick: () => addChapter(s) },
+    { label: 'Свойства', icon: <Settings2 size={15} />, onClick: () => setPropertiesStory(s) },
     { label: 'Загрузить обложку', icon: <ImageIcon size={15} />, onClick: () => setStoryCover(s) },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameStory(s) },
     { type: 'sep' },
@@ -156,6 +160,7 @@ export function Sidebar(): React.JSX.Element {
   ]
 
   return (
+    <>
     <aside className="sidebar">
       <div className="sidebar-head">
         <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -281,5 +286,9 @@ export function Sidebar(): React.JSX.Element {
         )}
       </div>
     </aside>
+    {propertiesStory && (
+      <StoryProperties story={propertiesStory} onClose={() => setPropertiesStory(null)} />
+    )}
+    </>
   )
 }
