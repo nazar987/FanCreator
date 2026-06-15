@@ -49,7 +49,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
-  const setTheme = React.useCallback((t: ThemeName) => {
+  const applyThemeLocal = React.useCallback((t: ThemeName) => {
     setThemeState(t)
     localStorage.setItem(THEME_KEY, t)
   }, [])
@@ -88,6 +88,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     )
   }, [])
 
+  const setTheme = React.useCallback(
+    (t: ThemeName) => {
+      applyThemeLocal(t)
+      if (current) {
+        window.api.projects
+          .update({ projectId: current.id, patch: { theme: t } })
+          .then(applyProject)
+      }
+    },
+    [current, applyProject, applyThemeLocal]
+  )
+
   const reloadCurrent = React.useCallback(async () => {
     if (!current) return null
     const p = await window.api.projects.get(current.id)
@@ -100,11 +112,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       const p = await window.api.projects.get(projectId)
       if (!p) return
       setCurrent(p)
-      if (p.theme) setTheme(p.theme)
+      if (p.theme) applyThemeLocal(p.theme)
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
     },
-    [setTheme]
+    [applyThemeLocal]
   )
 
   const closeProject = React.useCallback(() => {
