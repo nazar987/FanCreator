@@ -101,6 +101,25 @@
 .tree-chapter {
   font-size: 13.5px;
 }
+.tree-chapter--dragging {
+  background: var(--panel-solid);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+}
+.tree-drag-handle {
+  display: flex;
+  color: var(--text-faint);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--t-fast), color var(--t-fast);
+}
+.tree-chapter:hover .tree-drag-handle,
+.tree-drag-handle:focus {
+  opacity: 1;
+}
+.tree-drag-handle:active {
+  cursor: grabbing;
+}
 
 /* ---------- Main ---------- */
 .main {

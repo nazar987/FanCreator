@@ -11,8 +11,10 @@ import {
   Image as ImageIcon,
   Copy,
   CircleDot,
-  Settings2
+  Settings2,
+  GripVertical
 } from 'lucide-react'
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 import { useStore } from '../store/store'
 import { Button, Input, StatusBadge, Hashtags } from '../shared/ui/components'
 import { promptText, confirmDialog } from '../shared/ui/dialogs'
@@ -134,6 +136,25 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
+  const reorderChapters = async (result: DropResult): Promise<void> => {
+    const { source, destination } = result
+    if (!destination || source.droppableId !== destination.droppableId) return
+    if (source.index === destination.index) return
+
+    const story = current.stories.find((item) => item.id === source.droppableId)
+    if (!story) return
+    const order = story.chapters.map((chapter) => chapter.id)
+    const [moved] = order.splice(source.index, 1)
+    order.splice(destination.index, 0, moved)
+    applyProject(
+      await window.api.chapters.reorder({
+        projectId: current.id,
+        storyId: story.id,
+        order
+      })
+    )
+  }
+
   const chapterMenu = (s: Story, c: Chapter): MenuItem[] => [
     { label: 'Открыть', icon: <FileText size={15} />, onClick: () => openChapter(s, c) },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameChapter(s, c) },
@@ -228,6 +249,7 @@ export function Sidebar(): React.JSX.Element {
               </div>
             )}
 
+            <DragDropContext onDragEnd={reorderChapters}>
             {current.stories.map((s) => (
               <div className="tree-node" key={s.id}>
                 <div
@@ -254,23 +276,43 @@ export function Sidebar(): React.JSX.Element {
 
                 {expanded[s.id] && (
                   <div className="tree-children">
-                    {s.chapters.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`tree-row tree-chapter ${
-                          activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
-                        }`}
-                        onClick={() => openChapter(s, c)}
-                        onDoubleClick={() => openChapter(s, c)}
-                        onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
-                      >
-                        <FileText size={14} />
-                        <span className="truncate" style={{ flex: 1 }}>
-                          {c.title || 'Без названия'}
-                        </span>
-                        <StatusBadge status={c.status} />
-                      </div>
-                    ))}
+                    <Droppable droppableId={s.id}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                          {s.chapters.map((c, index) => (
+                            <Draggable draggableId={c.id} index={index} key={c.id}>
+                              {(dragProvided, snapshot) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  className={`tree-row tree-chapter ${
+                                    activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
+                                  } ${snapshot.isDragging ? 'tree-chapter--dragging' : ''}`}
+                                  onClick={() => openChapter(s, c)}
+                                  onDoubleClick={() => openChapter(s, c)}
+                                  onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
+                                >
+                                  <span
+                                    className="tree-drag-handle"
+                                    title="Изменить порядок главы"
+                                    {...dragProvided.dragHandleProps}
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <GripVertical size={14} />
+                                  </span>
+                                  <FileText size={14} />
+                                  <span className="truncate" style={{ flex: 1 }}>
+                                    {c.title || 'Без названия'}
+                                  </span>
+                                  <StatusBadge status={c.status} />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
                     <div
                       className="tree-row tree-chapter faint"
                       onClick={() => addChapter(s)}
@@ -282,6 +324,7 @@ export function Sidebar(): React.JSX.Element {
                 )}
               </div>
             ))}
+            </DragDropContext>
           </>
         )}
       </div>
