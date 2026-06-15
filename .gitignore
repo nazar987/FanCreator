@@ -4,13 +4,13 @@ node_modules
 # logs
 *.log
 
-# electron-vite build output
-out
+# electron-vite build output (anchored to repo root so nested src dirs are not ignored)
+/out
 .vite
 
 # packaged builds
-dist
+/dist
 
 # legacy nextron build (removed)
 .next
-app
+/app
