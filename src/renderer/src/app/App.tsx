@@ -1,0 +1,45 @@
+import React from 'react'
+import { useStore } from '../store/store'
+import { DialogHost } from '../shared/ui/dialogs'
+import { ContextMenuHost } from '../shared/ui/ContextMenu'
+import { Sidebar } from './Sidebar'
+import { TabBar } from './TabBar'
+import { Home } from '../features/library/Home'
+import { Shelf } from '../features/library/Shelf'
+import { Editor } from '../features/editor/Editor'
+import { Characters } from '../features/characters/Characters'
+
+export function App(): React.JSX.Element {
+  const { current, tabs, activeTabId } = useStore()
+
+  const active = tabs.find((t) => t.id === activeTabId) ?? tabs[0]
+
+  return (
+    <div className="app">
+      {!current ? (
+        <Home />
+      ) : (
+        <>
+          <Sidebar />
+          <div className="main">
+            <TabBar />
+            <div className="tab-content">
+              {active?.kind === 'shelf' && <Shelf />}
+              {active?.kind === 'characters' && <Characters />}
+              {active?.kind === 'chapter' && active.storyId && active.chapterId && (
+                <Editor
+                  key={active.chapterId}
+                  storyId={active.storyId}
+                  chapterId={active.chapterId}
+                />
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      <DialogHost />
+      <ContextMenuHost />
+    </div>
+  )
+}

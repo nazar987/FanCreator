@@ -5,6 +5,7 @@ import './shared/ui/ui.css'
 import './app/app.css'
 import './features/editor/editor.css'
 import './features/library/library.css'
+import './features/characters/characters.css'
 import { StoreProvider } from './store/store'
 import { App } from './app/App'
 
