@@ -23,6 +23,19 @@ export interface Chapter {
   updatedAt: number
 }
 
+export interface TimelineEvent {
+  id: string
+  title: string
+  note: string
+  order: number
+}
+
+export interface Timeline {
+  id: string
+  title: string
+  events: TimelineEvent[]
+}
+
 /** История внутри проекта. Может иметь обложку (п.19). */
 export interface Story {
   id: string
@@ -126,6 +139,7 @@ export interface Project {
   characters: Character[]
   boards: Board[]
   templates: CharacterTemplate[]
+  timelines: Timeline[]
 }
 
 /** Лёгкое представление проекта для списка (без тяжёлого контента глав). */

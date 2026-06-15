@@ -9,7 +9,8 @@ import type {
   ChapterStatus,
   ThemeName,
   BoardSticker,
-  BoardArrow
+  BoardArrow,
+  TimelineEvent
 } from './types'
 
 /**
@@ -96,6 +97,25 @@ export interface FanCreatorApi {
       boardId: string
       stickers: BoardSticker[]
       arrows: BoardArrow[]
+    }): Promise<Project | null>
+  }
+  timelines: {
+    add(input: { projectId: string; title: string }): Promise<Project | null>
+    rename(input: { projectId: string; timelineId: string; title: string }): Promise<Project | null>
+    delete(input: { projectId: string; timelineId: string }): Promise<Project | null>
+  }
+  timelineEvents: {
+    add(input: { projectId: string; timelineId: string; title: string }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      timelineId: string
+      eventId: string
+      patch: Partial<Pick<TimelineEvent, 'title' | 'note' | 'order'>>
+    }): Promise<Project | null>
+    delete(input: {
+      projectId: string
+      timelineId: string
+      eventId: string
     }): Promise<Project | null>
   }
   assets: {

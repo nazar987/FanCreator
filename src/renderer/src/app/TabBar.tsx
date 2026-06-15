@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, Plus, Library, BookPlus, FileText, Users, LayoutDashboard } from 'lucide-react'
+import { X, Plus, Library, BookPlus, FileText, Users, LayoutDashboard, Clock3 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
@@ -32,11 +32,37 @@ export function TabBar(): React.JSX.Element {
         onClick: () => openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
       },
       {
+        label: 'Новый таймлайн',
+        icon: <Clock3 size={15} />,
+        onClick: async () => {
+          if (!current) return
+          const title = await promptText({
+            title: 'Новый таймлайн',
+            placeholder: 'Название таймлайна'
+          })
+          if (!title) return
+          const project = await window.api.timelines.add({ projectId: current.id, title })
+          applyProject(project)
+          const timeline = project?.timelines[project.timelines.length - 1]
+          if (timeline) {
+            openTab({
+              id: `timeline:${timeline.id}`,
+              kind: 'timeline',
+              title: timeline.title,
+              timelineId: timeline.id
+            })
+          }
+        }
+      },
+      {
         label: 'Новая доска',
         icon: <LayoutDashboard size={15} />,
         onClick: async () => {
           if (!current) return
-          const title = await promptText({ title: 'Новая доска', placeholder: 'Название доски' })
+          const title = await promptText({
+            title: 'Новая доска',
+            placeholder: 'Название доски'
+          })
           if (!title) return
           const project = await window.api.boards.add({ projectId: current.id, title })
           applyProject(project)
@@ -62,6 +88,18 @@ export function TabBar(): React.JSX.Element {
             title: board.title,
             boardId: board.id
           })
+      })) ?? []),
+      { type: 'label', label: 'Таймлайны проекта' },
+      ...(current?.timelines.map((timeline) => ({
+        label: timeline.title,
+        icon: <Clock3 size={15} />,
+        onClick: () =>
+          openTab({
+            id: `timeline:${timeline.id}`,
+            kind: 'timeline',
+            title: timeline.title,
+            timelineId: timeline.id
+          })
       })) ?? [])
     ]
     openContextMenu(e, items)
@@ -75,7 +113,7 @@ export function TabBar(): React.JSX.Element {
           className={`tab ${activeTabId === t.id ? 'tab--active' : ''}`}
           onClick={() => setActiveTab(t.id)}
           onAuxClick={(e) => {
-            if (e.button === 1) closeTab(t.id) // средняя кнопка закрывает
+            if (e.button === 1) closeTab(t.id)
           }}
         >
           {t.kind === 'shelf' ? (
@@ -84,6 +122,8 @@ export function TabBar(): React.JSX.Element {
             <Users size={14} />
           ) : t.kind === 'board' ? (
             <LayoutDashboard size={14} />
+          ) : t.kind === 'timeline' ? (
+            <Clock3 size={14} />
           ) : (
             <FileText size={14} />
           )}
@@ -105,7 +145,12 @@ export function TabBar(): React.JSX.Element {
         </div>
       ))}
 
-      <button className="tab-close" style={{ width: 26, height: 26 }} onClick={addMenu} title="Добавить вкладку">
+      <button
+        className="tab-close"
+        style={{ width: 26, height: 26 }}
+        onClick={addMenu}
+        title="Добавить вкладку"
+      >
         <Plus size={16} />
       </button>
 

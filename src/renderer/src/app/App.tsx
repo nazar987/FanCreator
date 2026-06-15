@@ -9,6 +9,7 @@ import { Shelf } from '../features/library/Shelf'
 import { Editor } from '../features/editor/Editor'
 import { Characters } from '../features/characters/Characters'
 import { Board } from '../features/board/Board'
+import { Timeline } from '../features/timeline/Timeline'
 
 export function App(): React.JSX.Element {
   const { current, tabs, activeTabId } = useStore()
@@ -29,6 +30,9 @@ export function App(): React.JSX.Element {
               {active?.kind === 'characters' && <Characters />}
               {active?.kind === 'board' && active.boardId && (
                 <Board key={active.boardId} boardId={active.boardId} />
+              )}
+              {active?.kind === 'timeline' && active.timelineId && (
+                <Timeline key={active.timelineId} timelineId={active.timelineId} />
               )}
               {active?.kind === 'chapter' && active.storyId && active.chapterId && (
                 <Editor

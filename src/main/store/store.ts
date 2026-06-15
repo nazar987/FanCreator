@@ -62,6 +62,7 @@ export async function readProject(projectId: string): Promise<Project | null> {
     const project = JSON.parse(raw) as Project
     project.boards ??= []
     project.templates ??= []
+    project.timelines ??= []
     return project
   } catch {
     return null
@@ -193,7 +194,8 @@ function normalizeLegacyProject(legacy: any): Project {
       updatedAt: ch.updatedAt ?? now()
     })),
     boards: legacy.boards ?? [],
-    templates: legacy.templates ?? []
+    templates: legacy.templates ?? [],
+    timelines: legacy.timelines ?? []
   }
 }
 

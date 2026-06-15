@@ -43,6 +43,16 @@ const api: FanCreatorApi = {
     delete: (input) => invoke('boards:delete', input),
     save: (input) => invoke('boards:save', input)
   },
+  timelines: {
+    add: (input) => invoke('timelines:add', input),
+    rename: (input) => invoke('timelines:rename', input),
+    delete: (input) => invoke('timelines:delete', input)
+  },
+  timelineEvents: {
+    add: (input) => invoke('timelineEvents:add', input),
+    update: (input) => invoke('timelineEvents:update', input),
+    delete: (input) => invoke('timelineEvents:delete', input)
+  },
   assets: {
     saveImage: (input) => invoke('assets:saveImage', input)
   },

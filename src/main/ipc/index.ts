@@ -10,7 +10,9 @@ import type {
   Character,
   SearchResult,
   Board,
-  CharacterTemplate
+  CharacterTemplate,
+  Timeline,
+  TimelineEvent
 } from '@shared/types'
 import {
   listProjects,
@@ -60,7 +62,8 @@ export function registerIpc(): void {
       stories: [],
       characters: [],
       boards: [],
-      templates: []
+      templates: [],
+      timelines: []
     }
     return writeProject(project)
   })
@@ -325,6 +328,63 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const board = p.boards.find((item) => item.id === boardId)
       if (board) Object.assign(board, { stickers, arrows, updatedAt: now() })
+    })
+  )
+
+  // ---------- Timelines ----------
+  ipcMain.handle('timelines:add', (_e, { projectId, title }) =>
+    mutate(projectId, (p) => {
+      const timeline: Timeline = {
+        id: uid(),
+        title,
+        events: []
+      }
+      p.timelines.push(timeline)
+    })
+  )
+
+  ipcMain.handle('timelines:rename', (_e, { projectId, timelineId, title }) =>
+    mutate(projectId, (p) => {
+      const timeline = p.timelines.find((item) => item.id === timelineId)
+      if (timeline) timeline.title = title
+    })
+  )
+
+  ipcMain.handle('timelines:delete', (_e, { projectId, timelineId }) =>
+    mutate(projectId, (p) => {
+      p.timelines = p.timelines.filter((item) => item.id !== timelineId)
+    })
+  )
+
+  ipcMain.handle('timelineEvents:add', (_e, { projectId, timelineId, title }) =>
+    mutate(projectId, (p) => {
+      const timeline = p.timelines.find((item) => item.id === timelineId)
+      if (!timeline) return
+      const event: TimelineEvent = {
+        id: uid(),
+        title,
+        note: '',
+        order: timeline.events.length
+      }
+      timeline.events.push(event)
+    })
+  )
+
+  ipcMain.handle('timelineEvents:update', (_e, { projectId, timelineId, eventId, patch }) =>
+    mutate(projectId, (p) => {
+      const timeline = p.timelines.find((item) => item.id === timelineId)
+      const event = timeline?.events.find((item) => item.id === eventId)
+      if (event) Object.assign(event, patch)
+    })
+  )
+
+  ipcMain.handle('timelineEvents:delete', (_e, { projectId, timelineId, eventId }) =>
+    mutate(projectId, (p) => {
+      const timeline = p.timelines.find((item) => item.id === timelineId)
+      if (!timeline) return
+      timeline.events = timeline.events
+        .filter((item) => item.id !== eventId)
+        .map((item, index) => ({ ...item, order: index }))
     })
   )
 
