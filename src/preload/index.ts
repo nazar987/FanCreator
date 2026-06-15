@@ -24,7 +24,8 @@ const api: FanCreatorApi = {
     add: (input) => invoke('chapters:add', input),
     update: (input) => invoke('chapters:update', input),
     delete: (input) => invoke('chapters:delete', input),
-    reorder: (input) => invoke('chapters:reorder', input)
+    reorder: (input) => invoke('chapters:reorder', input),
+    move: (input) => invoke('chapters:move', input)
   },
   characters: {
     add: (input) => invoke('characters:add', input),

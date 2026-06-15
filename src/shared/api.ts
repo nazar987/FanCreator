@@ -61,6 +61,12 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
     delete(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     reorder(input: { projectId: string; storyId: string; order: string[] }): Promise<Project | null>
+    move(input: {
+      projectId: string
+      fromStoryId: string
+      toStoryId: string
+      chapterId: string
+    }): Promise<Project | null>
   }
   characters: {
     add(input: { projectId: string; name: string }): Promise<Project | null>

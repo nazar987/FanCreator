@@ -12,7 +12,8 @@ import {
   Copy,
   CircleDot,
   Settings2,
-  GripVertical
+  GripVertical,
+  MoveRight
 } from 'lucide-react'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 import { useStore } from '../store/store'
@@ -155,21 +156,48 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
-  const chapterMenu = (s: Story, c: Chapter): MenuItem[] => [
-    { label: 'Открыть', icon: <FileText size={15} />, onClick: () => openChapter(s, c) },
-    { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameChapter(s, c) },
-    { label: 'Копировать', icon: <Copy size={15} />, onClick: () => duplicateChapter(s, c) },
-    {
-      label: 'Статус',
-      icon: <CircleDot size={15} />,
-      submenu: (Object.keys(STATUS_LABEL) as ChapterStatus[]).map((st) => ({
-        label: STATUS_LABEL[st],
-        onClick: () => setChapterStatus(s, c, st)
-      }))
-    },
-    { type: 'sep' },
-    { label: 'Удалить', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteChapter(s, c) }
-  ]
+  const moveChapter = async (fromStory: Story, toStory: Story, chapter: Chapter): Promise<void> => {
+    applyProject(
+      await window.api.chapters.move({
+        projectId: current.id,
+        fromStoryId: fromStory.id,
+        toStoryId: toStory.id,
+        chapterId: chapter.id
+      })
+    )
+    setExpanded((items) => ({ ...items, [toStory.id]: true }))
+  }
+
+  const chapterMenu = (s: Story, c: Chapter): MenuItem[] => {
+    const otherStories = current.stories.filter((story) => story.id !== s.id)
+    return [
+      { label: 'Открыть', icon: <FileText size={15} />, onClick: () => openChapter(s, c) },
+      { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameChapter(s, c) },
+      { label: 'Копировать', icon: <Copy size={15} />, onClick: () => duplicateChapter(s, c) },
+      {
+        label: 'Статус',
+        icon: <CircleDot size={15} />,
+        submenu: (Object.keys(STATUS_LABEL) as ChapterStatus[]).map((st) => ({
+          label: STATUS_LABEL[st],
+          onClick: () => setChapterStatus(s, c, st)
+        }))
+      },
+      ...(otherStories.length
+        ? [
+            {
+              label: 'Переместить',
+              icon: <MoveRight size={15} />,
+              submenu: otherStories.map((story) => ({
+                label: story.title,
+                onClick: () => moveChapter(s, story, c)
+              }))
+            }
+          ]
+        : []),
+      { type: 'sep' },
+      { label: 'Удалить', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteChapter(s, c) }
+    ]
+  }
 
   const storyMenu = (s: Story): MenuItem[] => [
     { label: 'Добавить главу', icon: <Plus size={15} />, onClick: () => addChapter(s) },

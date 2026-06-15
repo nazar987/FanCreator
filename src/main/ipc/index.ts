@@ -218,6 +218,23 @@ export function registerIpc(): void {
     })
   )
 
+  ipcMain.handle('chapters:move', (_e, { projectId, fromStoryId, toStoryId, chapterId }) =>
+    mutate(projectId, (p) => {
+      if (fromStoryId === toStoryId) return
+      const fromStory = p.stories.find((s) => s.id === fromStoryId)
+      const toStory = p.stories.find((s) => s.id === toStoryId)
+      const chapter = fromStory?.chapters.find((c) => c.id === chapterId)
+      if (!fromStory || !toStory || !chapter) return
+
+      fromStory.chapters = fromStory.chapters
+        .filter((c) => c.id !== chapterId)
+        .map((c, index) => ({ ...c, order: index }))
+      toStory.chapters = [...toStory.chapters, { ...chapter, order: toStory.chapters.length }]
+      fromStory.updatedAt = now()
+      toStory.updatedAt = now()
+    })
+  )
+
   // ---------- Characters ----------
   ipcMain.handle('characters:add', (_e, { projectId, name }) =>
     mutate(projectId, (p) => {
