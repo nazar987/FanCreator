@@ -9,7 +9,9 @@ const api: FanCreatorApi = {
     get: (projectId) => invoke('projects:get', projectId),
     create: (input) => invoke('projects:create', input),
     update: (input) => invoke('projects:update', input),
-    delete: (projectId) => invoke('projects:delete', projectId)
+    delete: (projectId) => invoke('projects:delete', projectId),
+    setCover: (input) => invoke('projects:setCover', input),
+    pickCover: (input) => invoke('projects:pickCover', input)
   },
   stories: {
     add: (input) => invoke('stories:add', input),

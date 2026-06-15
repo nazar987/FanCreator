@@ -60,6 +60,34 @@ export function registerIpc(): void {
   )
   ipcMain.handle('projects:delete', (_e, projectId: string) => deleteProject(projectId))
 
+  ipcMain.handle('projects:setCover', async (_e, { projectId, source, isDataUrl }) => {
+    let fileName: string
+    if (isDataUrl) {
+      const { buffer, ext } = dataUrlToBuffer(source)
+      fileName = await saveAsset(projectId, buffer, ext)
+    } else {
+      const buffer = await fs.readFile(source)
+      fileName = await saveAsset(projectId, buffer, path.extname(source) || '.png')
+    }
+    return mutate(projectId, (p) => {
+      p.coverPath = assetUrl(projectId, fileName)
+    })
+  })
+
+  ipcMain.handle('projects:pickCover', async (_e, { projectId }) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Выберите обложку проекта',
+      filters: [{ name: 'Изображения', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+      properties: ['openFile']
+    })
+    if (canceled || !filePaths[0]) return readProject(projectId)
+    const buffer = await fs.readFile(filePaths[0])
+    const fileName = await saveAsset(projectId, buffer, path.extname(filePaths[0]) || '.png')
+    return mutate(projectId, (p) => {
+      p.coverPath = assetUrl(projectId, fileName)
+    })
+  })
+
   // ---------- Stories ----------
   ipcMain.handle('stories:add', (_e, { projectId, title }) =>
     mutate(projectId, (p) => {

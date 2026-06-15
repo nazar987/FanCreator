@@ -43,6 +43,20 @@ export function Home(): React.JSX.Element {
     refreshProjects()
   }
 
+  const dropCover = async (p: ProjectSummary, dataUrl: string): Promise<void> => {
+    await window.api.projects.setCover({
+      projectId: p.id,
+      source: dataUrl,
+      isDataUrl: true
+    })
+    await refreshProjects()
+  }
+
+  const pickCover = async (p: ProjectSummary): Promise<void> => {
+    await window.api.projects.pickCover({ projectId: p.id })
+    await refreshProjects()
+  }
+
   const menu = (p: ProjectSummary): MenuItem[] => [
     { label: 'Открыть', icon: <FolderOpen size={15} />, onClick: () => openProject(p.id) },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameProject(p) },
@@ -93,7 +107,12 @@ export function Home(): React.JSX.Element {
                 onClick={() => openProject(p.id)}
                 onContextMenu={(e) => openContextMenu(e, menu(p))}
               >
-                <CoverArt title={p.title} coverPath={p.coverPath} />
+                <CoverArt
+                  title={p.title}
+                  coverPath={p.coverPath}
+                  onDropImage={(dataUrl) => dropCover(p, dataUrl)}
+                  onPick={() => pickCover(p)}
+                />
                 <div>
                   <div className="book-title truncate">{p.title}</div>
                   <div className="book-meta">

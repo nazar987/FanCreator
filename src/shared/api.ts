@@ -23,6 +23,12 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Project, 'title' | 'description' | 'tags' | 'theme'>>
     }): Promise<Project | null>
     delete(projectId: string): Promise<boolean>
+    setCover(input: {
+      projectId: string
+      source: string
+      isDataUrl?: boolean
+    }): Promise<Project | null>
+    pickCover(input: { projectId: string }): Promise<Project | null>
   }
   stories: {
     add(input: { projectId: string; title: string }): Promise<Project | null>
