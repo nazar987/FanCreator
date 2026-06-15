@@ -1,12 +1,23 @@
-appId: com.example.nextron
+appId: com.fancreator.app
 productName: FanCreator
-copyright: Copyright © 2018 Yoshihide Shiono
+copyright: Copyright © 2026
 directories:
   output: dist
   buildResources: resources
 files:
-  - from: .
-    filter:
-      - package.json
-      - app
+  - out/**/*
+  - package.json
+asarUnpack:
+  - resources/**
+win:
+  icon: resources/icon.ico
+  target:
+    - nsis
+mac:
+  icon: resources/icon.icns
+  target:
+    - dmg
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
 publish: null

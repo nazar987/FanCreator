@@ -1,0 +1,280 @@
+/* ============================================================
+   UI-kit FanCreator — лёгкие компоненты на CSS-переменных
+   ============================================================ */
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  padding: 0 16px;
+  height: 38px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast),
+    box-shadow var(--t-fast), color var(--t-fast);
+  user-select: none;
+}
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn--sm {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 13px;
+  border-radius: var(--r-sm);
+}
+.btn--icon {
+  width: 38px;
+  padding: 0;
+}
+.btn--icon.btn--sm {
+  width: 30px;
+}
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-contrast);
+  box-shadow: 0 6px 18px -8px var(--accent-glow);
+}
+.btn--primary:hover {
+  box-shadow: 0 10px 26px -8px var(--accent-glow);
+  transform: translateY(-1px);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--text-dim);
+}
+.btn--ghost:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.btn--soft {
+  background: var(--panel-2);
+  color: var(--text);
+  border-color: var(--stroke);
+}
+.btn--soft:hover {
+  border-color: var(--stroke-strong);
+  background: var(--panel-solid);
+}
+.btn--danger {
+  color: #ff8a8a;
+}
+.btn--danger:hover {
+  background: rgba(255, 90, 90, 0.12);
+}
+
+/* ---------- Card ---------- */
+.card {
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Input ---------- */
+.input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.input::placeholder {
+  color: var(--text-faint);
+}
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.input--with-icon {
+  padding-left: 38px;
+}
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrap .input-icon {
+  position: absolute;
+  left: 11px;
+  color: var(--text-faint);
+  pointer-events: none;
+  display: flex;
+}
+
+/* ---------- Badge ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  border: 1px solid var(--stroke);
+}
+.badge--dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* статусы глав */
+.badge[data-status='idea'] {
+  color: #f0d65b;
+}
+.badge[data-status='draft'] {
+  color: var(--accent);
+}
+.badge[data-status='editing'] {
+  color: #5bb8e6;
+}
+.badge[data-status='done'] {
+  color: #5fd39a;
+}
+
+/* ---------- Hashtag (п.3) ---------- */
+.hashtag {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  opacity: 0.85;
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 8, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fade 0.18s var(--ease);
+}
+.modal {
+  width: min(460px, calc(100vw - 40px));
+  background: var(--panel-solid);
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 22px;
+  animation: pop 0.2s var(--ease);
+}
+.modal h3 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ---------- Context menu ---------- */
+.ctx-menu {
+  position: fixed;
+  z-index: 1100;
+  min-width: 200px;
+  background: var(--panel-solid);
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  animation: pop 0.14s var(--ease);
+}
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  text-align: left;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.ctx-item:hover {
+  background: var(--panel-2);
+}
+.ctx-item--danger {
+  color: #ff8a8a;
+}
+.ctx-sep {
+  height: 1px;
+  background: var(--stroke);
+  margin: 6px 4px;
+}
+.ctx-label {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+}
+
+/* ---------- Tooltip (простой через title в основном) ---------- */
+
+/* ---------- Анимации ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+/* ---------- утилиты ---------- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+}
+.spacer {
+  flex: 1;
+}
+.dim {
+  color: var(--text-dim);
+}
+.faint {
+  color: var(--text-faint);
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

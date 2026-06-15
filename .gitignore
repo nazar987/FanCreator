@@ -4,10 +4,13 @@ node_modules
 # logs
 *.log
 
-# next.js
-.next
-next-env.d.ts
+# electron-vite build output
+out
+.vite
 
-# build
-/app
+# packaged builds
 dist
+
+# legacy nextron build (removed)
+.next
+app

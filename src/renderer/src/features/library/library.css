@@ -1,0 +1,204 @@
+/* ============================================================
+   Библиотека: проекты (главный экран) и полка историй
+   ============================================================ */
+
+/* ---------- Home (проекты) ---------- */
+.home {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  width: 100%;
+}
+.home-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 40px 80px;
+}
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.home-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.home-sub {
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+/* карточка проекта */
+.project-card {
+  cursor: pointer;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform var(--t-med), box-shadow var(--t-med), border-color var(--t-med);
+}
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--stroke-strong);
+}
+
+/* ---------- Полка историй ---------- */
+.shelf {
+  height: 100%;
+  overflow-y: auto;
+}
+.shelf-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 40px 80px;
+}
+.shelf-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 30px 26px;
+}
+
+.book {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Обложка-«пластинка» (п.19) ----------
+   Конверт (cover) + диск (vinyl), который выезжает вправо
+   и крутится при наведении. */
+.cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: 14px;
+  overflow: visible;
+  cursor: pointer;
+  perspective: 1200px;
+}
+.cover-disc {
+  position: absolute;
+  top: 8%;
+  right: 6%;
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at center, #111 0 2px, #1a1a1a 2px 4px);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.7);
+  transition: transform 0.5s var(--ease);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+.cover-disc::after {
+  content: '';
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.cover-sleeve {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 2;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--stroke-strong);
+  background: var(--panel-solid);
+  transition: transform 0.5s var(--ease);
+}
+.cover-sleeve img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* запасная обложка-«корешок» без картинки */
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px;
+  background: linear-gradient(160deg, var(--accent-soft), var(--panel-2)),
+    linear-gradient(var(--panel-solid), var(--panel-solid));
+  position: relative;
+}
+.cover-fallback::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.cover-fallback-title {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+/* при наведении: диск выезжает и крутится */
+.cover:hover .cover-disc {
+  transform: translateX(26%) rotate(180deg);
+  animation: spin 4s linear infinite 0.5s;
+}
+.cover:hover .cover-sleeve {
+  transform: rotateY(-12deg) translateX(-4%);
+}
+@keyframes spin {
+  to {
+    transform: translateX(26%) rotate(540deg);
+  }
+}
+
+.book-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.book-meta {
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+
+/* кнопка-обложка для загрузки */
+.cover-upload {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.cover:hover .cover-upload {
+  opacity: 1;
+}
+.cover.drag-over .cover-sleeve {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+}

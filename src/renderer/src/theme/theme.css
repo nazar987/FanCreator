@@ -1,0 +1,206 @@
+/* ============================================================
+   FanCreator — дизайн-система и темы (п.1, п.12)
+   Тёмная база + пастельные акцентные палитры. Переключение
+   через [data-theme] на <html>.
+   ============================================================ */
+
+:root {
+  /* типографика */
+  --font-ui: 'Manrope', 'Inter', system-ui, sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
+
+  /* радиусы */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+
+  /* тени (мягкие, «дорогие») */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 12px 40px -12px var(--accent-glow);
+
+  /* анимации */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 0.14s var(--ease);
+  --t-med: 0.26s var(--ease);
+}
+
+/* ---------- Тёмная (по умолчанию) ---------- */
+:root,
+[data-theme='dark'] {
+  --bg: #0c0d13;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #1a1b2e 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #161a2c 0%, transparent 55%), #0c0d13;
+  --panel: rgba(24, 26, 38, 0.72);
+  --panel-solid: #15171f;
+  --panel-2: rgba(34, 37, 54, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #eef0f6;
+  --text-dim: #9aa0b4;
+  --text-faint: #6b7187;
+  --accent: #8b8cf0;
+  --accent-2: #b18cf0;
+  --accent-contrast: #0c0d13;
+  --accent-soft: rgba(139, 140, 240, 0.22);
+  --accent-glow: rgba(139, 140, 240, 0.5);
+  --paper: #f7f5ef;
+  --paper-text: #1d1c1a;
+}
+
+[data-theme='blue'] {
+  --bg: #0a1016;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #0f2236 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #0c1b2c 0%, transparent 55%), #0a1016;
+  --panel: rgba(18, 30, 42, 0.72);
+  --panel-solid: #10202c;
+  --panel-2: rgba(24, 42, 58, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #e8f1f8;
+  --text-dim: #93aac0;
+  --text-faint: #5f7a90;
+  --accent: #5bb8e6;
+  --accent-2: #6fe0d2;
+  --accent-contrast: #051018;
+  --accent-soft: rgba(91, 184, 230, 0.22);
+  --accent-glow: rgba(91, 184, 230, 0.5);
+  --paper: #f6f8fb;
+  --paper-text: #182230;
+}
+
+[data-theme='violet'] {
+  --bg: #100a18;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #2a1640 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #1d1230 0%, transparent 55%), #100a18;
+  --panel: rgba(30, 20, 44, 0.72);
+  --panel-solid: #1c1330;
+  --panel-2: rgba(44, 30, 64, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #f1ebf8;
+  --text-dim: #b29ec8;
+  --text-faint: #806b96;
+  --accent: #b98cf5;
+  --accent-2: #f08cd0;
+  --accent-contrast: #120a1c;
+  --accent-soft: rgba(185, 140, 245, 0.22);
+  --accent-glow: rgba(185, 140, 245, 0.5);
+  --paper: #faf6fc;
+  --paper-text: #241830;
+}
+
+[data-theme='green'] {
+  --bg: #0a130f;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #143026 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #0e2419 0%, transparent 55%), #0a130f;
+  --panel: rgba(18, 32, 26, 0.72);
+  --panel-solid: #12241b;
+  --panel-2: rgba(26, 46, 36, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #e9f6ee;
+  --text-dim: #97bda7;
+  --text-faint: #67896f;
+  --accent: #5fd39a;
+  --accent-2: #b6e06f;
+  --accent-contrast: #06140c;
+  --accent-soft: rgba(95, 211, 154, 0.22);
+  --accent-glow: rgba(95, 211, 154, 0.5);
+  --paper: #f5faf6;
+  --paper-text: #16241c;
+}
+
+[data-theme='orange'] {
+  --bg: #15100a;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #3a2210 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #2c1a0e 0%, transparent 55%), #15100a;
+  --panel: rgba(34, 26, 18, 0.72);
+  --panel-solid: #241a12;
+  --panel-2: rgba(48, 36, 24, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #f8f0e8;
+  --text-dim: #c5a988;
+  --text-faint: #957a5f;
+  --accent: #f0a35b;
+  --accent-2: #f0d65b;
+  --accent-contrast: #1c1006;
+  --accent-soft: rgba(240, 163, 91, 0.22);
+  --accent-glow: rgba(240, 163, 91, 0.5);
+  --paper: #fbf7f2;
+  --paper-text: #2a1d10;
+}
+
+[data-theme='rose'] {
+  --bg: #160a0f;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #3a1424 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #2c0e1a 0%, transparent 55%), #160a0f;
+  --panel: rgba(36, 20, 28, 0.72);
+  --panel-solid: #26141c;
+  --panel-2: rgba(52, 30, 40, 0.6);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text: #f8ebf0;
+  --text-dim: #c898ab;
+  --text-faint: #95677a;
+  --accent: #f06b9b;
+  --accent-2: #f0a35b;
+  --accent-contrast: #1c0610;
+  --accent-soft: rgba(240, 107, 155, 0.22);
+  --accent-glow: rgba(240, 107, 155, 0.5);
+  --paper: #fcf5f8;
+  --paper-text: #2a1620;
+}
+
+/* ============================================================
+   Базовые стили
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+::selection {
+  background: var(--accent-soft);
+}
+button {
+  font-family: inherit;
+}
+a {
+  color: var(--accent);
+}
+
+/* Скроллбары */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--stroke-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
