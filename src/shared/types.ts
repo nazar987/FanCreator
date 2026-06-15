@@ -59,6 +59,12 @@ export interface Character {
   updatedAt: number
 }
 
+export interface CharacterTemplate {
+  id: string
+  name: string
+  fieldLabels: string[]
+}
+
 export type StickerShape = 'rect' | 'rounded' | 'circle' | 'note'
 
 export interface BoardSticker {
@@ -119,6 +125,7 @@ export interface Project {
   stories: Story[]
   characters: Character[]
   boards: Board[]
+  templates: CharacterTemplate[]
 }
 
 /** Лёгкое представление проекта для списка (без тяжёлого контента глав). */

@@ -9,7 +9,8 @@ import type {
   Chapter,
   Character,
   SearchResult,
-  Board
+  Board,
+  CharacterTemplate
 } from '@shared/types'
 import {
   listProjects,
@@ -58,7 +59,8 @@ export function registerIpc(): void {
       updatedAt: now(),
       stories: [],
       characters: [],
-      boards: []
+      boards: [],
+      templates: []
     }
     return writeProject(project)
   })
@@ -263,6 +265,31 @@ export function registerIpc(): void {
   ipcMain.handle('characters:delete', (_e, { projectId, characterId }) =>
     mutate(projectId, (p) => {
       p.characters = p.characters.filter((c) => c.id !== characterId)
+    })
+  )
+
+  // ---------- Character templates ----------
+  ipcMain.handle('templates:add', (_e, { projectId, name }) =>
+    mutate(projectId, (p) => {
+      const template: CharacterTemplate = {
+        id: uid(),
+        name,
+        fieldLabels: []
+      }
+      p.templates.push(template)
+    })
+  )
+
+  ipcMain.handle('templates:update', (_e, { projectId, templateId, patch }) =>
+    mutate(projectId, (p) => {
+      const template = p.templates.find((item) => item.id === templateId)
+      if (template) Object.assign(template, patch)
+    })
+  )
+
+  ipcMain.handle('templates:delete', (_e, { projectId, templateId }) =>
+    mutate(projectId, (p) => {
+      p.templates = p.templates.filter((item) => item.id !== templateId)
     })
   )
 

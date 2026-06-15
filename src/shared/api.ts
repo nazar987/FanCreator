@@ -4,6 +4,7 @@ import type {
   Story,
   Chapter,
   Character,
+  CharacterTemplate,
   SearchResult,
   ChapterStatus,
   ThemeName,
@@ -76,6 +77,15 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; characterId: string }): Promise<Project | null>
+  }
+  templates: {
+    add(input: { projectId: string; name: string }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      templateId: string
+      patch: Partial<Pick<CharacterTemplate, 'name' | 'fieldLabels'>>
+    }): Promise<Project | null>
+    delete(input: { projectId: string; templateId: string }): Promise<Project | null>
   }
   boards: {
     add(input: { projectId: string; title: string }): Promise<Project | null>
