@@ -167,7 +167,8 @@ function TagEditor(props: { tags: string[]; onChange: (tags: string[]) => void; 
 
 ---
 
-## T3 — Сохранение темы оформления по проекту (Easy)
+## ✅ T3 — Сохранение темы оформления по проекту (Easy) — СДЕЛАНО (commit f67e998)
+### (архив описания T3)
 **Зачем:** пожелание №12 — тема должна запоминаться.
 Сейчас `openProject` применяет `project.theme`, но смена темы нигде не сохраняется.
 
@@ -181,7 +182,8 @@ function TagEditor(props: { tags: string[]; onChange: (tags: string[]) => void; 
 
 ---
 
-## T4 — Обложка проекта на главном экране (Easy-Medium)
+## ✅ T4 — Обложка проекта на главном экране (Easy-Medium) — СДЕЛАНО (commit fd7c5f7)
+### (архив описания T4)
 **Зачем:** пожелание №19 (проекты тоже как книги).
 Сейчас обложки есть только у историй. Нужно повторить для проектов.
 
@@ -201,7 +203,9 @@ function TagEditor(props: { tags: string[]; onChange: (tags: string[]) => void; 
 
 ---
 
-## T5 — Drag & Drop переупорядочивание глав в дереве (Medium)
+## ✅ T5 — Drag & Drop переупорядочивание глав в дереве (Medium) — СДЕЛАНО (commit a34290e)
+> Все задачи T1–T5 выполнены и приняты. Дальнейшие фичи — из «зоны senior» (см. ниже).
+### (архив описания T5)
 **Зачем:** пожелания №7/№15 — управлять порядком глав.
 **IPC уже готов:** `window.api.chapters.reorder({ projectId, storyId, order: string[] })` →
 `Project` (`order` — массив id глав в новом порядке).
