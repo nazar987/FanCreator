@@ -535,13 +535,14 @@ export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 ---
 
 # ▶️ Senior-очередь — ФАЗА 4 (Claude)
-- **S-H — Авто-обновление** (`electron-updater` + GitHub Releases): проверка обновлений,
-  фоновая загрузка, уведомление «доступно обновление → перезапустить». Нужен канал релизов
-  (теги/Releases) и в идеале подпись кода. Делается на этапе релиза.
-- **S-I — Экспорт «рыбьей кости» на доску**: отрисовать таймлайн-схему в картинку (SVG→PNG),
-  сохранить через `assets:saveImage` и вставить как элемент доски `kind:'image'` (из T11),
-  чтобы привязывать к стикерам/связям.
-- **S-J — Миграция на SQLite** (`better-sqlite3`): таблицы (projects, stories, chapters,
+- **S-H — Авто-обновление** ✅ commit (electron-updater + publish github + UpdateBanner).
+  Реально заработает после первого релиза с тегом на GitHub Releases.
+- **S-I — Экспорт «рыбьей кости» на доску** ✅ commit (кнопка «На доску» в режиме рыбьей кости).
+- **S-J — Миграция на SQLite** ⏳ В ОЧЕРЕДИ. ВАЖНО: `better-sqlite3` — нативный модуль,
+  требует пересборки под Electron и проверки запуска на машине пользователя (здесь runtime
+  не проверить). Делать поэтапно: (1) добавить dep + подтвердить, что `npm run dev` стартует;
+  (2) схема + store + НЕразрушающая миграция из project.json (json оставить как бэкап);
+  (3) переключить IPC на sqlite, FTS5 по chapters.plainText. (`better-sqlite3`): таблицы (projects, stories, chapters,
   characters, character_fields, templates, boards, board_stickers, board_arrows, timelines,
   timeline_events, sticker_links); посохранение по сущностям вместо перезаписи всего проекта;
   FTS5 по `chapters.plainText` для быстрого поиска; одноразовая миграция из `project.json`.
