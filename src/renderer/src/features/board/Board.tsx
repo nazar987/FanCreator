@@ -395,7 +395,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const selected = arrows.find((a) => a.id === selectedArrow)
 
   return (
-    <div className="board">
+    <div className="board" data-tour="board">
       <div className="board-toolbar">
         <div>
           <div className="board-title">{board.title}</div>

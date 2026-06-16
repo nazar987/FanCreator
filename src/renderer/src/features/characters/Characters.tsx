@@ -268,7 +268,7 @@ export function Characters(): React.JSX.Element {
   }
 
   return (
-    <div className="characters">
+    <div className="characters" data-tour="characters">
       <div className="characters-inner">
         <div className="characters-head">
           <div>

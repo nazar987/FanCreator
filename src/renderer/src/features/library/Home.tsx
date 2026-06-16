@@ -1,11 +1,12 @@
 import React from 'react'
-import { Plus, Sparkles, Trash2, Pencil, FolderOpen } from 'lucide-react'
+import { Plus, Sparkles, Trash2, Pencil, FolderOpen, CircleHelp } from 'lucide-react'
 import { useStore } from '../../store/store'
 import { Button, Card, Hashtags } from '../../shared/ui/components'
 import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { ThemeSwitcher } from '../../app/ThemeSwitcher'
 import { CoverArt } from './CoverArt'
+import { startHelpTour } from '../help/HelpTour'
 import type { ProjectSummary } from '@shared/types'
 
 export function Home(): React.JSX.Element {
@@ -65,7 +66,7 @@ export function Home(): React.JSX.Element {
   ]
 
   return (
-    <div className="home">
+    <div className="home" data-tour="library">
       <div className="home-inner">
         <div className="home-top">
           <div>
@@ -79,6 +80,9 @@ export function Home(): React.JSX.Element {
           </div>
           <div className="row">
             <ThemeSwitcher />
+            <Button variant="soft" icon title="Помощь" onClick={startHelpTour}>
+              <CircleHelp size={17} />
+            </Button>
             <Button variant="primary" onClick={createProject}>
               <Plus size={17} /> Новый проект
             </Button>
