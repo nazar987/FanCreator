@@ -41,15 +41,18 @@ export function CoverArt({
       onDragLeave={() => setDrag(false)}
       onDrop={handleDrop}
     >
-      <div className="cover-disc" />
-      <div className="cover-sleeve">
-        {coverPath ? (
-          <img src={coverPath} alt={title} draggable={false} />
-        ) : (
-          <div className="cover-fallback">
-            <div className="cover-fallback-title">{title}</div>
-          </div>
-        )}
+      <div className="cover-book">
+        <div className="cover-pages" />
+        <div className="cover-page-flip" />
+        <div className="cover-sleeve">
+          {coverPath ? (
+            <img src={coverPath} alt={title} draggable={false} />
+          ) : (
+            <div className="cover-fallback">
+              <div className="cover-fallback-title">{title}</div>
+            </div>
+          )}
+        </div>
       </div>
       {onPick && (
         <button
