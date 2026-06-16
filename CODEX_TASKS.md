@@ -538,11 +538,11 @@ export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 - **S-H — Авто-обновление** ✅ commit (electron-updater + publish github + UpdateBanner).
   Реально заработает после первого релиза с тегом на GitHub Releases.
 - **S-I — Экспорт «рыбьей кости» на доску** ✅ commit (кнопка «На доску» в режиме рыбьей кости).
-- **S-J — Миграция на SQLite** ⏳ В ОЧЕРЕДИ. ВАЖНО: `better-sqlite3` — нативный модуль,
-  требует пересборки под Electron и проверки запуска на машине пользователя (здесь runtime
-  не проверить). Делать поэтапно: (1) добавить dep + подтвердить, что `npm run dev` стартует;
-  (2) схема + store + НЕразрушающая миграция из project.json (json оставить как бэкап);
-  (3) переключить IPC на sqlite, FTS5 по chapters.plainText. (`better-sqlite3`): таблицы (projects, stories, chapters,
+- **S-J — Миграция на SQLite** ✅ commit. `db.ts` (документ в строке + FTS5), `store.ts` —
+  фасад с фолбэком на JSON при сбое `initDb`, НЕразрушающая миграция из `project.json`
+  (json остаётся бэкапом), поиск глав через FTS5. Native `better-sqlite3` (N-API prebuilt).
+  ⚠️ Нужна визуальная проверка в собранном/dev окне: что БД поднялась (нет варнинга
+  «SQLite недоступен» в терминале) и старые проекты на месте. (`better-sqlite3`): таблицы (projects, stories, chapters,
   characters, character_fields, templates, boards, board_stickers, board_arrows, timelines,
   timeline_events, sticker_links); посохранение по сущностям вместо перезаписи всего проекта;
   FTS5 по `chapters.plainText` для быстрого поиска; одноразовая миграция из `project.json`.
