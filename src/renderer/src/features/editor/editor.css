@@ -265,3 +265,25 @@
 .editor-status-sep {
   color: var(--text-faint);
 }
+
+/* ---------- Внутренние ссылки / подстраницы (п.14) ---------- */
+.fc-internal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.05em 0.4em;
+  margin: 0 1px;
+  border-radius: 6px;
+  background: rgba(80, 100, 230, 0.12);
+  border: 1px solid rgba(80, 100, 230, 0.25);
+  color: #3a45b0;
+  font-family: var(--font-ui);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.fc-internal-link:hover {
+  background: rgba(80, 100, 230, 0.2);
+}

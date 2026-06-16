@@ -15,6 +15,7 @@ import Typography from '@tiptap/extension-typography'
 import { PaginationPlus } from 'tiptap-pagination-plus'
 import type { Extensions } from '@tiptap/core'
 import { FontSize } from './FontSize'
+import { InternalLink } from './InternalLink'
 
 /** Размеры страницы A4 при 96 dpi. */
 export const A4 = {
@@ -24,8 +25,11 @@ export const A4 = {
   gap: 28
 }
 
-export function buildExtensions(): Extensions {
+export function buildExtensions(opts: {
+  onOpenInternalLink: (chapterId: string) => void
+}): Extensions {
   return [
+    InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
     // StarterKit v3 уже включает Link и Underline — отдельно их не добавляем,
     // чтобы избежать дублирования марок.
     StarterKit.configure({

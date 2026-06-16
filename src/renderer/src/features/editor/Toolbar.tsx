@@ -26,7 +26,9 @@ import {
   Columns3,
   Trash2,
   FileDown,
-  FileUp
+  FileUp,
+  FileSymlink,
+  FilePlus2
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 
@@ -34,6 +36,8 @@ interface ToolbarProps {
   editor: Editor
   onToggleFind: () => void
   onInsertImage: () => void
+  onInsertInternalLink: (e: React.MouseEvent) => void
+  onCreateSubpage: () => void
   onImportDocx: () => void
   onExportDocx: () => void
 }
@@ -56,7 +60,7 @@ function Btn({
   disabled
 }: {
   active?: boolean
-  onClick: () => void
+  onClick: (e: React.MouseEvent) => void
   title: string
   children: React.ReactNode
   disabled?: boolean
@@ -80,6 +84,8 @@ export function Toolbar({
   editor,
   onToggleFind,
   onInsertImage,
+  onInsertInternalLink,
+  onCreateSubpage,
   onImportDocx,
   onExportDocx
 }: ToolbarProps): React.JSX.Element {
@@ -263,6 +269,12 @@ export function Toolbar({
       </Btn>
       <Btn title="Вставить изображение" onClick={onInsertImage}>
         <ImageIcon size={17} />
+      </Btn>
+      <Btn title="Ссылка на главу (подстраница)" onClick={onInsertInternalLink}>
+        <FileSymlink size={17} />
+      </Btn>
+      <Btn title="Создать подстраницу" onClick={onCreateSubpage}>
+        <FilePlus2 size={17} />
       </Btn>
 
       {/* Таблицы — п.6 */}

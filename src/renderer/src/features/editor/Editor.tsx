@@ -4,6 +4,8 @@ import { useStore } from '../../store/store'
 import { buildExtensions } from './extensions'
 import { Toolbar } from './Toolbar'
 import { FindReplace } from './FindReplace'
+import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { promptText } from '../../shared/ui/dialogs'
 import type { Chapter, Story } from '@shared/types'
 
 interface EditorProps {
@@ -22,9 +24,29 @@ function initialContent(chapter: Chapter | undefined): Content {
 }
 
 export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
-  const { current, reloadCurrent } = useStore()
+  const { current, reloadCurrent, openTab, applyProject } = useStore()
   const story = current?.stories.find((s) => s.id === storyId)
   const chapter = story?.chapters.find((c) => c.id === chapterId)
+
+  // ссылки-подстраницы (п.14): открытие главы по id из контента редактора
+  const currentRef = React.useRef(current)
+  currentRef.current = current
+  const openChapterById = React.useRef((id: string) => {
+    const proj = currentRef.current
+    for (const s of proj?.stories ?? []) {
+      const c = s.chapters.find((c) => c.id === id)
+      if (c) {
+        openTab({
+          id: `chapter:${c.id}`,
+          kind: 'chapter',
+          title: c.title || 'Без названия',
+          storyId: s.id,
+          chapterId: c.id
+        })
+        return
+      }
+    }
+  }).current
 
   const [showFind, setShowFind] = React.useState(false)
   const [pageCount, setPageCount] = React.useState(1)
@@ -46,7 +68,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   )
 
   const editor = useEditor({
-    extensions: buildExtensions(),
+    extensions: buildExtensions({ onOpenInternalLink: openChapterById }),
     content: initialContent(chapter),
     autofocus: 'end',
     editorProps: {
@@ -177,6 +199,40 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     })
   }
 
+  // п.14 — вставить ссылку на существующую главу (меню) или создать подстраницу
+  const insertInternalLink = (e: React.MouseEvent): void => {
+    if (!editor || !current) return
+    const items = current.stories.flatMap((s) =>
+      s.chapters
+        .filter((c) => c.id !== chapterId)
+        .map((c) => ({
+          label: `${s.title} — ${c.title || 'Без названия'}`,
+          onClick: () =>
+            editor
+              .chain()
+              .focus()
+              .setInternalLink({ chapterId: c.id, label: c.title || 'Без названия' })
+              .run()
+        }))
+    )
+    if (!items.length) {
+      openContextMenu(e, [{ type: 'label', label: 'Нет других глав для ссылки' }])
+      return
+    }
+    openContextMenu(e, [{ type: 'label', label: 'Ссылка на главу' }, ...items])
+  }
+
+  const createSubpage = async (): Promise<void> => {
+    if (!editor || !projectId) return
+    const title = await promptText({ title: 'Новая подстраница', placeholder: 'Название' })
+    if (!title) return
+    const p = await window.api.chapters.add({ projectId, storyId, title })
+    applyProject(p)
+    const s = p?.stories.find((x) => x.id === storyId)
+    const created = s?.chapters[s.chapters.length - 1]
+    if (created) editor.chain().focus().setInternalLink({ chapterId: created.id, label: title }).run()
+  }
+
   if (!editor) return <div className="editor-loading">Загрузка редактора…</div>
 
   return (
@@ -186,6 +242,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           editor={editor}
           onToggleFind={() => setShowFind((v) => !v)}
           onInsertImage={() => fileInputRef.current?.click()}
+          onInsertInternalLink={insertInternalLink}
+          onCreateSubpage={createSubpage}
           onImportDocx={importDocx}
           onExportDocx={exportDocx}
         />
