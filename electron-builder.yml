@@ -24,3 +24,4 @@ publish:
   provider: github
   owner: nazar987
   repo: FanCreator
+  releaseType: release
