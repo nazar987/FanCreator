@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, List, GitFork } from 'lucide-react'
 import type { TimelineEvent } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
@@ -12,6 +12,107 @@ interface TimelineEventCardProps {
     patch: Partial<Pick<TimelineEvent, 'title' | 'note' | 'order'>>
   ) => Promise<void>
   onDelete: (event: TimelineEvent) => Promise<void>
+}
+
+/** Раскладка «рыбья кость» (Исикава): хребет + наклонные кости-события (S-C). */
+function Fishbone({
+  title,
+  events,
+  onEdit,
+  onDelete
+}: {
+  title: string
+  events: TimelineEvent[]
+  onEdit: (event: TimelineEvent) => void
+  onDelete: (event: TimelineEvent) => Promise<void>
+}): React.JSX.Element {
+  const STEP = 200
+  const START_X = 80
+  const SPINE_Y = 200
+  const REACH = 130
+  const BONE_DX = 34
+
+  const width = START_X + events.length * STEP + 200
+  const height = 400
+  const endX = START_X + events.length * STEP + 40
+
+  return (
+    <div className="fishbone-scroll">
+      <div className="fishbone" style={{ width, height }}>
+        <svg className="fishbone-svg" width={width} height={height}>
+          <defs>
+            <marker id="fishbone-head" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 Z" fill="var(--accent)" />
+            </marker>
+          </defs>
+          {/* хребет */}
+          <line
+            x1={START_X - 30}
+            y1={SPINE_Y}
+            x2={endX}
+            y2={SPINE_Y}
+            stroke="var(--accent)"
+            strokeWidth="4"
+            markerEnd="url(#fishbone-head)"
+          />
+          {/* кости */}
+          {events.map((event, i) => {
+            const footX = START_X + (i + 1) * STEP - STEP / 2
+            const up = i % 2 === 0
+            const nodeX = footX - BONE_DX
+            const nodeY = up ? SPINE_Y - REACH : SPINE_Y + REACH
+            return (
+              <line
+                key={event.id}
+                x1={footX}
+                y1={SPINE_Y}
+                x2={nodeX}
+                y2={nodeY}
+                stroke="var(--stroke-strong)"
+                strokeWidth="2"
+              />
+            )
+          })}
+        </svg>
+
+        {/* «голова рыбы» — цель/итог */}
+        <div className="fishbone-head-label" style={{ left: endX + 6, top: SPINE_Y }}>
+          {title}
+        </div>
+
+        {/* узлы-события */}
+        {events.map((event, i) => {
+          const footX = START_X + (i + 1) * STEP - STEP / 2
+          const up = i % 2 === 0
+          const nodeX = footX - BONE_DX
+          const nodeY = up ? SPINE_Y - REACH : SPINE_Y + REACH
+          return (
+            <div
+              key={event.id}
+              className="fishbone-node"
+              style={{ left: nodeX, top: nodeY }}
+              title={event.note || undefined}
+              onClick={() => onEdit(event)}
+            >
+              <div className="fishbone-node-order">{i + 1}</div>
+              <div className="fishbone-node-title truncate">{event.title}</div>
+              {event.note && <div className="fishbone-node-note">{event.note}</div>}
+              <button
+                className="fishbone-node-del"
+                title="Удалить событие"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void onDelete(event)
+                }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function TimelineEventCard({
@@ -77,6 +178,7 @@ function TimelineEventCard({
 export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Element {
   const { current, applyProject } = useStore()
   const timeline = current?.timelines.find((item) => item.id === timelineId)
+  const [view, setView] = React.useState<'list' | 'fishbone'>('list')
 
   if (!current || !timeline) {
     return <div className="timeline-missing dim">Таймлайн не найден</div>
@@ -129,6 +231,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
     )
   }
 
+  // компонент «рыбья кость» определён ниже
   return (
     <div className="timeline">
       <div className="timeline-inner">
@@ -141,16 +244,34 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
               {events.length} событий в таймлайне
             </div>
           </div>
-          <Button variant="primary" onClick={addEvent}>
-            <Plus size={17} /> Добавить событие
-          </Button>
+          <div className="row">
+            <div className="timeline-view-switch">
+              <button
+                className={view === 'list' ? 'is-active' : ''}
+                onClick={() => setView('list')}
+                title="Список"
+              >
+                <List size={15} /> Список
+              </button>
+              <button
+                className={view === 'fishbone' ? 'is-active' : ''}
+                onClick={() => setView('fishbone')}
+                title="Рыбья кость"
+              >
+                <GitFork size={15} /> Рыбья кость
+              </button>
+            </div>
+            <Button variant="primary" onClick={addEvent}>
+              <Plus size={17} /> Добавить событие
+            </Button>
+          </div>
         </div>
 
         {events.length === 0 ? (
           <div className="timeline-empty dim">
             Событий пока нет. Добавьте первую точку сюжета, чтобы собрать линию времени.
           </div>
-        ) : (
+        ) : view === 'list' ? (
           <div className="timeline-list">
             {events.map((event) => (
               <TimelineEventCard
@@ -161,6 +282,16 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
               />
             ))}
           </div>
+        ) : (
+          <Fishbone
+            title={timeline.title}
+            events={events}
+            onEdit={async (event) => {
+              const title = await promptText({ title: 'Событие', initial: event.title })
+              if (title && title !== event.title) await updateEvent(event.id, { title })
+            }}
+            onDelete={deleteEvent}
+          />
         )}
       </div>
     </div>
