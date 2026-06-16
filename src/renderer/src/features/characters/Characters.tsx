@@ -289,34 +289,63 @@ export function Characters(): React.JSX.Element {
 
         {current.characters.length > 0 && (
           <div className="characters-selectbar">
-            <label className="character-select">
+            <label className="character-select" title="Выбрать всех персонажей">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+              <span>Выбрать всех</span>
             </label>
-            <span className="dim">
-              {selected.size > 0 ? `Выбрано: ${selected.size}` : 'Выбрать всех'}
-            </span>
-            {selected.size > 0 && current.templates.length > 0 && (
-              <div className="row" style={{ gap: 8, marginLeft: 'auto' }}>
-                <select
-                  className="input"
-                  style={{ width: 'auto' }}
-                  value={groupTemplateId}
-                  onChange={(e) => setGroupTemplateId(e.target.value)}
-                >
-                  {current.templates.map((t) => (
+            <div className="characters-select-state">
+              <strong>{selected.size > 0 ? `Выбрано: ${selected.size}` : 'Ничего не выбрано'}</strong>
+              <span className="dim">
+                Выбор нужен, чтобы применить шаблон анкеты сразу к нескольким персонажам.
+              </span>
+              {current.templates.length === 0 && (
+                <span className="dim">
+                  Создайте шаблон во вкладке «Шаблоны», чтобы применять к группе.
+                </span>
+              )}
+            </div>
+            <div className="characters-select-actions">
+              <select
+                className="input"
+                value={groupTemplateId}
+                onChange={(e) => setGroupTemplateId(e.target.value)}
+                disabled={current.templates.length === 0}
+                title={current.templates.length === 0 ? 'Сначала создайте шаблон анкеты' : 'Шаблон для выбранных персонажей'}
+              >
+                {current.templates.length === 0 ? (
+                  <option value="">Нет шаблонов</option>
+                ) : (
+                  current.templates.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
-                  ))}
-                </select>
-                <Button variant="primary" size="sm" onClick={applyToSelected}>
-                  <ClipboardList size={15} /> Применить к выбранным
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
-                  Снять
-                </Button>
-              </div>
-            )}
+                  ))
+                )}
+              </select>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={applyToSelected}
+                disabled={selected.size === 0 || current.templates.length === 0}
+                title={
+                  current.templates.length === 0
+                    ? 'Сначала создайте шаблон анкеты'
+                    : selected.size === 0
+                      ? 'Выберите хотя бы одного персонажа'
+                      : 'Применить шаблон к выбранным персонажам'
+                }
+              >
+                <ClipboardList size={15} /> Применить к выбранным
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelected(new Set())}
+                disabled={selected.size === 0}
+              >
+                Снять
+              </Button>
+            </div>
           </div>
         )}
 

@@ -15,7 +15,7 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 18px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid var(--stroke);
   border-radius: var(--r-md);
   background: var(--panel-2);
@@ -23,6 +23,10 @@
 .character-select {
   display: inline-flex;
   align-items: center;
+  gap: 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
 }
 .character-select input {
@@ -30,6 +34,25 @@
   height: 17px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+.characters-select-state {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.characters-select-state strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.characters-select-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.characters-select-actions .input {
+  width: auto;
 }
 .character-card--selected {
   border-color: var(--accent);
