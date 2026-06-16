@@ -503,7 +503,7 @@ export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 
 Плюс стратегически: **миграция хранилища на SQLite** → **S-J (senior, отдельный рефакторинг)**.
 
-## T13 — Удаление досок и таймлайнов (Easy) ⭐ начать с этого
+## ✅ T13 — Удаление досок и таймлайнов (Easy) — СДЕЛАНО (commit a2c9097)
 **Зачем:** фидбэк №1. IPC уже готов: `window.api.boards.delete({projectId,boardId})` и
 `window.api.timelines.delete({projectId,timelineId})` (оба → `Project`). Нужен только UI.
 **Файл:** `src/renderer/src/app/TabBar.tsx` (там уже есть списки «Доски проекта» и
@@ -514,7 +514,7 @@ export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 **Приёмка:** доску и таймлайн можно удалить из меню «+», открытая вкладка закрывается,
 изменения переживают перезапуск; `npm run typecheck` чисто.
 
-## T14 — Кнопка «Помощь»: ненавязчивый гид (Medium, целиком Codex)
+## ✅ T14 — Кнопка «Помощь»: ненавязчивый гид (Medium) — СДЕЛАНО (senior-полировка: якорь editor-toolbar)
 **Зачем:** фидбэк №5. Кнопка «?» запускает пошаговый тур: подсвечивает элемент интерфейса и
 показывает подсказку, что это и зачем.
 **Файлы:** новый `src/renderer/src/features/help/HelpTour.tsx` + `help.css`; импорт css в
