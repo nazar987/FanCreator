@@ -20,4 +20,7 @@ mac:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-publish: null
+publish:
+  provider: github
+  owner: nazar987
+  repo: FanCreator

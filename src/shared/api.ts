@@ -139,6 +139,22 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
     exportChapter(input: { title: string; html: string }): Promise<boolean>
   }
+  updates: {
+    /** Проверить обновления вручную (в проде). */
+    check(): void
+    /** Перезапустить и установить загруженное обновление. */
+    install(): void
+    /** Подписка на статус обновления. Возвращает функцию отписки. */
+    onStatus(cb: (status: UpdateStatus) => void): () => void
+  }
+}
+
+/** Статус авто-обновления приложения (S-H). */
+export interface UpdateStatus {
+  state: 'checking' | 'available' | 'downloading' | 'ready' | 'none' | 'error'
+  version?: string
+  percent?: number
+  message?: string
 }
 
 export type { ChapterStatus, ThemeName }

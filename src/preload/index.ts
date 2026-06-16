@@ -63,6 +63,15 @@ const api: FanCreatorApi = {
   docx: {
     importToChapter: (input) => invoke('docx:importToChapter', input),
     exportChapter: (input) => invoke('docx:exportChapter', input)
+  },
+  updates: {
+    check: () => ipcRenderer.send('updates:check'),
+    install: () => ipcRenderer.send('updates:install'),
+    onStatus: (cb) => {
+      const handler = (_e: unknown, status: Parameters<typeof cb>[0]): void => cb(status)
+      ipcRenderer.on('updates:status', handler as never)
+      return () => ipcRenderer.removeListener('updates:status', handler as never)
+    }
   }
 }
 

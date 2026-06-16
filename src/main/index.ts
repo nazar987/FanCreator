@@ -4,6 +4,7 @@ import { pathToFileURL } from 'url'
 import Store from 'electron-store'
 import { initStore, resolveAssetUrl } from './store/store'
 import { registerIpc } from './ipc'
+import { setupUpdater } from './updater'
 
 const isDev = !app.isPackaged
 
@@ -79,7 +80,8 @@ app.whenReady().then(async () => {
 
   await initStore()
   registerIpc()
-  createMainWindow()
+  const win = createMainWindow()
+  setupUpdater(win)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
