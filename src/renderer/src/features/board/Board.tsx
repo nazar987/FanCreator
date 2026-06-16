@@ -66,7 +66,7 @@ type Interaction =
   | { mode: 'arrow'; fromId: string }
 
 export function Board({ boardId }: { boardId: string }): React.JSX.Element {
-  const { current, applyProject } = useStore()
+  const { current, applyProject, openTab } = useStore()
   const board = current?.boards.find((item) => item.id === boardId)
   const [stickers, setStickers] = React.useState<BoardSticker[]>(() => board?.stickers ?? [])
   const [arrows, setArrows] = React.useState<BoardArrow[]>(() => board?.arrows ?? [])
@@ -74,6 +74,8 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const [zoom, setZoom] = React.useState(1)
   const [selectedArrow, setSelectedArrow] = React.useState<string | null>(null)
   const [tempArrow, setTempArrow] = React.useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
+  // S-F: всплывающая вики-карточка привязанной сущности
+  const [preview, setPreview] = React.useState<{ link: BoardStickerLink; x: number; y: number } | null>(null)
 
   const canvasRef = React.useRef<HTMLDivElement>(null)
   const imageInputRef = React.useRef<HTMLInputElement>(null)
@@ -276,6 +278,68 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
       return current.stories.find((item) => item.id === link.id)?.title ?? null
     }
     return current.timelines.find((item) => item.id === link.id)?.title ?? null
+  }
+
+  // S-F: открыть привязанную сущность во вкладке
+  const openLink = (link: BoardStickerLink): void => {
+    if (link.kind === 'character') {
+      openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+    } else if (link.kind === 'story') {
+      const story = current.stories.find((s) => s.id === link.id)
+      const chapter = story?.chapters[0]
+      if (story && chapter) {
+        openTab({
+          id: `chapter:${chapter.id}`,
+          kind: 'chapter',
+          title: chapter.title || 'Без названия',
+          storyId: story.id,
+          chapterId: chapter.id
+        })
+      } else {
+        openTab({ id: 'shelf', kind: 'shelf', title: 'Библиотека' })
+      }
+    } else {
+      const timeline = current.timelines.find((t) => t.id === link.id)
+      if (timeline)
+        openTab({ id: `timeline:${timeline.id}`, kind: 'timeline', title: timeline.title, timelineId: timeline.id })
+    }
+  }
+
+  // S-F: содержимое всплывающей карточки (вики-стиль)
+  const renderPreview = (link: BoardStickerLink): React.JSX.Element | null => {
+    if (link.kind === 'character') {
+      const c = current.characters.find((x) => x.id === link.id)
+      if (!c) return null
+      return (
+        <>
+          <div className="board-preview-kind">Персонаж</div>
+          <div className="board-preview-title">{c.name}</div>
+          {c.role && <div className="board-preview-sub">{c.role}</div>}
+          {c.fields[0]?.value && <div className="board-preview-note">{c.fields[0].value}</div>}
+        </>
+      )
+    }
+    if (link.kind === 'story') {
+      const s = current.stories.find((x) => x.id === link.id)
+      if (!s) return null
+      return (
+        <>
+          <div className="board-preview-kind">История</div>
+          <div className="board-preview-title">{s.title}</div>
+          <div className="board-preview-sub">{s.chapters.length} глав</div>
+          {s.synopsis && <div className="board-preview-note">{s.synopsis}</div>}
+        </>
+      )
+    }
+    const t = current.timelines.find((x) => x.id === link.id)
+    if (!t) return null
+    return (
+      <>
+        <div className="board-preview-kind">Таймлайн</div>
+        <div className="board-preview-title">{t.title}</div>
+        <div className="board-preview-sub">{t.events.length} событий</div>
+      </>
+    )
   }
 
   const openStickerLinkMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
@@ -543,13 +607,18 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   />
                 )}
                 {sticker.link && getLinkTitle(sticker.link) && (
-                  // SENIOR: открыть привязанную сущность + превью-карточка.
                   <button
                     className="board-link-chip"
                     type="button"
                     data-link-kind={sticker.link.kind}
                     data-link-id={sticker.link.id}
-                    title="Привязанная сущность проекта"
+                    title="Открыть привязанную сущность"
+                    onClick={() => sticker.link && openLink(sticker.link)}
+                    onMouseEnter={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect()
+                      if (sticker.link) setPreview({ link: sticker.link, x: r.left, y: r.bottom + 8 })
+                    }}
+                    onMouseLeave={() => setPreview(null)}
                   >
                     {sticker.link.kind === 'character' ? (
                       <UserRound size={12} />
@@ -596,6 +665,12 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
           })}
         </div>
       </div>
+
+      {preview && (
+        <div className="board-link-preview" style={{ left: preview.x, top: preview.y }}>
+          {renderPreview(preview.link)}
+        </div>
+      )}
     </div>
   )
 }

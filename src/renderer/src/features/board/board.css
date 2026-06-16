@@ -326,3 +326,49 @@
   place-items: center;
   height: 100%;
 }
+
+/* S-F: вики-карточка привязанной сущности */
+.board-link-chip {
+  cursor: pointer;
+}
+.board-link-chip:hover {
+  border-color: var(--accent);
+}
+.board-link-preview {
+  position: fixed;
+  z-index: 1200;
+  width: 260px;
+  padding: 12px 14px;
+  background: var(--panel-solid);
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  animation: pop 0.12s var(--ease);
+}
+.board-preview-kind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+}
+.board-preview-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.board-preview-sub {
+  font-size: 12.5px;
+  color: var(--accent);
+  margin-top: 2px;
+}
+.board-preview-note {
+  margin-top: 7px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
