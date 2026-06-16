@@ -210,7 +210,7 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <>
-    <aside className="sidebar">
+    <aside className="sidebar" data-tour="tree">
       <div className="sidebar-head">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <button className="btn btn--ghost btn--sm" onClick={closeProject}>

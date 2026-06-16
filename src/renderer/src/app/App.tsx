@@ -10,6 +10,7 @@ import { Editor } from '../features/editor/Editor'
 import { Characters } from '../features/characters/Characters'
 import { Board } from '../features/board/Board'
 import { Timeline } from '../features/timeline/Timeline'
+import { HelpTour } from '../features/help/HelpTour'
 
 export function App(): React.JSX.Element {
   const { current, tabs, activeTabId } = useStore()
@@ -48,6 +49,7 @@ export function App(): React.JSX.Element {
 
       <DialogHost />
       <ContextMenuHost />
+      <HelpTour />
     </div>
   )
 }

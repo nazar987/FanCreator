@@ -14,7 +14,7 @@ const THEMES: { name: ThemeName; color: string; label: string }[] = [
 export function ThemeSwitcher(): React.JSX.Element {
   const { theme, setTheme } = useStore()
   return (
-    <div className="theme-dots" title="Тема оформления">
+    <div className="theme-dots" data-tour="theme" title="Тема оформления">
       {THEMES.map((t) => (
         <button
           key={t.name}

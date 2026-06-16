@@ -60,7 +60,7 @@ export function Shelf(): React.JSX.Element {
   }
 
   return (
-    <div className="shelf">
+    <div className="shelf" data-tour="library">
       <div className="shelf-inner">
         <div className="shelf-head">
           <div>

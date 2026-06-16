@@ -1,0 +1,53 @@
+.help-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  pointer-events: auto;
+}
+
+.help-tour-target {
+  position: fixed;
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62), 0 0 0 6px var(--accent-soft);
+  pointer-events: none;
+  transition: all var(--t-fast);
+}
+
+.help-tour-card {
+  position: fixed;
+  width: min(320px, calc(100vw - 36px));
+  padding: 18px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel-solid);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+
+.help-tour-count {
+  margin-bottom: 8px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.help-tour-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.help-tour-card p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.help-tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}

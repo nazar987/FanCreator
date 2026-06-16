@@ -8,12 +8,14 @@ import {
   Users,
   LayoutDashboard,
   Clock3,
-  Trash2
+  Trash2,
+  CircleHelp
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import { confirmDialog, promptText } from '../shared/ui/dialogs'
+import { startHelpTour } from '../features/help/HelpTour'
 
 export function TabBar(): React.JSX.Element {
   const { tabs, activeTabId, setActiveTab, closeTab, openTab, current, applyProject } = useStore()
@@ -203,6 +205,7 @@ export function TabBar(): React.JSX.Element {
 
       <button
         className="tab-close"
+        data-tour="add-tab"
         style={{ width: 26, height: 26 }}
         onClick={addMenu}
         title="Добавить вкладку"
@@ -211,6 +214,14 @@ export function TabBar(): React.JSX.Element {
       </button>
 
       <div className="spacer" />
+      <button
+        className="tab-close"
+        style={{ width: 26, height: 26 }}
+        onClick={startHelpTour}
+        title="Помощь"
+      >
+        <CircleHelp size={16} />
+      </button>
       <ThemeSwitcher />
     </div>
   )

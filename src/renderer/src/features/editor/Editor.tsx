@@ -375,7 +375,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   return (
     <div className="editor">
-      <div className="editor-toolbar-wrap">
+      <div className="editor-toolbar-wrap" data-tour="editor-toolbar">
         <Toolbar
           editor={editor}
           onToggleFind={() => setShowFind((v) => !v)}

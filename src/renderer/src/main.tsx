@@ -8,6 +8,7 @@ import './features/library/library.css'
 import './features/characters/characters.css'
 import './features/board/board.css'
 import './features/timeline/timeline.css'
+import './features/help/help.css'
 import { StoreProvider } from './store/store'
 import { App } from './app/App'
 
