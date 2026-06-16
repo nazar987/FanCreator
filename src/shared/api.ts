@@ -78,6 +78,12 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; characterId: string }): Promise<Project | null>
+    /** Применить шаблон к группе. characterIds=null → ко всем привязанным к шаблону. */
+    applyTemplate(input: {
+      projectId: string
+      templateId: string
+      characterIds: string[] | null
+    }): Promise<Project | null>
   }
   templates: {
     add(input: { projectId: string; name: string }): Promise<Project | null>

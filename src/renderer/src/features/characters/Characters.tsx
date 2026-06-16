@@ -10,6 +10,8 @@ interface CharacterCardProps {
   character: Character
   projectId: string
   templates: CharacterTemplate[]
+  selected: boolean
+  onToggleSelect: () => void
   onProjectChange: (project: Project | null) => void
 }
 
@@ -17,6 +19,8 @@ function CharacterCard({
   character,
   projectId,
   templates,
+  selected,
+  onToggleSelect,
   onProjectChange
 }: CharacterCardProps): React.JSX.Element {
   const [name, setName] = React.useState(character.name)
@@ -101,10 +105,15 @@ function CharacterCard({
   }
 
   return (
-    <Card className="character-card">
+    <Card className={`character-card ${selected ? 'character-card--selected' : ''}`}>
       <div className="character-card-head">
-        <div className="character-avatar">
-          <UserRound size={24} />
+        <div className="row" style={{ gap: 10 }}>
+          <label className="character-select" title="Выбрать персонажа">
+            <input type="checkbox" checked={selected} onChange={onToggleSelect} />
+          </label>
+          <div className="character-avatar">
+            <UserRound size={24} />
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -210,10 +219,52 @@ function CharacterCard({
 export function Characters(): React.JSX.Element {
   const { current, applyProject } = useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
+  const [selected, setSelected] = React.useState<Set<string>>(new Set())
+  const [groupTemplateId, setGroupTemplateId] = React.useState('')
+
+  // держим groupTemplateId валидным и сбрасываем выбор от удалённых персонажей
+  React.useEffect(() => {
+    const templates = current?.templates ?? []
+    setGroupTemplateId((cur) =>
+      templates.some((t) => t.id === cur) ? cur : templates[0]?.id ?? ''
+    )
+  }, [current?.templates])
+
+  React.useEffect(() => {
+    const ids = new Set((current?.characters ?? []).map((c) => c.id))
+    setSelected((prev) => {
+      const next = new Set([...prev].filter((id) => ids.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [current?.characters])
+
   if (!current) return <div />
 
   const addCharacter = async (): Promise<void> => {
     applyProject(await window.api.characters.add({ projectId: current.id, name: 'Новый персонаж' }))
+  }
+
+  const toggleSelect = (id: string): void =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+
+  const allSelected = current.characters.length > 0 && selected.size === current.characters.length
+  const toggleAll = (): void =>
+    setSelected(allSelected ? new Set() : new Set(current.characters.map((c) => c.id)))
+
+  const applyToSelected = async (): Promise<void> => {
+    if (!groupTemplateId || selected.size === 0) return
+    applyProject(
+      await window.api.characters.applyTemplate({
+        projectId: current.id,
+        templateId: groupTemplateId,
+        characterIds: [...selected]
+      })
+    )
+    setSelected(new Set())
   }
 
   return (
@@ -236,6 +287,39 @@ export function Characters(): React.JSX.Element {
           </div>
         </div>
 
+        {current.characters.length > 0 && (
+          <div className="characters-selectbar">
+            <label className="character-select">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+            </label>
+            <span className="dim">
+              {selected.size > 0 ? `Выбрано: ${selected.size}` : 'Выбрать всех'}
+            </span>
+            {selected.size > 0 && current.templates.length > 0 && (
+              <div className="row" style={{ gap: 8, marginLeft: 'auto' }}>
+                <select
+                  className="input"
+                  style={{ width: 'auto' }}
+                  value={groupTemplateId}
+                  onChange={(e) => setGroupTemplateId(e.target.value)}
+                >
+                  {current.templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <Button variant="primary" size="sm" onClick={applyToSelected}>
+                  <ClipboardList size={15} /> Применить к выбранным
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                  Снять
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {current.characters.length === 0 ? (
           <div className="dim characters-empty">
             В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.
@@ -248,6 +332,8 @@ export function Characters(): React.JSX.Element {
                 character={character}
                 projectId={current.id}
                 templates={current.templates}
+                selected={selected.has(character.id)}
+                onToggleSelect={() => toggleSelect(character.id)}
                 onProjectChange={applyProject}
               />
             ))}
@@ -258,6 +344,7 @@ export function Characters(): React.JSX.Element {
         <TemplateManager
           projectId={current.id}
           templates={current.templates}
+          characters={current.characters}
           onProjectChange={applyProject}
           onClose={() => setTemplatesOpen(false)}
         />
@@ -269,6 +356,7 @@ export function Characters(): React.JSX.Element {
 interface TemplateManagerProps {
   projectId: string
   templates: CharacterTemplate[]
+  characters: Character[]
   onProjectChange: (project: Project | null) => void
   onClose: () => void
 }
@@ -276,9 +364,20 @@ interface TemplateManagerProps {
 function TemplateManager({
   projectId,
   templates,
+  characters,
   onProjectChange,
   onClose
 }: TemplateManagerProps): React.JSX.Element {
+  const propagate = async (template: CharacterTemplate): Promise<void> => {
+    onProjectChange(
+      await window.api.characters.applyTemplate({
+        projectId,
+        templateId: template.id,
+        characterIds: null
+      })
+    )
+  }
+
   const addTemplate = async (): Promise<void> => {
     const name = await promptText({ title: 'Новый шаблон', placeholder: 'Название шаблона' })
     if (!name) return
@@ -386,9 +485,25 @@ function TemplateManager({
                   ))}
                 </div>
 
-                <Button variant="soft" size="sm" onClick={() => addFieldLabel(template)}>
-                  <Plus size={15} /> Добавить поле
-                </Button>
+                <div className="character-template-actions">
+                  <Button variant="soft" size="sm" onClick={() => addFieldLabel(template)}>
+                    <Plus size={15} /> Добавить поле
+                  </Button>
+                  {(() => {
+                    const bound = characters.filter((c) => c.templateId === template.id).length
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={bound === 0}
+                        title="Добавить недостающие поля шаблона всем привязанным персонажам"
+                        onClick={() => propagate(template)}
+                      >
+                        <ClipboardList size={15} /> Обновить привязанных ({bound})
+                      </Button>
+                    )
+                  })()}
+                </div>
               </Card>
             ))}
           </div>

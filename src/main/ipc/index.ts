@@ -271,6 +271,29 @@ export function registerIpc(): void {
     })
   )
 
+  // Применить шаблон к группе персонажей: добавляет недостающие поля (по label,
+  // без учёта регистра), не трогая уже заполненные; проставляет templateId.
+  // characterIds = null → применить ко всем персонажам, уже привязанным к этому
+  // шаблону (распространение правок шаблона).
+  ipcMain.handle('characters:applyTemplate', (_e, { projectId, templateId, characterIds }) =>
+    mutate(projectId, (p) => {
+      const template = p.templates.find((t) => t.id === templateId)
+      if (!template) return
+      const targets: Character[] = characterIds
+        ? p.characters.filter((c) => characterIds.includes(c.id))
+        : p.characters.filter((c) => c.templateId === templateId)
+      for (const ch of targets) {
+        const existing = new Set(ch.fields.map((f) => f.label.trim().toLowerCase()))
+        const added = template.fieldLabels
+          .filter((label) => label.trim() && !existing.has(label.trim().toLowerCase()))
+          .map((label) => ({ id: uid(), label, value: '' }))
+        ch.fields = [...ch.fields, ...added]
+        ch.templateId = templateId
+        ch.updatedAt = now()
+      }
+    })
+  )
+
   // ---------- Character templates ----------
   ipcMain.handle('templates:add', (_e, { projectId, name }) =>
     mutate(projectId, (p) => {
