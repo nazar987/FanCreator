@@ -1,9 +1,11 @@
 import React from 'react'
-import { Plus, Trash2, List, GitFork } from 'lucide-react'
-import type { TimelineEvent } from '@shared/types'
+import { Plus, Trash2, List, GitFork, ImageDown } from 'lucide-react'
+import type { BoardSticker, TimelineEvent } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
 import { confirmDialog, promptText } from '../../shared/ui/dialogs'
+import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { buildFishboneImage } from './fishboneImage'
 
 interface TimelineEventCardProps {
   event: TimelineEvent
@@ -176,7 +178,7 @@ function TimelineEventCard({
 }
 
 export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Element {
-  const { current, applyProject } = useStore()
+  const { current, applyProject, openTab } = useStore()
   const timeline = current?.timelines.find((item) => item.id === timelineId)
   const [view, setView] = React.useState<'list' | 'fishbone'>('list')
 
@@ -231,6 +233,61 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
     )
   }
 
+  // S-I: экспорт схемы «рыбья кость» картинкой на доску
+  const exportToBoard = async (e: React.MouseEvent): Promise<void> => {
+    if (!current || events.length === 0) return
+    const { dataUrl, width, height } = await buildFishboneImage(timeline.title, events)
+    const imagePath = await window.api.assets.saveImage({ projectId: current.id, dataUrl })
+
+    const w = Math.min(560, width)
+    const h = Math.round((w * height) / width)
+    const makeSticker = (): BoardSticker => ({
+      id: crypto.randomUUID(),
+      x: 120,
+      y: 120,
+      w,
+      h,
+      color: '#ffffff',
+      shape: 'rect',
+      kind: 'image',
+      imagePath,
+      text: `${timeline.title} — схема`
+    })
+
+    const addTo = async (boardId: string, stickers: BoardSticker[], arrows: typeof current.boards[number]['arrows']): Promise<void> => {
+      const p = await window.api.boards.save({
+        projectId: current.id,
+        boardId,
+        stickers: [...stickers, makeSticker()],
+        arrows
+      })
+      applyProject(p)
+      const b = p?.boards.find((x) => x.id === boardId)
+      if (b) openTab({ id: `board:${b.id}`, kind: 'board', title: b.title, boardId: b.id })
+    }
+
+    const createAndAdd = async (): Promise<void> => {
+      const p = await window.api.boards.add({ projectId: current.id, title: `${timeline.title} — доска` })
+      applyProject(p)
+      const b = p?.boards[p.boards.length - 1]
+      if (b) await addTo(b.id, b.stickers, b.arrows)
+    }
+
+    if (current.boards.length === 0) {
+      await createAndAdd()
+      return
+    }
+    openContextMenu(e, [
+      { type: 'label', label: 'Добавить схему на доску' },
+      ...current.boards.map((b) => ({
+        label: b.title,
+        onClick: () => addTo(b.id, b.stickers, b.arrows)
+      })),
+      { type: 'sep' },
+      { label: '＋ Новая доска', onClick: createAndAdd }
+    ])
+  }
+
   // компонент «рыбья кость» определён ниже
   return (
     <div className="timeline">
@@ -261,6 +318,11 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
                 <GitFork size={15} /> Рыбья кость
               </button>
             </div>
+            {view === 'fishbone' && events.length > 0 && (
+              <Button variant="soft" onClick={exportToBoard} title="Сохранить схему как элемент доски">
+                <ImageDown size={16} /> На доску
+              </Button>
+            )}
             <Button variant="primary" onClick={addEvent}>
               <Plus size={17} /> Добавить событие
             </Button>
