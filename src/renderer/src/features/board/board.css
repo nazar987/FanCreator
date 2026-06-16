@@ -221,6 +221,31 @@
   padding: 0;
 }
 
+.board-link-chip {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  margin-bottom: 6px;
+  padding: 3px 7px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: 700 11px/1.2 var(--font-ui);
+  cursor: default;
+}
+
+.board-link-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-sticker textarea {
   position: relative;
   z-index: 1;

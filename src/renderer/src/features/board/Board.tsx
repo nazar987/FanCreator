@@ -1,8 +1,26 @@
 import React from 'react'
-import { Plus, Trash2, Maximize, Link2, Type, Square, Image as ImageIcon } from 'lucide-react'
-import type { BoardArrow, BoardSticker, StickerKind, StickerShape } from '@shared/types'
+import {
+  Plus,
+  Trash2,
+  Maximize,
+  Link2,
+  Type,
+  Square,
+  Image as ImageIcon,
+  UserRound,
+  BookOpen,
+  Clock3
+} from 'lucide-react'
+import type {
+  BoardArrow,
+  BoardSticker,
+  BoardStickerLink,
+  StickerKind,
+  StickerShape
+} from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
+import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { promptText } from '../../shared/ui/dialogs'
 
 const SHAPE_LABEL: Record<StickerShape, string> = {
@@ -194,7 +212,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
 
   const startStickerDrag = (e: React.PointerEvent, s: BoardSticker): void => {
     const el = e.target as HTMLElement
-    if (el.closest('.board-sticker-tools, textarea, .board-resize-handle, .board-arrow-handle')) return
+    if (el.closest('.board-sticker-tools, textarea, .board-resize-handle, .board-arrow-handle, .board-link-chip')) return
     e.stopPropagation()
     interaction.current = {
       mode: 'sticker',
@@ -247,6 +265,58 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const deleteSticker = (id: string): void => {
     setStickers((items) => items.filter((s) => s.id !== id))
     setArrows((items) => items.filter((a) => a.fromId !== id && a.toId !== id))
+  }
+
+  const getLinkTitle = (link?: BoardStickerLink | null): string | null => {
+    if (!link) return null
+    if (link.kind === 'character') {
+      return current.characters.find((item) => item.id === link.id)?.name ?? null
+    }
+    if (link.kind === 'story') {
+      return current.stories.find((item) => item.id === link.id)?.title ?? null
+    }
+    return current.timelines.find((item) => item.id === link.id)?.title ?? null
+  }
+
+  const openStickerLinkMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
+    const items: MenuItem[] = []
+    if (current.characters.length > 0) {
+      items.push({ type: 'label', label: 'Персонажи' })
+      items.push(
+        ...current.characters.map((character) => ({
+          label: character.name,
+          icon: <UserRound size={15} />,
+          onClick: () => updateSticker(sticker.id, { link: { kind: 'character', id: character.id } })
+        }))
+      )
+    }
+    if (current.stories.length > 0) {
+      items.push({ type: 'label', label: 'Истории' })
+      items.push(
+        ...current.stories.map((story) => ({
+          label: story.title,
+          icon: <BookOpen size={15} />,
+          onClick: () => updateSticker(sticker.id, { link: { kind: 'story', id: story.id } })
+        }))
+      )
+    }
+    if (current.timelines.length > 0) {
+      items.push({ type: 'label', label: 'Таймлайны' })
+      items.push(
+        ...current.timelines.map((timeline) => ({
+          label: timeline.title,
+          icon: <Clock3 size={15} />,
+          onClick: () => updateSticker(sticker.id, { link: { kind: 'timeline', id: timeline.id } })
+        }))
+      )
+    }
+    if (sticker.link) {
+      items.push({ type: 'sep' }, { label: 'Убрать привязку', onClick: () => updateSticker(sticker.id, { link: null }) })
+    }
+    if (items.length === 0) {
+      items.push({ type: 'label', label: 'В проекте пока нет сущностей' })
+    }
+    openContextMenu(e, items)
   }
 
   const updateArrow = (id: string, patch: Partial<BoardArrow>): void =>
@@ -457,6 +527,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                       ))}
                     </select>
                   )}
+                  <button title="Привязать к сущности проекта" onClick={(e) => openStickerLinkMenu(e, sticker)}>
+                    <Link2 size={14} />
+                  </button>
                   <button title="Удалить элемент" onClick={() => deleteSticker(sticker.id)}>
                     <Trash2 size={14} />
                   </button>
@@ -468,6 +541,25 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                     alt={sticker.text || 'Картинка на доске'}
                     draggable={false}
                   />
+                )}
+                {sticker.link && getLinkTitle(sticker.link) && (
+                  // SENIOR: открыть привязанную сущность + превью-карточка.
+                  <button
+                    className="board-link-chip"
+                    type="button"
+                    data-link-kind={sticker.link.kind}
+                    data-link-id={sticker.link.id}
+                    title="Привязанная сущность проекта"
+                  >
+                    {sticker.link.kind === 'character' ? (
+                      <UserRound size={12} />
+                    ) : sticker.link.kind === 'story' ? (
+                      <BookOpen size={12} />
+                    ) : (
+                      <Clock3 size={12} />
+                    )}
+                    <span>{getLinkTitle(sticker.link)}</span>
+                  </button>
                 )}
                 <textarea
                   value={sticker.text}
