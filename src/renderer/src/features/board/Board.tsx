@@ -1,6 +1,6 @@
 import React from 'react'
-import { Plus, Trash2, Maximize, Link2 } from 'lucide-react'
-import type { BoardArrow, BoardSticker, StickerShape } from '@shared/types'
+import { Plus, Trash2, Maximize, Link2, Type, Square, Image as ImageIcon } from 'lucide-react'
+import type { BoardArrow, BoardSticker, StickerKind, StickerShape } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
 import { promptText } from '../../shared/ui/dialogs'
@@ -12,9 +12,19 @@ const SHAPE_LABEL: Record<StickerShape, string> = {
   note: 'Заметка'
 }
 
+const SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle']
+
 const ARROW_COLORS = ['#f06b9b', '#5fd39a', '#5bb8e6', '#f0a35b', '#b98cf5', '#e8e8ef']
 const ZOOM_MIN = 0.25
 const ZOOM_MAX = 2.5
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
 
 type Interaction =
   | { mode: 'pan'; startX: number; startY: number; origX: number; origY: number }
@@ -48,6 +58,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const [tempArrow, setTempArrow] = React.useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
 
   const canvasRef = React.useRef<HTMLDivElement>(null)
+  const imageInputRef = React.useRef<HTMLInputElement>(null)
   const interaction = React.useRef<Interaction | null>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const readyToSave = React.useRef(false)
@@ -196,24 +207,38 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     }
   }
 
-  const addSticker = (): void => {
+  const addSticker = (kind: StickerKind = 'note', imagePath?: string): void => {
     const rect = canvasRef.current?.getBoundingClientRect()
     const center = rect
       ? toWorld(rect.left + rect.width / 2, rect.top + rect.height / 2)
       : { x: 200, y: 200 }
+    const size =
+      kind === 'text'
+        ? { w: 260, h: 90 }
+        : kind === 'image'
+          ? { w: 280, h: 190 }
+          : { w: 220, h: 150 }
     setStickers((items) => [
       ...items,
       {
         id: crypto.randomUUID(),
-        x: center.x - 110,
-        y: center.y - 75,
-        w: 220,
-        h: 150,
-        color: '#ffd166',
-        shape: 'note',
-        text: ''
+        kind,
+        x: center.x - size.w / 2,
+        y: center.y - size.h / 2,
+        w: size.w,
+        h: size.h,
+        color: kind === 'shape' ? '#5bb8e6' : '#ffd166',
+        shape: kind === 'note' ? 'note' : 'rounded',
+        text: kind === 'text' ? 'Текст' : kind === 'shape' ? 'Фигура' : '',
+        imagePath
       }
     ])
+  }
+
+  const addImageSticker = async (file: File): Promise<void> => {
+    const dataUrl = await readFileAsDataUrl(file)
+    const imagePath = await window.api.assets.saveImage({ projectId: current.id, dataUrl })
+    addSticker('image', imagePath)
   }
 
   const updateSticker = (id: string, patch: Partial<BoardSticker>): void =>
@@ -256,9 +281,31 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
           >
             <Maximize size={15} /> {Math.round(zoom * 100)}%
           </button>
-          <Button variant="primary" onClick={addSticker}>
-            <Plus size={16} /> Добавить стикер
-          </Button>
+          <div className="board-add-group">
+            <Button variant="primary" onClick={() => addSticker('note')}>
+              <Plus size={16} /> Заметка
+            </Button>
+            <Button variant="soft" onClick={() => addSticker('text')}>
+              <Type size={15} /> Текст
+            </Button>
+            <Button variant="soft" onClick={() => addSticker('shape')}>
+              <Square size={15} /> Фигура
+            </Button>
+            <Button variant="soft" onClick={() => imageInputRef.current?.click()}>
+              <ImageIcon size={15} /> Картинка
+            </Button>
+            <input
+              ref={imageInputRef}
+              className="board-image-input"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0]
+                event.currentTarget.value = ''
+                if (file) addImageSticker(file)
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -372,75 +419,89 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
             )}
           </svg>
 
-          {stickers.map((sticker) => (
-            <div
-              className={`board-sticker board-sticker--${sticker.shape}`}
-              key={sticker.id}
-              style={{
-                left: sticker.x,
-                top: sticker.y,
-                width: sticker.w,
-                height: sticker.h,
-                backgroundColor: sticker.color
-              }}
-              onPointerDown={(e) => startStickerDrag(e, sticker)}
-            >
-              <div className="board-sticker-tools">
-                <input
-                  type="color"
-                  value={sticker.color}
-                  title="Цвет стикера"
-                  onChange={(e) => updateSticker(sticker.id, { color: e.target.value })}
-                />
-                <select
-                  value={sticker.shape}
-                  title="Форма стикера"
-                  onChange={(e) => updateSticker(sticker.id, { shape: e.target.value as StickerShape })}
-                >
-                  {(Object.keys(SHAPE_LABEL) as StickerShape[]).map((shape) => (
-                    <option key={shape} value={shape}>
-                      {SHAPE_LABEL[shape]}
-                    </option>
-                  ))}
-                </select>
-                <button title="Удалить стикер" onClick={() => deleteSticker(sticker.id)}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-              <textarea
-                value={sticker.text}
-                placeholder="Текст стикера"
-                onChange={(e) => updateSticker(sticker.id, { text: e.target.value })}
-              />
-              {/* ручка-коннектор для рисования стрелки */}
-              <span
-                className="board-arrow-handle"
-                title="Потяните к другому стикеру, чтобы создать связь"
-                onPointerDown={(e) => {
-                  e.stopPropagation()
-                  interaction.current = { mode: 'arrow', fromId: sticker.id }
+          {stickers.map((sticker) => {
+            const kind = sticker.kind ?? 'note'
+            const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : (Object.keys(SHAPE_LABEL) as StickerShape[])
+            return (
+              <div
+                className={`board-sticker board-sticker--${sticker.shape} board-sticker-kind--${kind}`}
+                key={sticker.id}
+                style={{
+                  left: sticker.x,
+                  top: sticker.y,
+                  width: sticker.w,
+                  height: sticker.h,
+                  backgroundColor: kind === 'text' ? undefined : sticker.color
                 }}
+                onPointerDown={(e) => startStickerDrag(e, sticker)}
               >
-                <Link2 size={12} />
-              </span>
-              {/* ручка изменения размера */}
-              <span
-                className="board-resize-handle"
-                title="Изменить размер"
-                onPointerDown={(e) => {
-                  e.stopPropagation()
-                  interaction.current = {
-                    mode: 'resize',
-                    id: sticker.id,
-                    startX: e.clientX,
-                    startY: e.clientY,
-                    origW: sticker.w,
-                    origH: sticker.h
-                  }
-                }}
-              />
-            </div>
-          ))}
+                <div className="board-sticker-tools">
+                  {kind !== 'text' && kind !== 'image' && (
+                    <input
+                      type="color"
+                      value={sticker.color}
+                      title="Цвет элемента"
+                      onChange={(e) => updateSticker(sticker.id, { color: e.target.value })}
+                    />
+                  )}
+                  {kind !== 'text' && kind !== 'image' && (
+                    <select
+                      value={sticker.shape}
+                      title="Форма элемента"
+                      onChange={(e) => updateSticker(sticker.id, { shape: e.target.value as StickerShape })}
+                    >
+                      {shapeOptions.map((shape) => (
+                        <option key={shape} value={shape}>
+                          {SHAPE_LABEL[shape]}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button title="Удалить элемент" onClick={() => deleteSticker(sticker.id)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                {kind === 'image' && sticker.imagePath && (
+                  <img
+                    className="board-sticker-image"
+                    src={sticker.imagePath}
+                    alt={sticker.text || 'Картинка на доске'}
+                    draggable={false}
+                  />
+                )}
+                <textarea
+                  value={sticker.text}
+                  placeholder={kind === 'image' ? 'Подпись' : kind === 'text' ? 'Текст' : 'Текст элемента'}
+                  onChange={(e) => updateSticker(sticker.id, { text: e.target.value })}
+                />
+                <span
+                  className="board-arrow-handle"
+                  title="Потяните к другому элементу, чтобы создать связь"
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    interaction.current = { mode: 'arrow', fromId: sticker.id }
+                  }}
+                >
+                  <Link2 size={12} />
+                </span>
+                <span
+                  className="board-resize-handle"
+                  title="Изменить размер"
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    interaction.current = {
+                      mode: 'resize',
+                      id: sticker.id,
+                      startX: e.clientX,
+                      startY: e.clientY,
+                      origW: sticker.w,
+                      origH: sticker.h
+                    }
+                  }}
+                />
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

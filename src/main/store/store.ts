@@ -63,6 +63,7 @@ export async function readProject(projectId: string): Promise<Project | null> {
     project.boards ??= []
     project.templates ??= []
     project.timelines ??= []
+    normalizeBoardStickers(project)
     return project
   } catch {
     return null
@@ -147,7 +148,7 @@ async function migrateFromLegacy(): Promise<void> {
 }
 
 function normalizeLegacyProject(legacy: any): Project {
-  return {
+  const project: Project = {
     id: legacy.id,
     title: legacy.title ?? 'Без названия',
     coverPath: legacy.coverPath ?? null,
@@ -197,10 +198,20 @@ function normalizeLegacyProject(legacy: any): Project {
     templates: legacy.templates ?? [],
     timelines: legacy.timelines ?? []
   }
+  normalizeBoardStickers(project)
+  return project
 }
 
 export function countWords(text: string): number {
   const t = (text || '').trim()
   if (!t) return 0
   return t.split(/\s+/).length
+}
+
+function normalizeBoardStickers(project: Project): void {
+  for (const board of project.boards) {
+    for (const sticker of board.stickers) {
+      sticker.kind ??= 'note'
+    }
+  }
 }

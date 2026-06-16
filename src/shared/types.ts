@@ -79,9 +79,11 @@ export interface CharacterTemplate {
 }
 
 export type StickerShape = 'rect' | 'rounded' | 'circle' | 'note'
+export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 
 export interface BoardSticker {
   id: string
+  kind: StickerKind
   x: number
   y: number
   w: number
@@ -89,6 +91,7 @@ export interface BoardSticker {
   color: string
   shape: StickerShape
   text: string
+  imagePath?: string
 }
 
 export interface BoardArrow {
