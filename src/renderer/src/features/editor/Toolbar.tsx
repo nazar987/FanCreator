@@ -28,7 +28,8 @@ import {
   FileDown,
   FileUp,
   FileSymlink,
-  FilePlus2
+  FilePlus2,
+  Globe
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 
@@ -38,6 +39,7 @@ interface ToolbarProps {
   onInsertImage: () => void
   onInsertInternalLink: (e: React.MouseEvent) => void
   onCreateSubpage: () => void
+  onInsertWikiLink: (e: React.MouseEvent) => void
   onImportDocx: () => void
   onExportDocx: () => void
 }
@@ -86,6 +88,7 @@ export function Toolbar({
   onInsertImage,
   onInsertInternalLink,
   onCreateSubpage,
+  onInsertWikiLink,
   onImportDocx,
   onExportDocx
 }: ToolbarProps): React.JSX.Element {
@@ -275,6 +278,9 @@ export function Toolbar({
       </Btn>
       <Btn title="Создать подстраницу" onClick={onCreateSubpage}>
         <FilePlus2 size={17} />
+      </Btn>
+      <Btn title="Вики-ссылка на сущность (выделите текст)" onClick={onInsertWikiLink}>
+        <Globe size={17} />
       </Btn>
 
       {/* Таблицы — п.6 */}

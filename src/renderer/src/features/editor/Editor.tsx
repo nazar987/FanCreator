@@ -48,10 +48,37 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     }
   }).current
 
+  // S-G: открыть любую сущность проекта по вики-ссылке
+  const openEntity = React.useRef((kind: string, refId: string) => {
+    const proj = currentRef.current
+    if (!proj) return
+    if (kind === 'character') {
+      openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+    } else if (kind === 'timeline') {
+      const t = proj.timelines.find((x) => x.id === refId)
+      if (t) openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id })
+    } else if (kind === 'story') {
+      const s = proj.stories.find((x) => x.id === refId)
+      const c = s?.chapters[0]
+      if (s && c)
+        openTab({ id: `chapter:${c.id}`, kind: 'chapter', title: c.title, storyId: s.id, chapterId: c.id })
+      else openTab({ id: 'shelf', kind: 'shelf', title: 'Библиотека' })
+    } else {
+      openChapterById(refId)
+    }
+  }).current
+
   const [showFind, setShowFind] = React.useState(false)
   const [pageCount, setPageCount] = React.useState(1)
   const [wordCount, setWordCount] = React.useState(chapter?.wordCount ?? 0)
   const [saved, setSaved] = React.useState(true)
+  // S-G: всплывающая вики-карточка при наведении на ссылку
+  const [wikiPreview, setWikiPreview] = React.useState<{
+    kind: string
+    refId: string
+    x: number
+    y: number
+  } | null>(null)
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -73,6 +100,32 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     autofocus: 'end',
     editorProps: {
       attributes: { class: 'fc-prose', spellcheck: 'true' },
+      // S-G: наведение/клик по вики-ссылке (делегирование событий)
+      handleDOMEvents: {
+        mouseover: (_view, event) => {
+          const el = (event.target as HTMLElement).closest('.fc-wikilink') as HTMLElement | null
+          if (!el) return false
+          const r = el.getBoundingClientRect()
+          setWikiPreview({
+            kind: el.dataset.kind ?? 'chapter',
+            refId: el.dataset.refId ?? '',
+            x: r.left,
+            y: r.bottom + 6
+          })
+          return false
+        },
+        mouseout: (_view, event) => {
+          if ((event.target as HTMLElement).closest('.fc-wikilink')) setWikiPreview(null)
+          return false
+        },
+        click: (_view, event) => {
+          const el = (event.target as HTMLElement).closest('.fc-wikilink') as HTMLElement | null
+          if (!el) return false
+          event.preventDefault()
+          openEntity(el.dataset.kind ?? 'chapter', el.dataset.refId ?? '')
+          return true
+        }
+      },
       // вставка картинки перетаскиванием (п.13) — без всплывающих окон
       handleDrop: (view, event, _slice, moved) => {
         const file = (event as DragEvent).dataTransfer?.files?.[0]
@@ -233,6 +286,91 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     if (created) editor.chain().focus().setInternalLink({ chapterId: created.id, label: title }).run()
   }
 
+  // S-G — превратить выделенный текст в вики-ссылку на сущность (фидбэк №5)
+  const insertWikiLink = (e: React.MouseEvent): void => {
+    if (!editor || !current) return
+    const { empty } = editor.state.selection
+    if (empty) {
+      openContextMenu(e, [{ type: 'label', label: 'Сначала выделите текст для ссылки' }])
+      return
+    }
+    const set = (kind: 'character' | 'story' | 'timeline' | 'chapter', refId: string): void => {
+      editor.chain().focus().setWikiLink({ kind, refId }).run()
+    }
+    const items = [
+      ...(current.characters.length
+        ? ([{ type: 'label', label: 'Персонажи' }] as never[]).concat(
+            current.characters.map((c) => ({ label: c.name, onClick: () => set('character', c.id) })) as never[]
+          )
+        : []),
+      ...current.stories.flatMap((s) => [
+        { label: `История: ${s.title}`, onClick: () => set('story', s.id) },
+        ...s.chapters.map((c) => ({
+          label: `   ${s.title} — ${c.title || 'Без названия'}`,
+          onClick: () => set('chapter', c.id)
+        }))
+      ]),
+      ...(current.timelines.length
+        ? ([{ type: 'label', label: 'Таймлайны' }] as never[]).concat(
+            current.timelines.map((t) => ({ label: t.title, onClick: () => set('timeline', t.id) })) as never[]
+          )
+        : [])
+    ]
+    openContextMenu(e, [{ type: 'label', label: 'Вики-ссылка на…' }, ...items])
+  }
+
+  const renderWikiPreview = (kind: string, refId: string): React.JSX.Element | null => {
+    if (!current) return null
+    if (kind === 'character') {
+      const c = current.characters.find((x) => x.id === refId)
+      if (!c) return null
+      return (
+        <>
+          <div className="fc-wiki-kind">Персонаж</div>
+          <div className="fc-wiki-title">{c.name}</div>
+          {c.role && <div className="fc-wiki-sub">{c.role}</div>}
+          {c.fields[0]?.value && <div className="fc-wiki-note">{c.fields[0].value}</div>}
+        </>
+      )
+    }
+    if (kind === 'timeline') {
+      const t = current.timelines.find((x) => x.id === refId)
+      if (!t) return null
+      return (
+        <>
+          <div className="fc-wiki-kind">Таймлайн</div>
+          <div className="fc-wiki-title">{t.title}</div>
+          <div className="fc-wiki-sub">{t.events.length} событий</div>
+        </>
+      )
+    }
+    if (kind === 'story') {
+      const s = current.stories.find((x) => x.id === refId)
+      if (!s) return null
+      return (
+        <>
+          <div className="fc-wiki-kind">История</div>
+          <div className="fc-wiki-title">{s.title}</div>
+          <div className="fc-wiki-sub">{s.chapters.length} глав</div>
+          {s.synopsis && <div className="fc-wiki-note">{s.synopsis}</div>}
+        </>
+      )
+    }
+    for (const s of current.stories) {
+      const c = s.chapters.find((x) => x.id === refId)
+      if (c)
+        return (
+          <>
+            <div className="fc-wiki-kind">Глава</div>
+            <div className="fc-wiki-title">{c.title || 'Без названия'}</div>
+            <div className="fc-wiki-sub">{s.title}</div>
+            {c.plainText && <div className="fc-wiki-note">{c.plainText.slice(0, 200)}</div>}
+          </>
+        )
+    }
+    return null
+  }
+
   if (!editor) return <div className="editor-loading">Загрузка редактора…</div>
 
   return (
@@ -244,6 +382,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onInsertImage={() => fileInputRef.current?.click()}
           onInsertInternalLink={insertInternalLink}
           onCreateSubpage={createSubpage}
+          onInsertWikiLink={insertWikiLink}
           onImportDocx={importDocx}
           onExportDocx={exportDocx}
         />
@@ -269,6 +408,12 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         style={{ display: 'none' }}
         onChange={onPickImageFile}
       />
+
+      {wikiPreview && (
+        <div className="fc-wiki-preview" style={{ left: wikiPreview.x, top: wikiPreview.y }}>
+          {renderWikiPreview(wikiPreview.kind, wikiPreview.refId)}
+        </div>
+      )}
     </div>
   )
 }
