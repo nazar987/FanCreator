@@ -60,7 +60,12 @@ export function ContextMenuHost(): React.JSX.Element | null {
   const x = Math.min(state.x, window.innerWidth - W - 8)
   const y = Math.min(state.y, window.innerHeight - 8 - state.items.length * 36)
 
-  const renderItem = (it: MenuItem, i: number, baseY: number): React.JSX.Element => {
+  const renderItem = (
+    it: MenuItem,
+    i: number,
+    baseY: number,
+    insideSubmenu = false
+  ): React.JSX.Element => {
     if (it.type === 'sep') return <div key={i} className="ctx-sep" />
     if (it.type === 'label')
       return (
@@ -75,7 +80,7 @@ export function ContextMenuHost(): React.JSX.Element | null {
         onMouseEnter={(e) => {
           if (it.submenu)
             setSubmenu({ items: it.submenu, y: (e.currentTarget as HTMLElement).offsetTop + baseY })
-          else setSubmenu(null)
+          else if (!insideSubmenu) setSubmenu(null)
         }}
         onClick={() => {
           if (it.submenu) return
@@ -102,7 +107,7 @@ export function ContextMenuHost(): React.JSX.Element | null {
           style={{ left: x + W - 6, top: submenu.y }}
           onMouseLeave={() => setSubmenu(null)}
         >
-          {submenu.items.map((it, i) => renderItem(it, i, submenu.y))}
+          {submenu.items.map((it, i) => renderItem(it, i, submenu.y, true))}
         </div>
       )}
     </>
