@@ -22,6 +22,7 @@ import {
   saveAsset,
   assetUrl,
   countWords,
+  searchChapters,
   now,
   uid
 } from '../store/store'
@@ -439,24 +440,6 @@ export function registerIpc(): void {
             title: s.title,
             snippet: s.synopsis
           })
-        for (const c of s.chapters) {
-          const hay = `${c.title}\n${c.plainText}`.toLowerCase()
-          const idx = hay.indexOf(q)
-          if (idx >= 0) {
-            const around = c.plainText.slice(
-              Math.max(0, idx - 40),
-              idx + q.length + 40
-            )
-            results.push({
-              type: 'chapter',
-              projectId: p.id,
-              storyId: s.id,
-              chapterId: c.id,
-              title: `${s.title} — ${c.title}`,
-              snippet: around
-            })
-          }
-        }
       }
       for (const ch of p.characters) {
         const blob = `${ch.name} ${ch.role} ${ch.fields.map((f) => f.value).join(' ')}`.toLowerCase()
@@ -470,6 +453,8 @@ export function registerIpc(): void {
           })
       }
     }
+    // главы — через FTS (SQLite) либо линейный поиск (JSON-фолбэк)
+    results.push(...(await searchChapters(query, projectId)))
     return results.slice(0, 100)
   })
 

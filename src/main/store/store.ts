@@ -3,7 +3,19 @@ import { promises as fs } from 'fs'
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
-import type { Project, ProjectSummary } from '@shared/types'
+import type { Project, ProjectSummary, SearchResult } from '@shared/types'
+import {
+  initDb,
+  dbProjectCount,
+  dbListProjects,
+  dbReadProject,
+  dbWriteProject,
+  dbDeleteProject,
+  dbSearchChapters
+} from './db'
+
+/** Активный бэкенд хранилища. SQLite по умолчанию, JSON — фолбэк при сбое инициализации БД. */
+let backend: 'sqlite' | 'json' = 'json'
 
 /** Корень данных приложения на диске пользователя. */
 const ROOT = path.join(app.getPath('userData'), 'FanCreator')
@@ -28,16 +40,97 @@ async function ensureDir(dir: string): Promise<void> {
 
 export async function initStore(): Promise<void> {
   await ensureDir(PROJECTS_DIR)
+  try {
+    initDb()
+    backend = 'sqlite'
+    // одноразовый импорт существующих project.json в БД (json остаётся бэкапом на диске)
+    if (dbProjectCount() === 0) {
+      const ids = await fs.readdir(PROJECTS_DIR).catch(() => [])
+      for (const id of ids) {
+        const p = await jsonReadProject(id)
+        if (p) dbWriteProject(normalizeProject(p))
+      }
+    }
+  } catch (e) {
+    backend = 'json'
+    console.warn('[store] SQLite недоступен — использую JSON-файлы. Причина:', e)
+  }
   await migrateFromLegacy()
+}
+
+/** Приводит проект к актуальной схеме (поля, появившиеся в новых версиях). */
+function normalizeProject(project: Project): Project {
+  project.boards ??= []
+  project.templates ??= []
+  project.timelines ??= []
+  normalizeBoardStickers(project)
+  return project
 }
 
 /** Список всех проектов в виде лёгких сводок (без контента глав). */
 export async function listProjects(): Promise<ProjectSummary[]> {
+  return backend === 'sqlite' ? dbListProjects() : jsonListProjects()
+}
+
+export async function readProject(projectId: string): Promise<Project | null> {
+  const p = backend === 'sqlite' ? dbReadProject(projectId) : await jsonReadProject(projectId)
+  return p ? normalizeProject(p) : null
+}
+
+export async function writeProject(project: Project): Promise<Project> {
+  project.updatedAt = now()
+  if (backend === 'sqlite') {
+    dbWriteProject(project)
+    return project
+  }
+  return jsonWriteProject(project)
+}
+
+/** Полнотекстовый поиск по главам (FTS5 в SQLite, линейный скан в JSON-режиме). */
+export async function searchChapters(query: string, projectId?: string): Promise<SearchResult[]> {
+  if (backend === 'sqlite') {
+    return dbSearchChapters(query, projectId).map((h) => ({
+      type: 'chapter',
+      projectId: h.projectId,
+      storyId: h.storyId,
+      chapterId: h.chapterId,
+      title: `${h.storyTitle} — ${h.chapterTitle || 'Без названия'}`,
+      snippet: h.snippet
+    }))
+  }
+  // JSON-фолбэк: линейный поиск
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  const summaries = await jsonListProjects()
+  const ids = projectId ? [projectId] : summaries.map((s) => s.id)
+  const out: SearchResult[] = []
+  for (const id of ids) {
+    const p = await jsonReadProject(id)
+    if (!p) continue
+    for (const s of p.stories)
+      for (const c of s.chapters) {
+        const idx = `${c.title}\n${c.plainText}`.toLowerCase().indexOf(q)
+        if (idx >= 0)
+          out.push({
+            type: 'chapter',
+            projectId: p.id,
+            storyId: s.id,
+            chapterId: c.id,
+            title: `${s.title} — ${c.title || 'Без названия'}`,
+            snippet: c.plainText.slice(Math.max(0, idx - 40), idx + q.length + 40)
+          })
+      }
+  }
+  return out
+}
+
+// ---- JSON-бэкенд (фолбэк) ----
+async function jsonListProjects(): Promise<ProjectSummary[]> {
   await ensureDir(PROJECTS_DIR)
   const ids = await fs.readdir(PROJECTS_DIR).catch(() => [])
   const summaries: ProjectSummary[] = []
   for (const id of ids) {
-    const p = await readProject(id)
+    const p = await jsonReadProject(id)
     if (!p) continue
     const chapterCount = p.stories.reduce((n, s) => n + s.chapters.length, 0)
     summaries.push({
@@ -55,32 +148,26 @@ export async function listProjects(): Promise<ProjectSummary[]> {
   return summaries
 }
 
-export async function readProject(projectId: string): Promise<Project | null> {
-  const file = projectFile(projectId)
+async function jsonReadProject(projectId: string): Promise<Project | null> {
   try {
-    const raw = await fs.readFile(file, 'utf8')
-    const project = JSON.parse(raw) as Project
-    project.boards ??= []
-    project.templates ??= []
-    project.timelines ??= []
-    normalizeBoardStickers(project)
-    return project
+    const raw = await fs.readFile(projectFile(projectId), 'utf8')
+    return JSON.parse(raw) as Project
   } catch {
     return null
   }
 }
 
-export async function writeProject(project: Project): Promise<Project> {
-  project.updatedAt = now()
+async function jsonWriteProject(project: Project): Promise<Project> {
   await ensureDir(projectDir(project.id))
   await fs.writeFile(projectFile(project.id), JSON.stringify(project, null, 2), 'utf8')
   return project
 }
 
 export async function deleteProject(projectId: string): Promise<boolean> {
+  if (backend === 'sqlite') dbDeleteProject(projectId)
+  // удаляем папку проекта на диске (assets + возможный бэкап project.json)
   const dir = projectDir(projectId)
-  if (!existsSync(dir)) return false
-  await fs.rm(dir, { recursive: true, force: true })
+  if (existsSync(dir)) await fs.rm(dir, { recursive: true, force: true })
   return true
 }
 
