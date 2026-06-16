@@ -22,7 +22,7 @@ export const A4 = {
   width: 794,
   height: 1123,
   margin: 80,
-  gap: 28
+  gap: 44
 }
 
 export function buildExtensions(opts: {
@@ -56,9 +56,10 @@ export function buildExtensions(opts: {
       pageHeight: A4.height,
       pageWidth: A4.width,
       pageGap: A4.gap,
-      pageGapBorderSize: 0,
-      pageGapBorderColor: 'transparent',
-      pageBreakBackground: 'transparent',
+      // непрозрачный зазор цвета «стола» + тонкая кромка листа → видимый разрыв страниц (как в Word)
+      pageGapBorderSize: 1,
+      pageGapBorderColor: 'var(--paper-edge)',
+      pageBreakBackground: 'var(--editor-desk)',
       marginTop: A4.margin,
       marginBottom: A4.margin,
       marginLeft: A4.margin,

@@ -108,11 +108,14 @@
 
 /* ---------- «Стол» и листы ---------- */
 .editor-scroll {
+  /* «стол» под листами: непрозрачный, чтобы межстраничный зазор совпадал с ним */
+  --editor-desk: var(--bg);
+  --paper-edge: rgba(0, 0, 0, 0.28);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 32px 0 80px;
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--editor-desk);
 }
 
 /* лист A4: ProseMirror получает класс .fc-prose (+ rm-with-pagination) */
