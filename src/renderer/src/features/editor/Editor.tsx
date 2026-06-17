@@ -24,7 +24,7 @@ function initialContent(chapter: Chapter | undefined): Content {
 }
 
 export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
-  const { current, reloadCurrent, openTab, applyProject } = useStore()
+  const { current, patchChapter, openTab, applyProject } = useStore()
   const story = current?.stories.find((s) => s.id === storyId)
   const chapter = story?.chapters.find((c) => c.id === chapterId)
 
@@ -82,8 +82,6 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-  const reloadRef = React.useRef(reloadCurrent)
-  reloadRef.current = reloadCurrent
   const projectId = current?.id ?? ''
 
   const persistImage = React.useCallback(
@@ -100,6 +98,20 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     autofocus: 'end',
     editorProps: {
       attributes: { class: 'fc-prose', spellcheck: 'true' },
+      // S-L (п.2): чистим вставляемый HTML (Word/Google Docs) — убираем пустые абзацы,
+      // из-за которых появлялись лишние пустые строки
+      transformPastedHTML: (html) => {
+        try {
+          const doc = new DOMParser().parseFromString(html, 'text/html')
+          doc.querySelectorAll('p').forEach((p) => {
+            const text = (p.textContent || '').replace(/ /g, ' ').trim()
+            if (!text && !p.querySelector('img')) p.remove()
+          })
+          return doc.body.innerHTML
+        } catch {
+          return html
+        }
+      },
       // S-G: наведение/клик по вики-ссылке (делегирование событий)
       handleDOMEvents: {
         mouseover: (_view, event) => {
@@ -170,19 +182,20 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   const save = React.useCallback(async () => {
     if (!editor || !projectId) return
+    const content = editor.getJSON()
+    const plainText = editor.getText()
+    const wordCount = editor.storage.characterCount.words()
+    // локально синхронизируем главу в сторе — без round-trip за всем проектом
+    // (важно для больших глав: не гоняем весь проект через IPC на каждое сохранение)
+    patchChapter(storyId, chapterId, { content, plainText, wordCount })
     await window.api.chapters.update({
       projectId,
       storyId,
       chapterId,
-      patch: {
-        content: editor.getJSON(),
-        plainText: editor.getText(),
-        wordCount: editor.storage.characterCount.words()
-      }
+      patch: { content, plainText, wordCount }
     })
     setSaved(true)
-    reloadRef.current()
-  }, [editor, projectId, storyId, chapterId])
+  }, [editor, projectId, storyId, chapterId, patchChapter])
 
   const schedulePageCount = React.useCallback(() => {
     setTimeout(() => {
@@ -236,8 +249,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   const importDocx = async (): Promise<void> => {
     if (!projectId) return
-    await window.api.docx.importToChapter({ projectId, storyId, chapterId })
-    const p = await reloadRef.current()
+    const p = await window.api.docx.importToChapter({ projectId, storyId, chapterId })
+    applyProject(p)
     const ch = p?.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
     if (editor && ch?.content && typeof ch.content === 'object' && 'html' in ch.content) {
       editor.commands.setContent((ch.content as { html: string }).html)

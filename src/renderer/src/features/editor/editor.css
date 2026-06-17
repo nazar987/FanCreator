@@ -208,6 +208,11 @@
   border-radius: 3px;
   padding: 0.05em 0.1em;
 }
+/* п.28: подчёркивание не должно «разрываться» под выносными (у, д, ц…) */
+.fc-prose u,
+.fc-prose [style*='underline'] {
+  text-decoration-skip-ink: none;
+}
 
 /* таблицы (п.6) */
 .fc-prose table {

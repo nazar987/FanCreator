@@ -1,5 +1,5 @@
 import React from 'react'
-import type { Project, ProjectSummary, ThemeName } from '@shared/types'
+import type { Project, ProjectSummary, ThemeName, Chapter } from '@shared/types'
 
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
 export interface OpenTab {
@@ -25,6 +25,12 @@ interface StoreValue {
   reloadCurrent: () => Promise<Project | null>
   /** Применяет вернувшийся с бэкенда проект как текущий + обновляет список. */
   applyProject: (p: Project | null) => void
+  /** Локально обновляет главу в текущем проекте (без round-trip за всем проектом). */
+  patchChapter: (
+    storyId: string,
+    chapterId: string,
+    patch: Partial<Pick<Chapter, 'content' | 'plainText' | 'wordCount' | 'title' | 'status'>>
+  ) => void
 
   tabs: OpenTab[]
   activeTabId: string | null
@@ -89,6 +95,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
         .sort((a, b) => b.updatedAt - a.updatedAt)
     )
   }, [])
+
+  const patchChapter = React.useCallback<StoreValue['patchChapter']>(
+    (storyId, chapterId, patch) => {
+      setCurrent((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          stories: prev.stories.map((s) =>
+            s.id !== storyId
+              ? s
+              : {
+                  ...s,
+                  chapters: s.chapters.map((c) =>
+                    c.id === chapterId ? { ...c, ...patch } : c
+                  )
+                }
+          )
+        }
+      })
+    },
+    []
+  )
 
   const setTheme = React.useCallback(
     (t: ThemeName) => {
@@ -160,6 +188,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     closeProject,
     reloadCurrent,
     applyProject,
+    patchChapter,
     tabs,
     activeTabId,
     openTab,
