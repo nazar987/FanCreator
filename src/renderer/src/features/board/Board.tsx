@@ -29,10 +29,15 @@ const SHAPE_LABEL: Record<StickerShape, string> = {
   rect: 'Прямоугольник',
   rounded: 'Скруглённый',
   circle: 'Круг',
-  note: 'Заметка'
+  note: 'Заметка',
+  diamond: 'Ромб',
+  triangle: 'Треугольник',
+  parallelogram: 'Параллелограмм',
+  hexagon: 'Шестиугольник'
 }
 
-const SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle']
+const SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle', 'diamond', 'triangle', 'parallelogram', 'hexagon']
+const NOTE_SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle', 'note']
 
 const ARROW_COLORS = ['#f06b9b', '#5fd39a', '#5bb8e6', '#f0a35b', '#b98cf5', '#e8e8ef']
 const STICKER_COLORS = ['#ffd166', '#f06b9b', '#5fd39a', '#5bb8e6', '#b98cf5', '#e8e8ef']
@@ -116,6 +121,19 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     const sx = clientX - (rect?.left ?? 0)
     const sy = clientY - (rect?.top ?? 0)
     return { x: (sx - panRef.current.x) / zoomRef.current, y: (sy - panRef.current.y) / zoomRef.current }
+  }
+
+  const curvedPath = (x1: number, y1: number, x2: number, y2: number): string => {
+    const dx = x2 - x1
+    const dy = y2 - y1
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      const bend = Math.max(60, Math.abs(dx) * 0.45)
+      const dir = dx >= 0 ? 1 : -1
+      return `M ${x1} ${y1} C ${x1 + bend * dir} ${y1}, ${x2 - bend * dir} ${y2}, ${x2} ${y2}`
+    }
+    const bend = Math.max(60, Math.abs(dy) * 0.45)
+    const dir = dy >= 0 ? 1 : -1
+    return `M ${x1} ${y1} C ${x1} ${y1 + bend * dir}, ${x2} ${y2 - bend * dir}, ${x2} ${y2}`
   }
 
   const stickerAtWorld = (x: number, y: number): BoardSticker | undefined =>
@@ -236,7 +254,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     }
   }
 
-  const addSticker = (kind: StickerKind = 'note', imagePath?: string): void => {
+  const addSticker = (kind: StickerKind = 'note', imagePath?: string, shape?: StickerShape): void => {
     const rect = canvasRef.current?.getBoundingClientRect()
     const center = rect
       ? toWorld(rect.left + rect.width / 2, rect.top + rect.height / 2)
@@ -257,8 +275,8 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
         w: size.w,
         h: size.h,
         color: kind === 'shape' ? '#5bb8e6' : '#ffd166',
-        shape: kind === 'note' ? 'note' : 'rounded',
-        text: kind === 'text' ? 'Текст' : kind === 'shape' ? 'Фигура' : '',
+        shape: shape ?? (kind === 'note' ? 'note' : 'rounded'),
+        text: kind === 'text' ? 'Текст' : '',
         imagePath
       }
     ])
@@ -268,6 +286,16 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     const dataUrl = await readFileAsDataUrl(file)
     const imagePath = await window.api.assets.saveImage({ projectId: current.id, dataUrl })
     addSticker('image', imagePath)
+  }
+
+  const openShapeAddMenu = (e: React.MouseEvent): void => {
+    openContextMenu(
+      e,
+      SHAPE_OPTIONS.map((shape) => ({
+        label: SHAPE_LABEL[shape],
+        onClick: () => addSticker('shape', undefined, shape)
+      }))
+    )
   }
 
   const updateSticker = (id: string, patch: Partial<BoardSticker>): void =>
@@ -410,7 +438,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
 
   const openStickerMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
     const kind = sticker.kind ?? 'note'
-    const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : (Object.keys(SHAPE_LABEL) as StickerShape[])
+    const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : NOTE_SHAPE_OPTIONS
     const items: MenuItem[] = [
       {
         label: 'Дублировать',
@@ -496,7 +524,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
             <Button variant="soft" onClick={() => addSticker('text')}>
               <Type size={15} /> Текст
             </Button>
-            <Button variant="soft" onClick={() => addSticker('shape')}>
+            <Button variant="soft" onClick={openShapeAddMenu}>
               <Square size={15} /> Фигура
             </Button>
             <Button variant="soft" onClick={() => imageInputRef.current?.click()}>
@@ -581,26 +609,23 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
               const x2 = to.x + to.w / 2
               const y2 = to.y + to.h / 2
               const isSel = arrow.id === selectedArrow
+              const d = curvedPath(x1, y1, x2, y2)
               return (
                 <g key={arrow.id} className="board-arrow-g" onPointerDown={(e) => {
                   e.stopPropagation()
                   setSelectedArrow(arrow.id)
                 }}>
                   {/* широкая прозрачная линия для удобного клика */}
-                  <line
+                  <path
                     className="board-arrow-hit"
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
+                    d={d}
+                    fill="none"
                     stroke="transparent"
                     strokeWidth="16"
                   />
-                  <line
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
+                  <path
+                    d={d}
+                    fill="none"
                     stroke={arrow.color}
                     strokeWidth={isSel ? 4 : 3}
                     markerEnd={`url(#arr-${board.id}-${arrow.color.slice(1)})`}
@@ -615,11 +640,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
               )
             })}
             {tempArrow && (
-              <line
-                x1={tempArrow.x1}
-                y1={tempArrow.y1}
-                x2={tempArrow.x2}
-                y2={tempArrow.y2}
+              <path
+                d={curvedPath(tempArrow.x1, tempArrow.y1, tempArrow.x2, tempArrow.y2)}
+                fill="none"
                 stroke="var(--accent)"
                 strokeWidth="2.5"
                 strokeDasharray="6 5"
@@ -629,7 +652,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
 
           {stickers.map((sticker) => {
             const kind = sticker.kind ?? 'note'
-            const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : (Object.keys(SHAPE_LABEL) as StickerShape[])
+            const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : NOTE_SHAPE_OPTIONS
             return (
               <div
                 className={`board-sticker board-sticker--${sticker.shape} board-sticker-kind--${kind}`}
@@ -639,8 +662,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   top: sticker.y,
                   width: sticker.w,
                   height: sticker.h,
-                  backgroundColor: kind === 'note' || kind === 'shape' ? sticker.color : undefined
-                }}
+                  '--board-sticker-color': sticker.color,
+                  backgroundColor: kind === 'note' ? sticker.color : undefined
+                } as React.CSSProperties}
                 onPointerDown={(e) => startStickerDrag(e, sticker)}
               >
                 <button
@@ -713,7 +737,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                 )}
                 <textarea
                   value={sticker.text}
-                  placeholder={kind === 'image' ? 'Подпись' : kind === 'text' ? 'Текст' : 'Текст элемента'}
+                  placeholder={kind === 'image' ? 'Подпись' : kind === 'text' ? 'Текст' : ''}
                   onChange={(e) => updateSticker(sticker.id, { text: e.target.value })}
                 />
                 <span

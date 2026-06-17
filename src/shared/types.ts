@@ -82,7 +82,15 @@ export interface CharacterTemplate {
   fieldLabels: string[]
 }
 
-export type StickerShape = 'rect' | 'rounded' | 'circle' | 'note'
+export type StickerShape =
+  | 'rect'
+  | 'rounded'
+  | 'circle'
+  | 'note'
+  | 'diamond'
+  | 'triangle'
+  | 'parallelogram'
+  | 'hexagon'
 export type StickerKind = 'note' | 'text' | 'shape' | 'image'
 export type BoardStickerLinkKind = 'character' | 'story' | 'timeline'
 

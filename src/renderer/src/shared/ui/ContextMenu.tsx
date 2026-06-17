@@ -27,7 +27,7 @@ export function openContextMenu(e: React.MouseEvent, items: MenuItem[]): void {
 
 export function ContextMenuHost(): React.JSX.Element | null {
   const [state, setState] = React.useState<MenuState | null>(null)
-  const [submenu, setSubmenu] = React.useState<{ items: MenuItem[]; y: number } | null>(null)
+  const [submenu, setSubmenu] = React.useState<{ items: MenuItem[]; x: number; y: number } | null>(null)
   const ref = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -57,8 +57,8 @@ export function ContextMenuHost(): React.JSX.Element | null {
 
   // удерживаем меню внутри окна
   const W = 210
-  const x = Math.min(state.x, window.innerWidth - W - 8)
-  const y = Math.min(state.y, window.innerHeight - 8 - state.items.length * 36)
+  const x = Math.max(8, Math.min(state.x, window.innerWidth - W - 8))
+  const y = Math.max(8, Math.min(state.y, window.innerHeight - 8 - state.items.length * 36))
 
   const renderItem = (
     it: MenuItem,
@@ -78,9 +78,17 @@ export function ContextMenuHost(): React.JSX.Element | null {
         key={i}
         className={`ctx-item ${it.danger ? 'ctx-item--danger' : ''}`}
         onMouseEnter={(e) => {
-          if (it.submenu)
-            setSubmenu({ items: it.submenu, y: (e.currentTarget as HTMLElement).offsetTop + baseY })
-          else if (!insideSubmenu) setSubmenu(null)
+          if (it.submenu) {
+            const nextX = Math.max(8, x + W * 2 - 6 > window.innerWidth - 8 ? x - W + 6 : x + W - 6)
+            const nextY = Math.max(
+              8,
+              Math.min(
+                (e.currentTarget as HTMLElement).offsetTop + baseY,
+                window.innerHeight - 8 - it.submenu.length * 36
+              )
+            )
+            setSubmenu({ items: it.submenu, x: nextX, y: nextY })
+          } else if (!insideSubmenu) setSubmenu(null)
         }}
         onClick={() => {
           if (it.submenu) return
@@ -104,7 +112,7 @@ export function ContextMenuHost(): React.JSX.Element | null {
       {submenu && (
         <div
           className="ctx-menu"
-          style={{ left: x + W - 6, top: submenu.y }}
+          style={{ left: submenu.x, top: submenu.y }}
           onMouseLeave={() => setSubmenu(null)}
         >
           {submenu.items.map((it, i) => renderItem(it, i, submenu.y, true))}

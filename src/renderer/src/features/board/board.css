@@ -167,6 +167,26 @@
   padding: 22px;
 }
 
+.board-sticker--diamond {
+  border-radius: 0;
+  padding: 24px 34px;
+}
+
+.board-sticker--triangle {
+  border-radius: 0;
+  padding: 46px 24px 18px;
+}
+
+.board-sticker--parallelogram {
+  border-radius: 0;
+  padding: 18px 34px;
+}
+
+.board-sticker--hexagon {
+  border-radius: 0;
+  padding: 18px 30px;
+}
+
 .board-sticker--note {
   border-radius: var(--r-sm) var(--r-sm) var(--r-lg) var(--r-sm);
 }
@@ -324,6 +344,41 @@
 .board-sticker-kind--shape {
   align-items: stretch;
   justify-content: center;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.board-sticker-kind--shape::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 1px solid var(--stroke-strong);
+  border-radius: inherit;
+  background: var(--board-sticker-color);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.board-sticker-kind--shape.board-sticker--diamond::before {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.board-sticker-kind--shape.board-sticker--triangle::before {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.board-sticker-kind--shape.board-sticker--parallelogram::before {
+  border-radius: 0;
+  clip-path: polygon(14% 0, 100% 0, 86% 100%, 0 100%);
+}
+
+.board-sticker-kind--shape.board-sticker--hexagon::before {
+  border-radius: 0;
+  clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
 }
 
 .board-sticker-kind--shape textarea {
