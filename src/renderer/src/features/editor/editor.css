@@ -235,7 +235,32 @@
   height: auto;
   border-radius: 6px;
   display: block;
-  margin: 0.4em auto;
+}
+/* п.24: обёртка картинки с ручкой ресайза */
+.fc-img-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: 0.4em 0;
+}
+.fc-img-wrap img {
+  margin: 0;
+}
+.fc-img-handle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--accent);
+  border: 2px solid var(--paper);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.fc-img-wrap:hover .fc-img-handle {
+  opacity: 1;
 }
 .fc-prose pre {
   background: rgba(0, 0, 0, 0.06);

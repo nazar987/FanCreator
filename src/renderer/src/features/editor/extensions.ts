@@ -4,7 +4,7 @@ import { FontFamily } from '@tiptap/extension-font-family'
 import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import { TextAlign } from '@tiptap/extension-text-align'
-import Image from '@tiptap/extension-image'
+import { ResizableImage } from './ResizableImage'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -46,7 +46,7 @@ export function buildExtensions(opts: {
     Color.configure({ types: ['textStyle'] }),
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Image.configure({ inline: false, allowBase64: false }),
+    ResizableImage.configure({ inline: false, allowBase64: false }),
     Table.configure({ resizable: true }),
     TableRow,
     TableHeader,
