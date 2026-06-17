@@ -4,6 +4,10 @@
   flex-direction: column;
   background: var(--bg);
 }
+.board--dragging,
+.board--dragging * {
+  user-select: none;
+}
 
 .board-toolbar {
   min-height: 70px;
@@ -220,6 +224,41 @@
   place-items: center;
   padding: 0;
 }
+.board-sticker-tools {
+  display: none;
+}
+
+.board-sticker-menu {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t-fast), border-color var(--t-fast);
+}
+.board-sticker:hover .board-sticker-menu,
+.board-sticker-menu:focus {
+  opacity: 1;
+}
+.board-sticker-menu:hover {
+  border-color: var(--accent);
+}
+
+.board-menu-color {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 50%;
+}
 
 .board-link-chip {
   position: relative;
@@ -294,7 +333,10 @@
 
 .board-sticker-kind--image {
   gap: 6px;
-  background: var(--panel);
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
   color: var(--text);
 }
 
@@ -306,7 +348,7 @@
   width: 100%;
   object-fit: cover;
   border-radius: var(--r-sm);
-  border: 1px solid var(--stroke-strong);
+  border: none;
   pointer-events: none;
 }
 

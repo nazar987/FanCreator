@@ -9,7 +9,9 @@ import {
   Image as ImageIcon,
   UserRound,
   BookOpen,
-  Clock3
+  Clock3,
+  Copy,
+  MoreVertical
 } from 'lucide-react'
 import type {
   BoardArrow,
@@ -33,6 +35,7 @@ const SHAPE_LABEL: Record<StickerShape, string> = {
 const SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle']
 
 const ARROW_COLORS = ['#f06b9b', '#5fd39a', '#5bb8e6', '#f0a35b', '#b98cf5', '#e8e8ef']
+const STICKER_COLORS = ['#ffd166', '#f06b9b', '#5fd39a', '#5bb8e6', '#b98cf5', '#e8e8ef']
 const ZOOM_MIN = 0.25
 const ZOOM_MAX = 2.5
 
@@ -72,6 +75,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const [arrows, setArrows] = React.useState<BoardArrow[]>(() => board?.arrows ?? [])
   const [pan, setPan] = React.useState({ x: 60, y: 60 })
   const [zoom, setZoom] = React.useState(1)
+  const [isDragging, setIsDragging] = React.useState(false)
   const [selectedArrow, setSelectedArrow] = React.useState<string | null>(null)
   const [tempArrow, setTempArrow] = React.useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
   // S-F: всплывающая вики-карточка привязанной сущности
@@ -153,6 +157,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     const onUp = (e: PointerEvent): void => {
       const it = interaction.current
       interaction.current = null
+      setIsDragging(false)
       if (!it) return
       if (it.mode === 'arrow') {
         const w = toWorld(e.clientX, e.clientY)
@@ -188,7 +193,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     // панорама только при клике по пустому холсту
     if (e.target !== e.currentTarget && !(e.target as HTMLElement).classList.contains('board-world'))
       return
+    e.preventDefault()
     setSelectedArrow(null)
+    setIsDragging(true)
     interaction.current = {
       mode: 'pan',
       startX: e.clientX,
@@ -214,8 +221,10 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
 
   const startStickerDrag = (e: React.PointerEvent, s: BoardSticker): void => {
     const el = e.target as HTMLElement
-    if (el.closest('.board-sticker-tools, textarea, .board-resize-handle, .board-arrow-handle, .board-link-chip')) return
+    if (el.closest('.board-sticker-menu, textarea, .board-resize-handle, .board-arrow-handle, .board-link-chip')) return
+    e.preventDefault()
     e.stopPropagation()
+    setIsDragging(true)
     interaction.current = {
       mode: 'sticker',
       id: s.id,
@@ -267,6 +276,18 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const deleteSticker = (id: string): void => {
     setStickers((items) => items.filter((s) => s.id !== id))
     setArrows((items) => items.filter((a) => a.fromId !== id && a.toId !== id))
+  }
+
+  const duplicateSticker = (sticker: BoardSticker): void => {
+    setStickers((items) => [
+      ...items,
+      {
+        ...sticker,
+        id: crypto.randomUUID(),
+        x: sticker.x + 28,
+        y: sticker.y + 28
+      }
+    ])
   }
 
   const getLinkTitle = (link?: BoardStickerLink | null): string | null => {
@@ -342,7 +363,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     )
   }
 
-  const openStickerLinkMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
+  const stickerLinkMenuItems = (sticker: BoardSticker): MenuItem[] => {
     const items: MenuItem[] = []
     if (current.characters.length > 0) {
       items.push({ type: 'label', label: 'Персонажи' })
@@ -380,6 +401,59 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     if (items.length === 0) {
       items.push({ type: 'label', label: 'В проекте пока нет сущностей' })
     }
+    return items
+  }
+
+  const openStickerLinkMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
+    openContextMenu(e, stickerLinkMenuItems(sticker))
+  }
+
+  const openStickerMenu = (e: React.MouseEvent, sticker: BoardSticker): void => {
+    const kind = sticker.kind ?? 'note'
+    const shapeOptions = kind === 'shape' ? SHAPE_OPTIONS : (Object.keys(SHAPE_LABEL) as StickerShape[])
+    const items: MenuItem[] = [
+      {
+        label: 'Дублировать',
+        icon: <Copy size={15} />,
+        onClick: () => duplicateSticker(sticker)
+      }
+    ]
+
+    if (kind !== 'text' && kind !== 'image') {
+      items.push(
+        {
+          label: 'Цвет',
+          submenu: STICKER_COLORS.map((color) => ({
+            label: color,
+            icon: <span className="board-menu-color" style={{ background: color }} />,
+            onClick: () => updateSticker(sticker.id, { color })
+          }))
+        },
+        {
+          label: 'Форма',
+          submenu: shapeOptions.map((shape) => ({
+            label: SHAPE_LABEL[shape],
+            onClick: () => updateSticker(sticker.id, { shape })
+          }))
+        }
+      )
+    }
+
+    items.push(
+      {
+        label: 'Привязать',
+        icon: <Link2 size={15} />,
+        submenu: stickerLinkMenuItems(sticker)
+      },
+      { type: 'sep' },
+      {
+        label: 'Удалить',
+        icon: <Trash2 size={15} />,
+        danger: true,
+        onClick: () => deleteSticker(sticker.id)
+      }
+    )
+
     openContextMenu(e, items)
   }
 
@@ -395,7 +469,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   const selected = arrows.find((a) => a.id === selectedArrow)
 
   return (
-    <div className="board" data-tour="board">
+    <div className={`board ${isDragging ? 'board--dragging' : ''}`} data-tour="board">
       <div className="board-toolbar">
         <div>
           <div className="board-title">{board.title}</div>
@@ -565,10 +639,17 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   top: sticker.y,
                   width: sticker.w,
                   height: sticker.h,
-                  backgroundColor: kind === 'text' ? undefined : sticker.color
+                  backgroundColor: kind === 'note' || kind === 'shape' ? sticker.color : undefined
                 }}
                 onPointerDown={(e) => startStickerDrag(e, sticker)}
               >
+                <button
+                  className="board-sticker-menu"
+                  title="Действия со стикером"
+                  onClick={(e) => openStickerMenu(e, sticker)}
+                >
+                  <MoreVertical size={14} />
+                </button>
                 <div className="board-sticker-tools">
                   {kind !== 'text' && kind !== 'image' && (
                     <input
@@ -639,7 +720,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   className="board-arrow-handle"
                   title="Потяните к другому элементу, чтобы создать связь"
                   onPointerDown={(e) => {
+                    e.preventDefault()
                     e.stopPropagation()
+                    setIsDragging(true)
                     interaction.current = { mode: 'arrow', fromId: sticker.id }
                   }}
                 >
@@ -649,7 +732,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   className="board-resize-handle"
                   title="Изменить размер"
                   onPointerDown={(e) => {
+                    e.preventDefault()
                     e.stopPropagation()
+                    setIsDragging(true)
                     interaction.current = {
                       mode: 'resize',
                       id: sticker.id,
