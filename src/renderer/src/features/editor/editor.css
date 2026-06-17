@@ -67,6 +67,13 @@
   background: var(--stroke);
   margin: 0 5px;
 }
+.tb-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--stroke-strong);
+  display: inline-block;
+}
 .tb-select {
   height: 32px;
   border-radius: var(--r-sm);
