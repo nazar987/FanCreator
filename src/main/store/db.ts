@@ -75,7 +75,11 @@ export function dbReadProject(id: string): Project | null {
 
 export function dbWriteProject(project: Project): void {
   const d = ensure()
-  const chapterCount = project.stories.reduce((n, s) => n + s.chapters.length, 0)
+  const activeStories = project.stories.filter((s) => !s.deletedAt)
+  const chapterCount = activeStories.reduce(
+    (n, s) => n + s.chapters.filter((c) => !c.deletedAt).length,
+    0
+  )
   const tx = d.transaction(() => {
     d.prepare(
       `INSERT INTO projects (id, title, cover_path, description, tags, story_count, chapter_count, updated_at, data)
@@ -89,7 +93,7 @@ export function dbWriteProject(project: Project): void {
       cover: project.coverPath,
       desc: project.description,
       tags: JSON.stringify(project.tags),
-      sc: project.stories.length,
+      sc: activeStories.length,
       cc: chapterCount,
       ua: project.updatedAt,
       data: JSON.stringify(project)
@@ -100,7 +104,9 @@ export function dbWriteProject(project: Project): void {
       'INSERT INTO chapters_fts (project_id, story_id, chapter_id, story_title, chapter_title, body) VALUES (?, ?, ?, ?, ?, ?)'
     )
     for (const s of project.stories) {
+      if (s.deletedAt) continue
       for (const c of s.chapters) {
+        if (c.deletedAt) continue
         ins.run(project.id, s.id, c.id, s.title, c.title || '', c.plainText || '')
       }
     }

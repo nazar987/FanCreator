@@ -23,6 +23,7 @@ import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import type { Story, Chapter, ChapterStatus, SearchResult } from '@shared/types'
 import { STATUS_LABEL } from '../shared/ui/components'
 import { StoryProperties } from '../features/library/StoryProperties'
+import { TrashView } from '../features/library/TrashView'
 
 export function Sidebar(): React.JSX.Element {
   const { current, closeProject, applyProject, openTab, activeTabId } = useStore()
@@ -30,6 +31,7 @@ export function Sidebar(): React.JSX.Element {
   const [search, setSearch] = React.useState('')
   const [results, setResults] = React.useState<SearchResult[]>([])
   const [propertiesStory, setPropertiesStory] = React.useState<Story | null>(null)
+  const [trashOpen, setTrashOpen] = React.useState(false)
 
   if (!current) return <aside className="sidebar" />
 
@@ -144,7 +146,7 @@ export function Sidebar(): React.JSX.Element {
 
     const story = current.stories.find((item) => item.id === source.droppableId)
     if (!story) return
-    const order = story.chapters.map((chapter) => chapter.id)
+    const order = story.chapters.filter((c) => !c.deletedAt).map((chapter) => chapter.id)
     const [moved] = order.splice(source.index, 1)
     order.splice(destination.index, 0, moved)
     applyProject(
@@ -271,14 +273,14 @@ export function Sidebar(): React.JSX.Element {
               </Button>
             </div>
 
-            {current.stories.length === 0 && (
+            {current.stories.filter((s) => !s.deletedAt).length === 0 && (
               <div className="dim" style={{ padding: '8px 10px', fontSize: 13 }}>
                 Пока нет историй. Нажмите «+», чтобы создать первую.
               </div>
             )}
 
             <DragDropContext onDragEnd={reorderChapters}>
-            {current.stories.map((s) => (
+            {current.stories.filter((s) => !s.deletedAt).map((s) => (
               <div className="tree-node" key={s.id}>
                 <div
                   className="tree-row"
@@ -293,7 +295,7 @@ export function Sidebar(): React.JSX.Element {
                     {s.title}
                   </span>
                   <span className="faint" style={{ fontSize: 12 }}>
-                    {s.chapters.length}
+                    {s.chapters.filter((c) => !c.deletedAt).length}
                   </span>
                 </div>
                 {(s.tags.length > 0 || s.genres.length > 0) && (
@@ -307,7 +309,7 @@ export function Sidebar(): React.JSX.Element {
                     <Droppable droppableId={s.id}>
                       {(provided) => (
                         <div ref={provided.innerRef} {...provided.droppableProps}>
-                          {s.chapters.map((c, index) => (
+                          {s.chapters.filter((c) => !c.deletedAt).map((c, index) => (
                             <Draggable draggableId={c.id} index={index} key={c.id}>
                               {(dragProvided, snapshot) => (
                                 <div
@@ -356,10 +358,16 @@ export function Sidebar(): React.JSX.Element {
           </>
         )}
       </div>
+      <div className="sidebar-foot">
+        <button className="btn btn--ghost btn--sm" onClick={() => setTrashOpen(true)}>
+          <Trash2 size={16} /> Корзина
+        </button>
+      </div>
     </aside>
     {propertiesStory && (
       <StoryProperties story={propertiesStory} onClose={() => setPropertiesStory(null)} />
     )}
+    {trashOpen && <TrashView onClose={() => setTrashOpen(false)} />}
     </>
   )
 }

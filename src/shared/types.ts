@@ -21,6 +21,8 @@ export interface Chapter {
   order: number
   createdAt: number
   updatedAt: number
+  /** Время удаления в корзину (п.30); null/undefined — активна. */
+  deletedAt?: number | null
 }
 
 export interface TimelineEvent {
@@ -51,6 +53,8 @@ export interface Story {
   createdAt: number
   updatedAt: number
   chapters: Chapter[]
+  /** Время удаления в корзину (п.30); null/undefined — активна. */
+  deletedAt?: number | null
 }
 
 /** Одно поле анкеты персонажа (динамическое, под шаблоны — п.16). */

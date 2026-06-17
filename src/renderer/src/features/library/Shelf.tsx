@@ -10,6 +10,8 @@ export function Shelf(): React.JSX.Element {
   const { current, applyProject, openTab } = useStore()
   if (!current) return <div />
 
+  const stories = current.stories.filter((s) => !s.deletedAt)
+
   const addStory = async (): Promise<void> => {
     const title = await promptText({ title: 'Новая история', placeholder: 'Название истории' })
     if (!title) return
@@ -68,7 +70,7 @@ export function Shelf(): React.JSX.Element {
               {current.title}
             </div>
             <div className="home-sub">
-              {current.stories.length} историй в проекте
+              {stories.length} историй в проекте
             </div>
           </div>
           <Button variant="primary" onClick={addStory}>
@@ -76,13 +78,13 @@ export function Shelf(): React.JSX.Element {
           </Button>
         </div>
 
-        {current.stories.length === 0 ? (
+        {stories.length === 0 ? (
           <div className="dim" style={{ textAlign: 'center', padding: '60px 0' }}>
             В этом проекте ещё нет историй. Добавьте первую — и она появится на полке.
           </div>
         ) : (
           <div className="shelf-grid">
-            {current.stories.map((s) => (
+            {stories.map((s) => (
               <div className="book" key={s.id}>
                 <CoverArt
                   title={s.title}

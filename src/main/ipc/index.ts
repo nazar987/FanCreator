@@ -129,7 +129,20 @@ export function registerIpc(): void {
     })
   )
 
+  // Удаление = в корзину (мягко, п.30). Восстановление/окончательное удаление — отдельно.
   ipcMain.handle('stories:delete', (_e, { projectId, storyId }) =>
+    mutate(projectId, (p) => {
+      const s = p.stories.find((s) => s.id === storyId)
+      if (s) s.deletedAt = now()
+    })
+  )
+  ipcMain.handle('stories:restore', (_e, { projectId, storyId }) =>
+    mutate(projectId, (p) => {
+      const s = p.stories.find((s) => s.id === storyId)
+      if (s) s.deletedAt = null
+    })
+  )
+  ipcMain.handle('stories:purge', (_e, { projectId, storyId }) =>
     mutate(projectId, (p) => {
       p.stories = p.stories.filter((s) => s.id !== storyId)
     })
@@ -200,13 +213,24 @@ export function registerIpc(): void {
     })
   )
 
+  // Удаление главы = в корзину (мягко, п.30)
   ipcMain.handle('chapters:delete', (_e, { projectId, storyId, chapterId }) =>
+    mutate(projectId, (p) => {
+      const c = p.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
+      if (c) c.deletedAt = now()
+    })
+  )
+  ipcMain.handle('chapters:restore', (_e, { projectId, storyId, chapterId }) =>
+    mutate(projectId, (p) => {
+      const c = p.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
+      if (c) c.deletedAt = null
+    })
+  )
+  ipcMain.handle('chapters:purge', (_e, { projectId, storyId, chapterId }) =>
     mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       if (!s) return
-      s.chapters = s.chapters
-        .filter((c) => c.id !== chapterId)
-        .map((c, i) => ({ ...c, order: i }))
+      s.chapters = s.chapters.filter((c) => c.id !== chapterId)
     })
   )
 
@@ -215,12 +239,16 @@ export function registerIpc(): void {
       const s = p.stories.find((s) => s.id === storyId)
       if (!s) return
       const byId = new Map(s.chapters.map((c) => [c.id, c]))
-      s.chapters = order
+      const reordered = order
         .map((id: string, i: number) => {
           const c = byId.get(id)
           return c ? { ...c, order: i } : null
         })
         .filter(Boolean) as Chapter[]
+      // сохраняем главы из корзины, которых нет в order (мягко удалённые)
+      const inOrder = new Set(order)
+      const trashed = s.chapters.filter((c) => !inOrder.has(c.id))
+      s.chapters = [...reordered, ...trashed]
     })
   )
 

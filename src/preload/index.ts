@@ -17,6 +17,8 @@ const api: FanCreatorApi = {
     add: (input) => invoke('stories:add', input),
     update: (input) => invoke('stories:update', input),
     delete: (input) => invoke('stories:delete', input),
+    restore: (input) => invoke('stories:restore', input),
+    purge: (input) => invoke('stories:purge', input),
     setCover: (input) => invoke('stories:setCover', input),
     pickCover: (input) => invoke('stories:pickCover', input)
   },
@@ -24,6 +26,8 @@ const api: FanCreatorApi = {
     add: (input) => invoke('chapters:add', input),
     update: (input) => invoke('chapters:update', input),
     delete: (input) => invoke('chapters:delete', input),
+    restore: (input) => invoke('chapters:restore', input),
+    purge: (input) => invoke('chapters:purge', input),
     reorder: (input) => invoke('chapters:reorder', input),
     move: (input) => invoke('chapters:move', input)
   },

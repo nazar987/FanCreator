@@ -42,6 +42,8 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Story, 'title' | 'synopsis' | 'tags' | 'genres' | 'status'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; storyId: string }): Promise<Project | null>
+    restore(input: { projectId: string; storyId: string }): Promise<Project | null>
+    purge(input: { projectId: string; storyId: string }): Promise<Project | null>
     setCover(input: {
       projectId: string
       storyId: string
@@ -62,6 +64,8 @@ export interface FanCreatorApi {
       >
     }): Promise<Project | null>
     delete(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
+    restore(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
+    purge(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     reorder(input: { projectId: string; storyId: string; order: string[] }): Promise<Project | null>
     move(input: {
       projectId: string
