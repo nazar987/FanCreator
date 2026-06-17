@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, net, screen } from 'electron'
+import { app, BrowserWindow, protocol, net, screen, Menu, MenuItem } from 'electron'
 import path from 'path'
 import { pathToFileURL } from 'url'
 import Store from 'electron-store'
@@ -54,6 +54,35 @@ function createMainWindow(): BrowserWindow {
 
   win.setMenuBarVisibility(false)
   win.once('ready-to-show', () => win.show())
+
+  // проверка орфографии (п.4): русский + английский словари
+  try {
+    win.webContents.session.setSpellCheckerLanguages(['ru', 'en-US'])
+  } catch {
+    // некоторые языки могут быть недоступны — не валим запуск
+  }
+  // контекстное меню с вариантами исправления для слова с ошибкой
+  win.webContents.on('context-menu', (_e, params) => {
+    if (!params.misspelledWord) return
+    const menu = new Menu()
+    for (const suggestion of params.dictionarySuggestions) {
+      menu.append(
+        new MenuItem({
+          label: suggestion,
+          click: () => win.webContents.replaceMisspelling(suggestion)
+        })
+      )
+    }
+    if (params.dictionarySuggestions.length) menu.append(new MenuItem({ type: 'separator' }))
+    menu.append(
+      new MenuItem({
+        label: 'Добавить в словарь',
+        click: () =>
+          win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord)
+      })
+    )
+    menu.popup()
+  })
 
   const save = (): void => {
     if (!win.isMinimized() && !win.isMaximized()) store.set('bounds', win.getBounds())
