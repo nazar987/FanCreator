@@ -47,12 +47,21 @@ interface ToolbarProps {
 const FONTS = [
   { label: 'Без засечек', value: 'Manrope, sans-serif' },
   { label: 'С засечками', value: 'Lora, serif' },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
+  { label: 'Verdana', value: 'Verdana, sans-serif' },
+  { label: 'Tahoma', value: 'Tahoma, sans-serif' },
+  { label: 'Trebuchet MS', value: '"Trebuchet MS", sans-serif' },
+  { label: 'Calibri', value: 'Calibri, sans-serif' },
   { label: 'Inter', value: 'Inter, sans-serif' },
   { label: 'Georgia', value: 'Georgia, serif' },
   { label: 'Times New Roman', value: '"Times New Roman", serif' },
-  { label: 'Courier', value: '"Courier New", monospace' }
+  { label: 'Courier New', value: '"Courier New", monospace' }
 ]
-const SIZES = ['12px', '14px', '16px', '18px', '21px', '24px', '30px', '36px']
+const SIZES = [
+  '8px', '9px', '10px', '11px', '12px', '14px', '16px', '18px',
+  '20px', '24px', '28px', '32px', '36px', '48px', '60px', '72px'
+]
 
 function Btn({
   active,

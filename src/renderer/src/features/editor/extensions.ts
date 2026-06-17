@@ -69,7 +69,7 @@ export function buildExtensions(opts: {
       contentMarginTop: 0,
       contentMarginBottom: 0,
       footerLeft: '',
-      footerRight: 'Страница {page}',
+      footerRight: '{page}',
       headerLeft: '',
       headerRight: ''
     })
