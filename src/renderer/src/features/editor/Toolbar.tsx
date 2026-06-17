@@ -29,7 +29,8 @@ import {
   FileUp,
   FileSymlink,
   FilePlus2,
-  Globe
+  Globe,
+  ListTree
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
@@ -41,6 +42,8 @@ interface ToolbarProps {
   onInsertInternalLink: (e: React.MouseEvent) => void
   onCreateSubpage: () => void
   onInsertWikiLink: (e: React.MouseEvent) => void
+  onToggleToc: () => void
+  tocActive: boolean
   onImportDocx: () => void
   onExportDocx: () => void
 }
@@ -105,6 +108,8 @@ export function Toolbar({
   onInsertInternalLink,
   onCreateSubpage,
   onInsertWikiLink,
+  onToggleToc,
+  tocActive,
   onImportDocx,
   onExportDocx
 }: ToolbarProps): React.JSX.Element {
@@ -369,6 +374,9 @@ export function Toolbar({
       )}
       <Sep />
 
+      <Btn title="Оглавление главы" active={tocActive} onClick={onToggleToc}>
+        <ListTree size={17} />
+      </Btn>
       <Btn title="Найти и заменить" onClick={onToggleFind}>
         <Search size={17} />
       </Btn>

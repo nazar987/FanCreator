@@ -72,6 +72,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const [pageCount, setPageCount] = React.useState(1)
   const [wordCount, setWordCount] = React.useState(chapter?.wordCount ?? 0)
   const [saved, setSaved] = React.useState(true)
+  // S-P: оглавление главы (заголовки H1–H3)
+  const [tocOpen, setTocOpen] = React.useState(false)
+  const [toc, setToc] = React.useState<{ level: number; text: string; pos: number }[]>([])
   // S-G: всплывающая вики-карточка при наведении на ссылку
   const [wikiPreview, setWikiPreview] = React.useState<{
     kind: string
@@ -202,10 +205,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       if (!editor) return
       const el = editor.view.dom.querySelector('[data-rm-pagination]')
       setPageCount(el ? Math.max(1, el.children.length) : 1)
+      // S-P: пересобираем оглавление из заголовков
+      const items: { level: number; text: string; pos: number }[] = []
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'heading') {
+          items.push({ level: node.attrs.level as number, text: node.textContent, pos })
+        }
+      })
+      setToc(items)
     }, 60)
   }, [editor])
 
-  // первичный расчёт числа страниц
+  const goToHeading = (pos: number): void => {
+    if (!editor) return
+    editor.chain().focus().setTextSelection(pos + 1).scrollIntoView().run()
+  }
+
+  // первичный расчёт числа страниц + оглавления
   React.useEffect(() => {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
@@ -396,14 +412,39 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onInsertInternalLink={insertInternalLink}
           onCreateSubpage={createSubpage}
           onInsertWikiLink={insertWikiLink}
+          onToggleToc={() => setTocOpen((v) => !v)}
+          tocActive={tocOpen}
           onImportDocx={importDocx}
           onExportDocx={exportDocx}
         />
         {showFind && <FindReplace editor={editor} onClose={() => setShowFind(false)} />}
       </div>
 
-      <div className="editor-scroll">
-        <EditorContent editor={editor} />
+      <div className="editor-body">
+        {tocOpen && (
+          <aside className="editor-toc">
+            <div className="editor-toc-head">Оглавление</div>
+            {toc.length === 0 ? (
+              <div className="dim editor-toc-empty">
+                Заголовков пока нет. Добавьте заголовок (H1–H3) в тексте.
+              </div>
+            ) : (
+              toc.map((h, i) => (
+                <button
+                  key={i}
+                  className="editor-toc-item"
+                  style={{ paddingLeft: 10 + (h.level - 1) * 14 }}
+                  onClick={() => goToHeading(h.pos)}
+                >
+                  {h.text || 'Без названия'}
+                </button>
+              ))
+            )}
+          </aside>
+        )}
+        <div className="editor-scroll">
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
       <div className="editor-status">

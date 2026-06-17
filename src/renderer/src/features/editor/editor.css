@@ -113,6 +113,51 @@
   text-align: center;
 }
 
+/* ---------- Тело: оглавление + лист ---------- */
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.editor-toc {
+  flex: 0 0 240px;
+  overflow-y: auto;
+  padding: 14px 10px;
+  border-right: 1px solid var(--stroke);
+  background: var(--panel);
+}
+.editor-toc-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  padding: 0 8px 8px;
+}
+.editor-toc-empty {
+  font-size: 12.5px;
+  padding: 6px 8px;
+  line-height: 1.4;
+}
+.editor-toc-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: 500 13px var(--font-ui);
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-toc-item:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
 /* ---------- «Стол» и листы ---------- */
 .editor-scroll {
   /* «стол» под листами: непрозрачный, чтобы межстраничный зазор совпадал с ним */
