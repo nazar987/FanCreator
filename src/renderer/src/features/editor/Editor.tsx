@@ -13,6 +13,32 @@ interface EditorProps {
   chapterId: string
 }
 
+/**
+ * Сжимает картинку до разумного размера перед сохранением — чтобы гигантские
+ * изображения не съедали память (вылет Oilpan OOM) и не раздували файлы.
+ */
+function downscaleDataUrl(dataUrl: string, maxDim = 1600): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const { width: w, height: h } = img
+      if (!w || !h || (w <= maxDim && h <= maxDim)) return resolve(dataUrl)
+      const scale = Math.min(maxDim / w, maxDim / h)
+      const cw = Math.round(w * scale)
+      const ch = Math.round(h * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = cw
+      canvas.height = ch
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return resolve(dataUrl)
+      ctx.drawImage(img, 0, 0, cw, ch)
+      resolve(canvas.toDataURL('image/jpeg', 0.9))
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+
 /** Преобразует сохранённый контент главы в начальное содержимое редактора. */
 function initialContent(chapter: Chapter | undefined): Content {
   if (!chapter?.content) return ''
@@ -90,7 +116,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const persistImage = React.useCallback(
     async (dataUrl: string): Promise<string | null> => {
       if (!projectId) return null
-      return window.api.assets.saveImage({ projectId, dataUrl })
+      const scaled = await downscaleDataUrl(dataUrl)
+      return window.api.assets.saveImage({ projectId, dataUrl: scaled })
     },
     [projectId]
   )
