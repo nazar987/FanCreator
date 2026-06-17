@@ -135,7 +135,12 @@ export function Toolbar({
 
   const curFont =
     (editor.getAttributes('textStyle').fontFamily as string) || FONTS[0].value
-  const curSize = (editor.getAttributes('textStyle').fontSize as string) || '16px'
+  const curSize =
+    (editor.getAttributes('textStyle').fontSize as string) ||
+    (editor.getAttributes('paragraph').fontSize as string) ||
+    (editor.getAttributes('heading').fontSize as string) ||
+    (editor.getAttributes('listItem').fontSize as string) ||
+    '16px'
   const curLineHeight =
     (editor.getAttributes('paragraph').lineHeight as string) ||
     (editor.getAttributes('heading').lineHeight as string) ||

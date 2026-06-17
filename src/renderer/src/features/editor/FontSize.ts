@@ -1,10 +1,13 @@
 import { Extension } from '@tiptap/core'
 
 /**
- * FontSize — добавляет атрибут font-size к существующей марке textStyle
- * (@tiptap/extension-text-style). НЕ создаёт отдельную марку textStyle,
- * чтобы избежать бага дублирования (см. старый коммит bd62b06).
+ * FontSize — размер шрифта. Ставится одновременно:
+ *  - на инлайновую марку textStyle (размер конкретных символов, как в Word);
+ *  - на блок (paragraph/heading/listItem) — чтобы маркер списка и «база» строки
+ *    совпадали по размеру с текстом (фидбэк №25) и размер держался при наборе (№26).
  */
+
+const BLOCK_TYPES = ['paragraph', 'heading', 'listItem']
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -30,10 +33,19 @@ export const FontSize = Extension.create({
           fontSize: {
             default: null,
             parseHTML: (element) => element.style.fontSize || null,
-            renderHTML: (attributes) => {
-              if (!attributes.fontSize) return {}
-              return { style: `font-size: ${attributes.fontSize}` }
-            }
+            renderHTML: (attributes) =>
+              attributes.fontSize ? { style: `font-size: ${attributes.fontSize}` } : {}
+          }
+        }
+      },
+      {
+        types: BLOCK_TYPES,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => element.style.fontSize || null,
+            renderHTML: (attributes) =>
+              attributes.fontSize ? { style: `font-size: ${attributes.fontSize}` } : {}
           }
         }
       }
@@ -44,12 +56,18 @@ export const FontSize = Extension.create({
     return {
       setFontSize:
         (size: string) =>
-        ({ chain }) =>
-          chain().setMark('textStyle', { fontSize: size }).run(),
+        ({ chain }) => {
+          let c = chain().setMark('textStyle', { fontSize: size })
+          for (const type of BLOCK_TYPES) c = c.updateAttributes(type, { fontSize: size })
+          return c.run()
+        },
       unsetFontSize:
         () =>
-        ({ chain }) =>
-          chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()
+        ({ chain }) => {
+          let c = chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle()
+          for (const type of BLOCK_TYPES) c = c.resetAttributes(type, 'fontSize')
+          return c.run()
+        }
     }
   }
 })
