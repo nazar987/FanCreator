@@ -21,6 +21,13 @@ export const ResizableImage = Image.extend({
       const wrap = document.createElement('span')
       wrap.className = 'fc-img-wrap'
 
+      // выравнивание картинки (left/center/right) через авто-поля (п. про выравнивание)
+      const applyAlign = (align: string | null): void => {
+        wrap.style.marginLeft = align === 'center' || align === 'right' ? 'auto' : '0'
+        wrap.style.marginRight = align === 'center' || align === 'left' ? 'auto' : '0'
+      }
+      applyAlign(node.attrs.textAlign as string)
+
       const img = document.createElement('img')
       img.src = node.attrs.src
       if (node.attrs.alt) img.alt = node.attrs.alt
@@ -64,6 +71,7 @@ export const ResizableImage = Image.extend({
           if (updated.type.name !== this.name) return false
           img.src = updated.attrs.src
           img.style.width = (updated.attrs.width as string) || ''
+          applyAlign(updated.attrs.textAlign as string)
           return true
         }
       }

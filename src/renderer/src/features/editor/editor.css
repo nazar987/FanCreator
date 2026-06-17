@@ -242,7 +242,8 @@
 /* п.24: обёртка картинки с ручкой ресайза */
 .fc-img-wrap {
   position: relative;
-  display: inline-block;
+  display: block;
+  width: fit-content;
   max-width: 100%;
   margin: 0.4em 0;
 }
