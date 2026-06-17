@@ -14,6 +14,33 @@
   font-size: 13.5px;
   animation: pop 0.18s var(--ease);
 }
+.update-banner--ready {
+  padding: 12px 14px;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+.update-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-contrast);
+  flex: 0 0 auto;
+}
+.update-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.update-banner-title {
+  font-weight: 700;
+}
+.update-banner-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+}
 .update-banner-close {
   display: grid;
   place-items: center;
