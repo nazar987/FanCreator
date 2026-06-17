@@ -165,7 +165,8 @@ export function TabBar(): React.JSX.Element {
 
   return (
     <div className="tabbar">
-      {tabs.map((t) => (
+      <div className="tabs-scroll">
+        {tabs.map((t) => (
         <div
           key={t.id}
           className={`tab ${activeTabId === t.id ? 'tab--active' : ''}`}
@@ -201,8 +202,10 @@ export function TabBar(): React.JSX.Element {
             </button>
           )}
         </div>
-      ))}
+        ))}
+      </div>
 
+      <div className="tabbar-actions">
       <button
         className="tab-close"
         data-tour="add-tab"
@@ -213,7 +216,6 @@ export function TabBar(): React.JSX.Element {
         <Plus size={16} />
       </button>
 
-      <div className="spacer" />
       <button
         className="tab-close"
         style={{ width: 26, height: 26 }}
@@ -223,6 +225,7 @@ export function TabBar(): React.JSX.Element {
         <CircleHelp size={16} />
       </button>
       <ThemeSwitcher />
+      </div>
     </div>
   )
 }

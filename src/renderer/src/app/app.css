@@ -145,7 +145,24 @@
 .tabbar > * {
   -webkit-app-region: no-drag;
 }
+.tabs-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.tabbar-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .tab {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
