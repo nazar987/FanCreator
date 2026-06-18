@@ -11,6 +11,7 @@ export type ThemeName = 'dark' | 'blue' | 'violet' | 'green' | 'orange' | 'rose'
 /** Глава истории — содержит контент редактора (TipTap JSON). */
 export interface Chapter {
   id: string
+  parentId?: string | null
   title: string
   status: ChapterStatus
   /** Документ TipTap в формате JSON (ProseMirror doc). */

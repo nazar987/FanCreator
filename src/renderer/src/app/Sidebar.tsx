@@ -67,12 +67,15 @@ export function Sidebar(): React.JSX.Element {
     applyProject(await window.api.stories.delete({ projectId: current.id, storyId: s.id }))
   }
 
-  const addChapter = async (s: Story): Promise<void> => {
-    const title = await promptText({ title: 'Новая глава', placeholder: 'Название главы' })
+  const addChapter = async (s: Story, parentId: string | null = null): Promise<void> => {
+    const title = await promptText({
+      title: parentId ? 'Новая подглава' : 'Новая глава',
+      placeholder: parentId ? 'Название подглавы' : 'Название главы'
+    })
     if (!title) return
-    const p = await window.api.chapters.add({ projectId: current.id, storyId: s.id, title })
+    const p = await window.api.chapters.add({ projectId: current.id, storyId: s.id, title, parentId })
     applyProject(p)
-    setExpanded((e) => ({ ...e, [s.id]: true }))
+    setExpanded((e) => ({ ...e, [s.id]: true, ...(parentId ? { [`chapter:${parentId}`]: true } : {}) }))
   }
 
   const openChapter = (s: Story, c: Chapter): void => {
@@ -113,7 +116,8 @@ export function Sidebar(): React.JSX.Element {
     const p = await window.api.chapters.add({
       projectId: current.id,
       storyId: s.id,
-      title: `${c.title} (копия)`
+      title: `${c.title} (копия)`,
+      parentId: c.parentId ?? null
     })
     if (!p) return
     const story = p.stories.find((x) => x.id === s.id)
@@ -146,7 +150,9 @@ export function Sidebar(): React.JSX.Element {
 
     const story = current.stories.find((item) => item.id === source.droppableId)
     if (!story) return
-    const order = story.chapters.filter((c) => !c.deletedAt).map((chapter) => chapter.id)
+    const order = story.chapters
+      .filter((c) => !c.deletedAt && !c.parentId)
+      .map((chapter) => chapter.id)
     const [moved] = order.splice(source.index, 1)
     order.splice(destination.index, 0, moved)
     applyProject(
@@ -174,6 +180,7 @@ export function Sidebar(): React.JSX.Element {
     const otherStories = current.stories.filter((story) => story.id !== s.id)
     return [
       { label: 'Открыть', icon: <FileText size={15} />, onClick: () => openChapter(s, c) },
+      { label: 'Добавить подглаву', icon: <Plus size={15} />, onClick: () => addChapter(s, c.id) },
       { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameChapter(s, c) },
       { label: 'Копировать', icon: <Copy size={15} />, onClick: () => duplicateChapter(s, c) },
       {
@@ -209,6 +216,51 @@ export function Sidebar(): React.JSX.Element {
     { type: 'sep' },
     { label: 'Удалить историю', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteStory(s) }
   ]
+
+  const activeChapters = (s: Story): Chapter[] => s.chapters.filter((c) => !c.deletedAt)
+
+  const childChapters = (s: Story, parentId: string | null): Chapter[] =>
+    activeChapters(s)
+      .filter((c) => (c.parentId ?? null) === parentId)
+      .sort((a, b) => a.order - b.order)
+
+  const renderChapterNode = (s: Story, c: Chapter, depth: number): React.JSX.Element => {
+    const children = childChapters(s, c.id)
+    const key = `chapter:${c.id}`
+    const isOpen = expanded[key] ?? true
+    return (
+      <div className="tree-chapter-node" key={c.id}>
+        <div
+          className={`tree-row tree-chapter ${activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''}`}
+          style={{ paddingLeft: 8 + depth * 14 }}
+          onClick={() => openChapter(s, c)}
+          onDoubleClick={() => openChapter(s, c)}
+          onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
+        >
+          <span
+            className={`chev ${children.length > 0 && isOpen ? 'chev--open' : ''}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              if (children.length > 0) toggle(key)
+            }}
+          >
+            {children.length > 0 ? <ChevronRight size={15} /> : <span style={{ width: 15 }} />}
+          </span>
+          <FileText size={14} />
+          <span className="truncate" style={{ flex: 1 }}>
+            {c.title || 'Р‘РµР· РЅР°Р·РІР°РЅРёСЏ'}
+          </span>
+          <StatusBadge status={c.status} />
+        </div>
+        {children.length > 0 && isOpen && (
+          <div className="tree-subchapters">
+            {/* TODO(senior): dnd РґР»СЏ РІР»РѕР¶РµРЅРЅС‹С… РіР»Р°РІ РїРѕСЃР»Рµ С„РёРЅР°Р»СЊРЅРѕР№ РјРѕРґРµР»Рё РґРµСЂРµРІР°. */}
+            {children.map((child) => renderChapterNode(s, child, depth + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -309,8 +361,9 @@ export function Sidebar(): React.JSX.Element {
                     <Droppable droppableId={s.id}>
                       {(provided) => (
                         <div ref={provided.innerRef} {...provided.droppableProps}>
-                          {s.chapters.filter((c) => !c.deletedAt).map((c, index) => (
-                            <Draggable draggableId={c.id} index={index} key={c.id}>
+                          {childChapters(s, null).map((c, index) => (
+                            <React.Fragment key={c.id}>
+                            <Draggable draggableId={c.id} index={index}>
                               {(dragProvided, snapshot) => (
                                 <div
                                   ref={dragProvided.innerRef}
@@ -338,6 +391,13 @@ export function Sidebar(): React.JSX.Element {
                                 </div>
                               )}
                             </Draggable>
+                            {childChapters(s, c.id).length > 0 && (expanded[`chapter:${c.id}`] ?? true) && (
+                              <div className="tree-subchapters">
+                                {/* TODO(senior): dnd для вложенных глав после финальной модели дерева. */}
+                                {childChapters(s, c.id).map((child) => renderChapterNode(s, child, 1))}
+                              </div>
+                            )}
+                            </React.Fragment>
                           ))}
                           {provided.placeholder}
                         </div>

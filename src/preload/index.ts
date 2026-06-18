@@ -29,6 +29,7 @@ const api: FanCreatorApi = {
     restore: (input) => invoke('chapters:restore', input),
     purge: (input) => invoke('chapters:purge', input),
     reorder: (input) => invoke('chapters:reorder', input),
+    setParent: (input) => invoke('chapters:setParent', input),
     move: (input) => invoke('chapters:move', input)
   },
   characters: {

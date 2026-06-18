@@ -54,7 +54,7 @@ export interface FanCreatorApi {
     pickCover(input: { projectId: string; storyId: string }): Promise<Project | null>
   }
   chapters: {
-    add(input: { projectId: string; storyId: string; title: string }): Promise<Project | null>
+    add(input: { projectId: string; storyId: string; title: string; parentId?: string | null }): Promise<Project | null>
     update(input: {
       projectId: string
       storyId: string
@@ -67,6 +67,12 @@ export interface FanCreatorApi {
     restore(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     purge(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     reorder(input: { projectId: string; storyId: string; order: string[] }): Promise<Project | null>
+    setParent(input: {
+      projectId: string
+      storyId: string
+      chapterId: string
+      parentId: string | null
+    }): Promise<Project | null>
     move(input: {
       projectId: string
       fromStoryId: string

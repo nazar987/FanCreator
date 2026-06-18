@@ -180,12 +180,14 @@ export function registerIpc(): void {
   })
 
   // ---------- Chapters ----------
-  ipcMain.handle('chapters:add', (_e, { projectId, storyId, title }) =>
+  ipcMain.handle('chapters:add', (_e, { projectId, storyId, title, parentId }) =>
     mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       if (!s) return
+      const parent = parentId ? s.chapters.find((c) => c.id === parentId && !c.deletedAt) : null
       const chapter: Chapter = {
         id: uid(),
+        parentId: parent?.id ?? null,
         title,
         status: 'draft',
         content: null,
@@ -196,6 +198,26 @@ export function registerIpc(): void {
         updatedAt: now()
       }
       s.chapters.push(chapter)
+      s.updatedAt = now()
+    })
+  )
+
+  ipcMain.handle('chapters:setParent', (_e, { projectId, storyId, chapterId, parentId }) =>
+    mutate(projectId, (p) => {
+      const s = p.stories.find((s) => s.id === storyId)
+      const c = s?.chapters.find((c) => c.id === chapterId)
+      if (!s || !c || parentId === chapterId) return
+      if (parentId) {
+        const parent = s.chapters.find((item) => item.id === parentId && !item.deletedAt)
+        if (!parent) return
+        let cursor: string | null | undefined = parent.parentId
+        while (cursor) {
+          if (cursor === chapterId) return
+          cursor = s.chapters.find((item) => item.id === cursor)?.parentId
+        }
+      }
+      c.parentId = parentId ?? null
+      c.updatedAt = now()
       s.updatedAt = now()
     })
   )
@@ -263,7 +285,7 @@ export function registerIpc(): void {
       fromStory.chapters = fromStory.chapters
         .filter((c) => c.id !== chapterId)
         .map((c, index) => ({ ...c, order: index }))
-      toStory.chapters = [...toStory.chapters, { ...chapter, order: toStory.chapters.length }]
+      toStory.chapters = [...toStory.chapters, { ...chapter, parentId: null, order: toStory.chapters.length }]
       fromStory.updatedAt = now()
       toStory.updatedAt = now()
     })

@@ -257,6 +257,7 @@ function normalizeLegacyProject(legacy: any): Project {
       updatedAt: s.updatedAt ?? now(),
       chapters: (s.chapters ?? []).map((c: any, ci: number) => ({
         id: c.id,
+        parentId: c.parentId ?? null,
         title: c.title ?? 'Глава',
         status: c.status ?? 'draft',
         content: c.content ?? null,
