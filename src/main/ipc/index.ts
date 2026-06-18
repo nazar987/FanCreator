@@ -2,7 +2,7 @@ import { ipcMain, dialog } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
-import { Document, Packer, Paragraph } from 'docx'
+import HTMLtoDOCX from 'html-to-docx'
 import type {
   Project,
   Story,
@@ -22,6 +22,7 @@ import {
   deleteProject,
   saveAsset,
   assetUrl,
+  resolveAssetUrl,
   countWords,
   searchChapters,
   now,
@@ -627,17 +628,39 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle('docx:exportChapter', async (_e, { title, html }) => {
-    const text = html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
-    const doc = new Document({
-      sections: [{ children: text.split(/\n+/).map((t: string) => new Paragraph(t)) }]
+    // полноценный экспорт: HTML редактора → docx (заголовки, жирный/курсив, списки,
+    // выравнивание, шрифты, отступы, интервал, картинки). Картинки asset:// встраиваем base64.
+    const inlined = await inlineAssetImages(html)
+    const out = await HTMLtoDOCX(`<!DOCTYPE html><html><body>${inlined}</body></html>`, null, {
+      table: { row: { cantSplit: true } },
+      footer: false,
+      pageNumber: false
     })
-    const buffer = await Packer.toBuffer(doc)
     const { filePath, canceled } = await dialog.showSaveDialog({
       defaultPath: `${title || 'Глава'}.docx`,
       filters: [{ name: 'Word', extensions: ['docx'] }]
     })
     if (canceled || !filePath) return false
-    await fs.writeFile(filePath, buffer)
+    await fs.writeFile(filePath, Buffer.from(out as ArrayBuffer))
     return true
   })
+}
+
+/** Встраивает картинки asset:// в HTML как base64 — чтобы они попали в экспортируемый docx. */
+async function inlineAssetImages(html: string): Promise<string> {
+  const urls = [...html.matchAll(/"(asset:\/\/[^"]+)"/g)].map((m) => m[1])
+  let out = html
+  for (const url of Array.from(new Set(urls))) {
+    const filePath = resolveAssetUrl(url)
+    if (!filePath) continue
+    try {
+      const buf = await fs.readFile(filePath)
+      const ext = (path.extname(filePath).slice(1) || 'png').toLowerCase().replace('jpg', 'jpeg')
+      const dataUri = `data:image/${ext};base64,${buf.toString('base64')}`
+      out = out.split(`"${url}"`).join(`"${dataUri}"`)
+    } catch {
+      // файл недоступен — пропускаем
+    }
+  }
+  return out
 }

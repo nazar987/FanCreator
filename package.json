@@ -18,9 +18,10 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
+    "docx": "^9.5.1",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.9",
-    "docx": "^9.5.1",
+    "html-to-docx": "^1.8.0",
     "mammoth": "^1.11.0"
   },
   "devDependencies": {
@@ -44,7 +45,6 @@
     "@tiptap/pm": "^3.7.2",
     "@tiptap/react": "^3.7.2",
     "@tiptap/starter-kit": "^3.7.2",
-    "tiptap-pagination-plus": "^3.0.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
@@ -58,6 +58,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
+    "tiptap-pagination-plus": "^3.0.1",
     "typescript": "^5.7.2",
     "vite": "^5.4.11"
   }
