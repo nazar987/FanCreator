@@ -430,12 +430,14 @@ export function registerIpc(): void {
     })
   )
 
-  ipcMain.handle('timelineEvents:add', (_e, { projectId, timelineId, title }) =>
+  ipcMain.handle('timelineEvents:add', (_e, { projectId, timelineId, title, parentId }) =>
     mutate(projectId, (p) => {
       const timeline = p.timelines.find((item) => item.id === timelineId)
       if (!timeline) return
+      const parent = parentId ? timeline.events.find((item) => item.id === parentId) : null
       const event: TimelineEvent = {
         id: uid(),
+        parentId: parent?.id ?? null,
         title,
         note: '',
         order: timeline.events.length
@@ -456,8 +458,19 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const timeline = p.timelines.find((item) => item.id === timelineId)
       if (!timeline) return
+      const remove = new Set<string>([eventId])
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const item of timeline.events) {
+          if (item.parentId && remove.has(item.parentId) && !remove.has(item.id)) {
+            remove.add(item.id)
+            changed = true
+          }
+        }
+      }
       timeline.events = timeline.events
-        .filter((item) => item.id !== eventId)
+        .filter((item) => !remove.has(item.id))
         .map((item, index) => ({ ...item, order: index }))
     })
   )

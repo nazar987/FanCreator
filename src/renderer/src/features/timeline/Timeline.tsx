@@ -9,10 +9,12 @@ import { buildFishboneImage } from './fishboneImage'
 
 interface TimelineEventCardProps {
   event: TimelineEvent
+  level: number
   onUpdate: (
     eventId: string,
     patch: Partial<Pick<TimelineEvent, 'title' | 'note' | 'order'>>
   ) => Promise<void>
+  onAddChild: (event: TimelineEvent) => Promise<void>
   onDelete: (event: TimelineEvent) => Promise<void>
 }
 
@@ -119,7 +121,9 @@ function Fishbone({
 
 function TimelineEventCard({
   event,
+  level,
   onUpdate,
+  onAddChild,
   onDelete
 }: TimelineEventCardProps): React.JSX.Element {
   const [title, setTitle] = React.useState(event.title)
@@ -144,7 +148,7 @@ function TimelineEventCard({
   }
 
   return (
-    <div className="timeline-event">
+    <div className="timeline-event" style={{ marginLeft: level * 28 }}>
       <div className="timeline-event-marker">{event.order + 1}</div>
       <Card className="timeline-event-card">
         <div className="timeline-event-head">
@@ -155,6 +159,15 @@ function TimelineEventCard({
             onChange={(changeEvent) => setTitle(changeEvent.target.value)}
             onBlur={saveTitle}
           />
+          <Button
+            variant="soft"
+            size="sm"
+            icon
+            title="Добавить под-событие"
+            onClick={() => onAddChild(event)}
+          >
+            <Plus size={15} />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -187,18 +200,22 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
   }
 
   const events = [...timeline.events].sort((a, b) => a.order - b.order)
+  const topEvents = events.filter((event) => !event.parentId)
+  const childEvents = (parentId: string): TimelineEvent[] =>
+    events.filter((event) => event.parentId === parentId)
 
-  const addEvent = async (): Promise<void> => {
+  const addEvent = async (parentId: string | null = null): Promise<void> => {
     const title = await promptText({
-      title: 'Новое событие',
-      placeholder: 'Название события'
+      title: parentId ? 'Новое под-событие' : 'Новое событие',
+      placeholder: parentId ? 'Название под-события' : 'Название события'
     })
     if (!title) return
     applyProject(
       await window.api.timelineEvents.add({
         projectId: current.id,
         timelineId,
-        title
+        title,
+        parentId
       })
     )
   }
@@ -234,9 +251,22 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
   }
 
   // S-I: экспорт схемы «рыбья кость» картинкой на доску
+  const renderEventNode = (event: TimelineEvent, level: number): React.JSX.Element => (
+    <React.Fragment key={event.id}>
+      <TimelineEventCard
+        event={event}
+        level={level}
+        onUpdate={updateEvent}
+        onAddChild={(item) => addEvent(item.id)}
+        onDelete={deleteEvent}
+      />
+      {childEvents(event.id).map((child) => renderEventNode(child, level + 1))}
+    </React.Fragment>
+  )
+
   const exportToBoard = async (e: React.MouseEvent): Promise<void> => {
-    if (!current || events.length === 0) return
-    const { dataUrl, width, height } = await buildFishboneImage(timeline.title, events)
+    if (!current || topEvents.length === 0) return
+    const { dataUrl, width, height } = await buildFishboneImage(timeline.title, topEvents)
     const imagePath = await window.api.assets.saveImage({ projectId: current.id, dataUrl })
 
     const w = Math.min(560, width)
@@ -323,7 +353,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
                 <ImageDown size={16} /> На доску
               </Button>
             )}
-            <Button variant="primary" onClick={addEvent}>
+            <Button variant="primary" onClick={() => addEvent()}>
               <Plus size={17} /> Добавить событие
             </Button>
           </div>
@@ -335,19 +365,13 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
           </div>
         ) : view === 'list' ? (
           <div className="timeline-list">
-            {events.map((event) => (
-              <TimelineEventCard
-                key={event.id}
-                event={event}
-                onUpdate={updateEvent}
-                onDelete={deleteEvent}
-              />
-            ))}
+            {topEvents.map((event) => renderEventNode(event, 0))}
           </div>
         ) : (
           <Fishbone
             title={timeline.title}
-            events={events}
+            // SENIOR: под-кости на схеме
+            events={topEvents}
             onEdit={async (event) => {
               const title = await promptText({ title: 'Событие', initial: event.title })
               if (title && title !== event.title) await updateEvent(event.id, { title })

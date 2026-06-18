@@ -284,7 +284,14 @@ function normalizeLegacyProject(legacy: any): Project {
     })),
     boards: legacy.boards ?? [],
     templates: legacy.templates ?? [],
-    timelines: legacy.timelines ?? []
+    timelines: (legacy.timelines ?? []).map((timeline: any) => ({
+      ...timeline,
+      events: (timeline.events ?? []).map((event: any, index: number) => ({
+        ...event,
+        parentId: event.parentId ?? null,
+        order: event.order ?? index
+      }))
+    }))
   }
   normalizeBoardStickers(project)
   return project

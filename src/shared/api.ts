@@ -121,7 +121,7 @@ export interface FanCreatorApi {
     delete(input: { projectId: string; timelineId: string }): Promise<Project | null>
   }
   timelineEvents: {
-    add(input: { projectId: string; timelineId: string; title: string }): Promise<Project | null>
+    add(input: { projectId: string; timelineId: string; title: string; parentId?: string | null }): Promise<Project | null>
     update(input: {
       projectId: string
       timelineId: string

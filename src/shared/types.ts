@@ -28,6 +28,7 @@ export interface Chapter {
 
 export interface TimelineEvent {
   id: string
+  parentId?: string | null
   title: string
   note: string
   order: number
