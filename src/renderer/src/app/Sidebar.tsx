@@ -15,7 +15,13 @@ import {
   GripVertical,
   MoveRight
 } from 'lucide-react'
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DraggableProvidedDragHandleProps,
+  type DropResult
+} from '@hello-pangea/dnd'
 import { useStore } from '../store/store'
 import { Button, Input, StatusBadge, Hashtags } from '../shared/ui/components'
 import { promptText, confirmDialog } from '../shared/ui/dialogs'
@@ -143,22 +149,43 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
-  const reorderChapters = async (result: DropResult): Promise<void> => {
+  const activeStories = (): Story[] =>
+    current.stories.filter((s) => !s.deletedAt).sort((a, b) => a.order - b.order)
+
+  const chapterDropId = (storyId: string, parentId: string | null): string =>
+    `chapters:${storyId}:${parentId ?? 'root'}`
+
+  const parseChapterDropId = (droppableId: string): { storyId: string; parentId: string | null } | null => {
+    const [, storyId, parentId] = droppableId.split(':')
+    if (!droppableId.startsWith('chapters:') || !storyId) return null
+    return { storyId, parentId: parentId === 'root' ? null : parentId }
+  }
+
+  const reorderSidebarItems = async (result: DropResult): Promise<void> => {
     const { source, destination } = result
     if (!destination || source.droppableId !== destination.droppableId) return
     if (source.index === destination.index) return
 
-    const story = current.stories.find((item) => item.id === source.droppableId)
+    if (source.droppableId === 'stories') {
+      const order = activeStories().map((story) => story.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      applyProject(await window.api.stories.reorder({ projectId: current.id, order }))
+      return
+    }
+
+    const chapterDrop = parseChapterDropId(source.droppableId)
+    if (!chapterDrop) return
+    const story = current.stories.find((item) => item.id === chapterDrop.storyId)
     if (!story) return
-    const order = story.chapters
-      .filter((c) => !c.deletedAt && !c.parentId)
-      .map((chapter) => chapter.id)
+    const order = childChapters(story, chapterDrop.parentId).map((chapter) => chapter.id)
     const [moved] = order.splice(source.index, 1)
     order.splice(destination.index, 0, moved)
     applyProject(
       await window.api.chapters.reorder({
         projectId: current.id,
         storyId: story.id,
+        parentId: chapterDrop.parentId,
         order
       })
     )
@@ -262,6 +289,79 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
+  const renderDraggableChapterRow = (
+    s: Story,
+    c: Chapter,
+    depth: number,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
+    isDragging: boolean
+  ): React.JSX.Element => {
+    const children = childChapters(s, c.id)
+    const key = `chapter:${c.id}`
+    const isOpen = expanded[key] ?? true
+    return (
+      <>
+        <div
+          className={`tree-row tree-chapter ${
+            activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
+          } ${isDragging ? 'tree-chapter--dragging' : ''}`}
+          style={{ paddingLeft: 8 + depth * 14 }}
+          onClick={() => openChapter(s, c)}
+          onDoubleClick={() => openChapter(s, c)}
+          onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
+        >
+          <span
+            className={`chev ${children.length > 0 && isOpen ? 'chev--open' : ''}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              if (children.length > 0) toggle(key)
+            }}
+          >
+            {children.length > 0 ? <ChevronRight size={15} /> : <span style={{ width: 15 }} />}
+          </span>
+          <span
+            className="tree-drag-handle"
+            title="Изменить порядок главы"
+            {...dragHandleProps}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </span>
+          <FileText size={14} />
+          <span className="truncate" style={{ flex: 1 }}>
+            {c.title || 'Без названия'}
+          </span>
+          <StatusBadge status={c.status} />
+        </div>
+        {children.length > 0 && isOpen && (
+          <div className="tree-subchapters">{renderDraggableChapterGroup(s, c.id, depth + 1)}</div>
+        )}
+      </>
+    )
+  }
+
+  const renderDraggableChapterGroup = (s: Story, parentId: string | null, depth: number): React.JSX.Element => {
+    const chapters = childChapters(s, parentId)
+    return (
+      <Droppable droppableId={chapterDropId(s.id, parentId)} type="chapter">
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            {chapters.map((c, index) => (
+              <Draggable draggableId={c.id} index={index} key={c.id}>
+                {(dragProvided, snapshot) => (
+                  <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className="tree-chapter-node">
+                    {renderDraggableChapterRow(s, c, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    )
+  }
+
   return (
     <>
     <aside className="sidebar" data-tour="tree">
@@ -331,14 +431,31 @@ export function Sidebar(): React.JSX.Element {
               </div>
             )}
 
-            <DragDropContext onDragEnd={reorderChapters}>
-            {current.stories.filter((s) => !s.deletedAt).map((s) => (
-              <div className="tree-node" key={s.id}>
+            <DragDropContext onDragEnd={reorderSidebarItems}>
+              <Droppable droppableId="stories" type="story">
+                {(storyDrop) => (
+                  <div ref={storyDrop.innerRef} {...storyDrop.droppableProps}>
+            {activeStories().map((s, storyIndex) => (
+              <Draggable draggableId={s.id} index={storyIndex} key={s.id}>
+                {(storyDrag, storySnapshot) => (
+              <div
+                ref={storyDrag.innerRef}
+                {...storyDrag.draggableProps}
+                className={`tree-node ${storySnapshot.isDragging ? 'tree-node--dragging' : ''}`}
+              >
                 <div
                   className="tree-row"
                   onClick={() => toggle(s.id)}
                   onContextMenu={(e) => openContextMenu(e, storyMenu(s))}
                 >
+                  <span
+                    className="tree-drag-handle"
+                    title="Изменить порядок истории"
+                    {...storyDrag.dragHandleProps}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <GripVertical size={14} />
+                  </span>
                   <span className={`chev ${expanded[s.id] ? 'chev--open' : ''}`}>
                     <ChevronRight size={15} />
                   </span>
@@ -358,7 +475,7 @@ export function Sidebar(): React.JSX.Element {
 
                 {expanded[s.id] && (
                   <div className="tree-children">
-                    <Droppable droppableId={s.id}>
+                    <Droppable droppableId={chapterDropId(s.id, null)} type="chapter">
                       {(provided) => (
                         <div ref={provided.innerRef} {...provided.droppableProps}>
                           {childChapters(s, null).map((c, index) => (
@@ -393,8 +510,7 @@ export function Sidebar(): React.JSX.Element {
                             </Draggable>
                             {childChapters(s, c.id).length > 0 && (expanded[`chapter:${c.id}`] ?? true) && (
                               <div className="tree-subchapters">
-                                {/* TODO(senior): dnd для вложенных глав после финальной модели дерева. */}
-                                {childChapters(s, c.id).map((child) => renderChapterNode(s, child, 1))}
+                                {renderDraggableChapterGroup(s, c.id, 1)}
                               </div>
                             )}
                             </React.Fragment>
@@ -413,7 +529,13 @@ export function Sidebar(): React.JSX.Element {
                   </div>
                 )}
               </div>
+                )}
+              </Draggable>
             ))}
+                    {storyDrop.placeholder}
+                  </div>
+                )}
+              </Droppable>
             </DragDropContext>
           </>
         )}

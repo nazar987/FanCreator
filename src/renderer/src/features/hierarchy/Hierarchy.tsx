@@ -1,5 +1,12 @@
 import React from 'react'
-import { GitFork, Plus, Trash2 } from 'lucide-react'
+import { GitFork, GripVertical, Plus, Trash2 } from 'lucide-react'
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DraggableProvidedDragHandleProps,
+  type DropResult
+} from '@hello-pangea/dnd'
 import type { HierarchyNode } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
@@ -15,6 +22,12 @@ export function Hierarchy({ hierarchyId }: { hierarchyId: string }): React.JSX.E
 
   const childNodes = (parentId: string | null): HierarchyNode[] =>
     hierarchy.nodes.filter((node) => node.parentId === parentId)
+  const nodeDropId = (parentId: string | null): string => `hierarchy-nodes:${parentId ?? 'root'}`
+  const parseNodeDropId = (droppableId: string): string | null | undefined => {
+    if (!droppableId.startsWith('hierarchy-nodes:')) return undefined
+    const parentId = droppableId.slice('hierarchy-nodes:'.length)
+    return parentId === 'root' ? null : parentId
+  }
 
   const updateOrientation = async (orientation: 'vertical' | 'horizontal'): Promise<void> => {
     applyProject(
@@ -65,11 +78,37 @@ export function Hierarchy({ hierarchyId }: { hierarchyId: string }): React.JSX.E
     )
   }
 
-  const renderNode = (node: HierarchyNode, level: number): React.JSX.Element => {
+  const reorderNodes = async (result: DropResult): Promise<void> => {
+    const { source, destination } = result
+    if (!destination || source.droppableId !== destination.droppableId) return
+    if (source.index === destination.index) return
+    const parentId = parseNodeDropId(source.droppableId)
+    if (parentId === undefined) return
+    const order = childNodes(parentId).map((node) => node.id)
+    const [moved] = order.splice(source.index, 1)
+    order.splice(destination.index, 0, moved)
+    applyProject(
+      await window.api.hierarchyNodes.reorder({
+        projectId: current.id,
+        hierarchyId,
+        parentId,
+        order
+      })
+    )
+  }
+
+  const renderNode = (
+    node: HierarchyNode,
+    level: number,
+    dragHandleProps?: DraggableProvidedDragHandleProps | null
+  ): React.JSX.Element => {
     const children = childNodes(node.id)
     return (
       <div className="hierarchy-node-wrap" key={node.id}>
         <Card className="hierarchy-node" style={{ marginLeft: hierarchy.orientation === 'vertical' ? level * 28 : 0 }}>
+          <span className="hierarchy-node-drag" title="Изменить порядок узла" {...dragHandleProps}>
+            <GripVertical size={15} />
+          </span>
           <Input
             defaultValue={node.title}
             aria-label="Название узла"
@@ -84,12 +123,31 @@ export function Hierarchy({ hierarchyId }: { hierarchyId: string }): React.JSX.E
         </Card>
         {children.length > 0 && (
           <div className={`hierarchy-children hierarchy-children--${hierarchy.orientation}`}>
-            {children.map((child) => renderNode(child, level + 1))}
+            {renderNodeGroup(node.id, level + 1)}
           </div>
         )}
       </div>
     )
   }
+
+  const renderNodeGroup = (parentId: string | null, level: number): React.JSX.Element => (
+    <Droppable droppableId={nodeDropId(parentId)} type="hierarchy-node">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps} className="hierarchy-node-group">
+          {childNodes(parentId).map((node, index) => (
+            <Draggable draggableId={node.id} index={index} key={node.id}>
+              {(dragProvided) => (
+                <div ref={dragProvided.innerRef} {...dragProvided.draggableProps}>
+                  {renderNode(node, level, dragProvided.dragHandleProps)}
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  )
 
   return (
     <div className="hierarchy">
@@ -126,9 +184,11 @@ export function Hierarchy({ hierarchyId }: { hierarchyId: string }): React.JSX.E
         {hierarchy.nodes.length === 0 ? (
           <div className="hierarchy-empty dim">Добавьте первый узел иерархии.</div>
         ) : (
-          <div className={`hierarchy-tree hierarchy-tree--${hierarchy.orientation}`}>
-            {childNodes(null).map((node) => renderNode(node, 0))}
-          </div>
+          <DragDropContext onDragEnd={reorderNodes}>
+            <div className={`hierarchy-tree hierarchy-tree--${hierarchy.orientation}`}>
+              {renderNodeGroup(null, 0)}
+            </div>
+          </DragDropContext>
         )}
       </div>
     </div>

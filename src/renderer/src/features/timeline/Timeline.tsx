@@ -1,5 +1,12 @@
 import React from 'react'
-import { Plus, Trash2, List, GitFork, ImageDown } from 'lucide-react'
+import { Plus, Trash2, List, GitFork, ImageDown, GripVertical } from 'lucide-react'
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DraggableProvidedDragHandleProps,
+  type DropResult
+} from '@hello-pangea/dnd'
 import type { BoardSticker, TimelineEvent } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
@@ -16,6 +23,7 @@ interface TimelineEventCardProps {
   ) => Promise<void>
   onAddChild: (event: TimelineEvent) => Promise<void>
   onDelete: (event: TimelineEvent) => Promise<void>
+  dragHandleProps?: DraggableProvidedDragHandleProps | null
 }
 
 /** Раскладка «рыбья кость» (Исикава): хребет + наклонные кости-события (S-C). */
@@ -124,7 +132,8 @@ function TimelineEventCard({
   level,
   onUpdate,
   onAddChild,
-  onDelete
+  onDelete,
+  dragHandleProps
 }: TimelineEventCardProps): React.JSX.Element {
   const [title, setTitle] = React.useState(event.title)
   const [note, setNote] = React.useState(event.note)
@@ -152,6 +161,13 @@ function TimelineEventCard({
       <div className="timeline-event-marker">{event.order + 1}</div>
       <Card className="timeline-event-card">
         <div className="timeline-event-head">
+          <span
+            className="timeline-event-drag"
+            title="Изменить порядок события"
+            {...dragHandleProps}
+          >
+            <GripVertical size={15} />
+          </span>
           <Input
             value={title}
             aria-label="Название события"
@@ -201,8 +217,14 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
 
   const events = [...timeline.events].sort((a, b) => a.order - b.order)
   const topEvents = events.filter((event) => !event.parentId)
-  const childEvents = (parentId: string): TimelineEvent[] =>
-    events.filter((event) => event.parentId === parentId)
+  const childEvents = (parentId: string | null): TimelineEvent[] =>
+    events.filter((event) => (event.parentId ?? null) === parentId)
+  const eventDropId = (parentId: string | null): string => `timeline-events:${parentId ?? 'root'}`
+  const parseEventDropId = (droppableId: string): string | null | undefined => {
+    if (!droppableId.startsWith('timeline-events:')) return undefined
+    const parentId = droppableId.slice('timeline-events:'.length)
+    return parentId === 'root' ? null : parentId
+  }
 
   const addEvent = async (parentId: string | null = null): Promise<void> => {
     const title = await promptText({
@@ -251,6 +273,25 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
   }
 
   // S-I: экспорт схемы «рыбья кость» картинкой на доску
+  const reorderEvents = async (result: DropResult): Promise<void> => {
+    const { source, destination } = result
+    if (!destination || source.droppableId !== destination.droppableId) return
+    if (source.index === destination.index) return
+    const parentId = parseEventDropId(source.droppableId)
+    if (parentId === undefined) return
+    const order = childEvents(parentId).map((event) => event.id)
+    const [moved] = order.splice(source.index, 1)
+    order.splice(destination.index, 0, moved)
+    applyProject(
+      await window.api.timelineEvents.reorder({
+        projectId: current.id,
+        timelineId,
+        parentId,
+        order
+      })
+    )
+  }
+
   const renderEventNode = (event: TimelineEvent, level: number): React.JSX.Element => (
     <React.Fragment key={event.id}>
       <TimelineEventCard
@@ -262,6 +303,33 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
       />
       {childEvents(event.id).map((child) => renderEventNode(child, level + 1))}
     </React.Fragment>
+  )
+
+  const renderEventGroup = (parentId: string | null, level: number): React.JSX.Element => (
+    <Droppable droppableId={eventDropId(parentId)} type="timeline-event">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps} className="timeline-event-group">
+          {childEvents(parentId).map((event, index) => (
+            <Draggable draggableId={event.id} index={index} key={event.id}>
+              {(dragProvided) => (
+                <div ref={dragProvided.innerRef} {...dragProvided.draggableProps}>
+                  <TimelineEventCard
+                    event={event}
+                    level={level}
+                    onUpdate={updateEvent}
+                    onAddChild={(item) => addEvent(item.id)}
+                    onDelete={deleteEvent}
+                    dragHandleProps={dragProvided.dragHandleProps}
+                  />
+                  {childEvents(event.id).length > 0 && renderEventGroup(event.id, level + 1)}
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
   )
 
   const exportToBoard = async (e: React.MouseEvent): Promise<void> => {
@@ -364,9 +432,9 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
             Событий пока нет. Добавьте первую точку сюжета, чтобы собрать линию времени.
           </div>
         ) : view === 'list' ? (
-          <div className="timeline-list">
-            {topEvents.map((event) => renderEventNode(event, 0))}
-          </div>
+          <DragDropContext onDragEnd={reorderEvents}>
+            <div className="timeline-list">{renderEventGroup(null, 0)}</div>
+          </DragDropContext>
         ) : (
           <Fishbone
             title={timeline.title}

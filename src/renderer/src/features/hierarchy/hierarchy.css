@@ -45,9 +45,31 @@
 
 .hierarchy-node {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
+}
+
+.hierarchy-node-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hierarchy-children--horizontal .hierarchy-node-group,
+.hierarchy-tree--horizontal > .hierarchy-node-group {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.hierarchy-node-drag {
+  display: flex;
+  color: var(--text-faint);
+  cursor: grab;
+}
+
+.hierarchy-node-drag:active {
+  cursor: grabbing;
 }
 
 .hierarchy-children {

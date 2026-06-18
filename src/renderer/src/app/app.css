@@ -106,6 +106,10 @@
   color: var(--text);
   box-shadow: var(--shadow-md);
 }
+.tree-node--dragging {
+  background: var(--panel-solid);
+  box-shadow: var(--shadow-md);
+}
 .tree-drag-handle {
   display: flex;
   color: var(--text-faint);
@@ -113,6 +117,7 @@
   opacity: 0;
   transition: opacity var(--t-fast), color var(--t-fast);
 }
+.tree-row:hover .tree-drag-handle,
 .tree-chapter:hover .tree-drag-handle,
 .tree-drag-handle:focus {
   opacity: 1;
