@@ -16,6 +16,7 @@ import { PaginationPlus } from 'tiptap-pagination-plus'
 import type { Extensions } from '@tiptap/core'
 import { FontSize } from './FontSize'
 import { LineHeight } from './LineHeight'
+import { ParagraphIndent } from './ParagraphIndent'
 import { InternalLink } from './InternalLink'
 import { WikiLink } from './WikiLink'
 
@@ -43,6 +44,7 @@ export function buildExtensions(opts: {
     FontFamily.configure({ types: ['textStyle'] }),
     FontSize,
     LineHeight,
+    ParagraphIndent,
     Color.configure({ types: ['textStyle'] }),
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),

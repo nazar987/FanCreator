@@ -494,7 +494,18 @@ export function registerIpc(): void {
     })
     if (canceled || !filePaths[0]) return readProject(projectId)
     const buffer = await fs.readFile(filePaths[0])
-    const { value: html } = await mammoth.convertToHtml({ buffer })
+    // переносим картинки из Word: сохраняем в assets проекта, src → asset://
+    const { value: html } = await mammoth.convertToHtml(
+      { buffer },
+      {
+        convertImage: mammoth.images.imgElement(async (image) => {
+          const imgBuffer = await image.read()
+          const ext = `.${(image.contentType || 'image/png').split('/')[1].replace('jpeg', 'jpg')}`
+          const fileName = await saveAsset(projectId, imgBuffer as Buffer, ext)
+          return { src: assetUrl(projectId, fileName) }
+        })
+      }
+    )
     const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     return mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
