@@ -4,12 +4,13 @@ import type { Project, ProjectSummary, ThemeName, Chapter } from '@shared/types'
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
 export interface OpenTab {
   id: string
-  kind: 'shelf' | 'chapter' | 'characters' | 'board' | 'timeline'
+  kind: 'shelf' | 'chapter' | 'characters' | 'board' | 'timeline' | 'hierarchy'
   title: string
   storyId?: string
   chapterId?: string
   boardId?: string
   timelineId?: string
+  hierarchyId?: string
 }
 
 interface StoreValue {
@@ -159,7 +160,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const openTab = React.useCallback((tab: Omit<OpenTab, 'id'> & { id?: string }) => {
     const id =
       tab.id ??
-      `${tab.kind}:${tab.chapterId ?? tab.storyId ?? tab.boardId ?? tab.timelineId ?? Math.random()}`
+      `${tab.kind}:${tab.chapterId ?? tab.storyId ?? tab.boardId ?? tab.timelineId ?? tab.hierarchyId ?? Math.random()}`
     setTabs((prev) => (prev.some((t) => t.id === id) ? prev : [...prev, { ...tab, id }]))
     setActiveTabId(id)
   }, [])

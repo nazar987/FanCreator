@@ -291,6 +291,16 @@ function normalizeLegacyProject(legacy: any): Project {
         parentId: event.parentId ?? null,
         order: event.order ?? index
       }))
+    })),
+    hierarchies: (legacy.hierarchies ?? []).map((hierarchy: any) => ({
+      id: hierarchy.id,
+      title: hierarchy.title ?? 'Иерархия',
+      orientation: hierarchy.orientation === 'horizontal' ? 'horizontal' : 'vertical',
+      nodes: (hierarchy.nodes ?? []).map((node: any) => ({
+        id: node.id,
+        parentId: node.parentId ?? null,
+        title: node.title ?? 'Узел'
+      }))
     }))
   }
   normalizeBoardStickers(project)

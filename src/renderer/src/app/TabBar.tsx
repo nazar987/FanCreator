@@ -9,7 +9,8 @@ import {
   LayoutDashboard,
   Clock3,
   Trash2,
-  CircleHelp
+  CircleHelp,
+  GitFork
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -37,6 +38,14 @@ export function TabBar(): React.JSX.Element {
         timelineId: timeline.id
       })
 
+    const openHierarchy = (hierarchy: NonNullable<typeof current>['hierarchies'][number]): void =>
+      openTab({
+        id: `hierarchy:${hierarchy.id}`,
+        kind: 'hierarchy',
+        title: hierarchy.title,
+        hierarchyId: hierarchy.id
+      })
+
     const deleteBoard = async (board: NonNullable<typeof current>['boards'][number]): Promise<void> => {
       if (!current) return
       const ok = await confirmDialog({
@@ -61,6 +70,19 @@ export function TabBar(): React.JSX.Element {
       if (!ok) return
       applyProject(await window.api.timelines.delete({ projectId: current.id, timelineId: timeline.id }))
       closeTab(`timeline:${timeline.id}`)
+    }
+
+    const deleteHierarchy = async (hierarchy: NonNullable<typeof current>['hierarchies'][number]): Promise<void> => {
+      if (!current) return
+      const ok = await confirmDialog({
+        title: `Удалить иерархию «${hierarchy.title}»?`,
+        message: 'Все узлы этой иерархии будут удалены.',
+        confirmLabel: 'Удалить',
+        danger: true
+      })
+      if (!ok) return
+      applyProject(await window.api.hierarchies.delete({ projectId: current.id, hierarchyId: hierarchy.id }))
+      closeTab(`hierarchy:${hierarchy.id}`)
     }
 
     const items: MenuItem[] = [
@@ -131,6 +153,22 @@ export function TabBar(): React.JSX.Element {
           }
         }
       },
+      {
+        label: 'Новая иерархия',
+        icon: <GitFork size={15} />,
+        onClick: async () => {
+          if (!current) return
+          const title = await promptText({
+            title: 'Новая иерархия',
+            placeholder: 'Название иерархии'
+          })
+          if (!title) return
+          const project = await window.api.hierarchies.add({ projectId: current.id, title })
+          applyProject(project)
+          const hierarchy = project?.hierarchies[project.hierarchies.length - 1]
+          if (hierarchy) openHierarchy(hierarchy)
+        }
+      },
       { type: 'label', label: 'Доски проекта' },
       ...(current?.boards.map((board) => ({
         label: board.title,
@@ -158,6 +196,20 @@ export function TabBar(): React.JSX.Element {
             onClick: () => deleteTimeline(timeline)
           }
         ]
+      })) ?? []),
+      { type: 'label', label: 'Иерархии проекта' },
+      ...(current?.hierarchies.map((hierarchy) => ({
+        label: hierarchy.title,
+        icon: <GitFork size={15} />,
+        submenu: [
+          { label: 'Открыть', icon: <GitFork size={15} />, onClick: () => openHierarchy(hierarchy) },
+          {
+            label: 'Удалить',
+            icon: <Trash2 size={15} />,
+            danger: true,
+            onClick: () => deleteHierarchy(hierarchy)
+          }
+        ]
       })) ?? [])
     ]
     openContextMenu(e, items)
@@ -183,6 +235,8 @@ export function TabBar(): React.JSX.Element {
             <LayoutDashboard size={14} />
           ) : t.kind === 'timeline' ? (
             <Clock3 size={14} />
+          ) : t.kind === 'hierarchy' ? (
+            <GitFork size={14} />
           ) : (
             <FileText size={14} />
           )}

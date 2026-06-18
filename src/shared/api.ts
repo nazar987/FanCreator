@@ -10,7 +10,8 @@ import type {
   ThemeName,
   BoardSticker,
   BoardArrow,
-  TimelineEvent
+  TimelineEvent,
+  Hierarchy
 } from './types'
 
 /**
@@ -119,6 +120,21 @@ export interface FanCreatorApi {
     add(input: { projectId: string; title: string }): Promise<Project | null>
     rename(input: { projectId: string; timelineId: string; title: string }): Promise<Project | null>
     delete(input: { projectId: string; timelineId: string }): Promise<Project | null>
+  }
+  hierarchies: {
+    add(input: { projectId: string; title: string }): Promise<Project | null>
+    rename(input: { projectId: string; hierarchyId: string; title: string }): Promise<Project | null>
+    delete(input: { projectId: string; hierarchyId: string }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      hierarchyId: string
+      patch: Partial<Pick<Hierarchy, 'title' | 'orientation'>>
+    }): Promise<Project | null>
+  }
+  hierarchyNodes: {
+    add(input: { projectId: string; hierarchyId: string; parentId: string | null; title: string }): Promise<Project | null>
+    update(input: { projectId: string; hierarchyId: string; nodeId: string; title: string }): Promise<Project | null>
+    delete(input: { projectId: string; hierarchyId: string; nodeId: string }): Promise<Project | null>
   }
   timelineEvents: {
     add(input: { projectId: string; timelineId: string; title: string; parentId?: string | null }): Promise<Project | null>

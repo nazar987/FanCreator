@@ -12,7 +12,8 @@ import type {
   Board,
   CharacterTemplate,
   Timeline,
-  TimelineEvent
+  TimelineEvent,
+  Hierarchy
 } from '@shared/types'
 import {
   listProjects,
@@ -64,7 +65,8 @@ export function registerIpc(): void {
       characters: [],
       boards: [],
       templates: [],
-      timelines: []
+      timelines: [],
+      hierarchies: []
     }
     return writeProject(project)
   })
@@ -427,6 +429,75 @@ export function registerIpc(): void {
   ipcMain.handle('timelines:delete', (_e, { projectId, timelineId }) =>
     mutate(projectId, (p) => {
       p.timelines = p.timelines.filter((item) => item.id !== timelineId)
+    })
+  )
+
+  // ---------- Hierarchies ----------
+  ipcMain.handle('hierarchies:add', (_e, { projectId, title }) =>
+    mutate(projectId, (p) => {
+      const hierarchy: Hierarchy = {
+        id: uid(),
+        title,
+        orientation: 'vertical',
+        nodes: []
+      }
+      p.hierarchies ??= []
+      p.hierarchies.push(hierarchy)
+    })
+  )
+
+  ipcMain.handle('hierarchies:rename', (_e, { projectId, hierarchyId, title }) =>
+    mutate(projectId, (p) => {
+      const hierarchy = p.hierarchies?.find((item) => item.id === hierarchyId)
+      if (hierarchy) hierarchy.title = title
+    })
+  )
+
+  ipcMain.handle('hierarchies:update', (_e, { projectId, hierarchyId, patch }) =>
+    mutate(projectId, (p) => {
+      const hierarchy = p.hierarchies?.find((item) => item.id === hierarchyId)
+      if (hierarchy) Object.assign(hierarchy, patch)
+    })
+  )
+
+  ipcMain.handle('hierarchies:delete', (_e, { projectId, hierarchyId }) =>
+    mutate(projectId, (p) => {
+      p.hierarchies = (p.hierarchies ?? []).filter((item) => item.id !== hierarchyId)
+    })
+  )
+
+  ipcMain.handle('hierarchyNodes:add', (_e, { projectId, hierarchyId, parentId, title }) =>
+    mutate(projectId, (p) => {
+      const hierarchy = p.hierarchies?.find((item) => item.id === hierarchyId)
+      if (!hierarchy) return
+      const parent = parentId ? hierarchy.nodes.find((item) => item.id === parentId) : null
+      hierarchy.nodes.push({ id: uid(), parentId: parent?.id ?? null, title })
+    })
+  )
+
+  ipcMain.handle('hierarchyNodes:update', (_e, { projectId, hierarchyId, nodeId, title }) =>
+    mutate(projectId, (p) => {
+      const node = p.hierarchies?.find((item) => item.id === hierarchyId)?.nodes.find((item) => item.id === nodeId)
+      if (node) node.title = title
+    })
+  )
+
+  ipcMain.handle('hierarchyNodes:delete', (_e, { projectId, hierarchyId, nodeId }) =>
+    mutate(projectId, (p) => {
+      const hierarchy = p.hierarchies?.find((item) => item.id === hierarchyId)
+      if (!hierarchy) return
+      const remove = new Set<string>([nodeId])
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const node of hierarchy.nodes) {
+          if (node.parentId && remove.has(node.parentId) && !remove.has(node.id)) {
+            remove.add(node.id)
+            changed = true
+          }
+        }
+      }
+      hierarchy.nodes = hierarchy.nodes.filter((node) => !remove.has(node.id))
     })
   )
 

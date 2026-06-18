@@ -40,6 +40,19 @@ export interface Timeline {
   events: TimelineEvent[]
 }
 
+export interface HierarchyNode {
+  id: string
+  parentId: string | null
+  title: string
+}
+
+export interface Hierarchy {
+  id: string
+  title: string
+  orientation: 'vertical' | 'horizontal'
+  nodes: HierarchyNode[]
+}
+
 /** История внутри проекта. Может иметь обложку (п.19). */
 export interface Story {
   id: string
@@ -164,6 +177,7 @@ export interface Project {
   boards: Board[]
   templates: CharacterTemplate[]
   timelines: Timeline[]
+  hierarchies: Hierarchy[]
 }
 
 /** Лёгкое представление проекта для списка (без тяжёлого контента глав). */

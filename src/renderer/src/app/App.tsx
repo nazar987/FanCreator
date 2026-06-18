@@ -10,6 +10,7 @@ import { Editor } from '../features/editor/Editor'
 import { Characters } from '../features/characters/Characters'
 import { Board } from '../features/board/Board'
 import { Timeline } from '../features/timeline/Timeline'
+import { Hierarchy } from '../features/hierarchy/Hierarchy'
 import { HelpTour } from '../features/help/HelpTour'
 import { UpdateBanner } from '../features/updates/UpdateBanner'
 
@@ -35,6 +36,9 @@ export function App(): React.JSX.Element {
               )}
               {active?.kind === 'timeline' && active.timelineId && (
                 <Timeline key={active.timelineId} timelineId={active.timelineId} />
+              )}
+              {active?.kind === 'hierarchy' && active.hierarchyId && (
+                <Hierarchy key={active.hierarchyId} hierarchyId={active.hierarchyId} />
               )}
               {active?.kind === 'chapter' && active.storyId && active.chapterId && (
                 <Editor

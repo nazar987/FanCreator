@@ -54,6 +54,17 @@ const api: FanCreatorApi = {
     rename: (input) => invoke('timelines:rename', input),
     delete: (input) => invoke('timelines:delete', input)
   },
+  hierarchies: {
+    add: (input) => invoke('hierarchies:add', input),
+    rename: (input) => invoke('hierarchies:rename', input),
+    delete: (input) => invoke('hierarchies:delete', input),
+    update: (input) => invoke('hierarchies:update', input)
+  },
+  hierarchyNodes: {
+    add: (input) => invoke('hierarchyNodes:add', input),
+    update: (input) => invoke('hierarchyNodes:update', input),
+    delete: (input) => invoke('hierarchyNodes:delete', input)
+  },
   timelineEvents: {
     add: (input) => invoke('timelineEvents:add', input),
     update: (input) => invoke('timelineEvents:update', input),

@@ -1,0 +1,75 @@
+.hierarchy {
+  height: 100%;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.hierarchy-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.hierarchy-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.hierarchy-tree {
+  display: flex;
+  gap: 14px;
+}
+
+.hierarchy-tree--vertical {
+  flex-direction: column;
+}
+
+.hierarchy-tree--horizontal {
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 18px;
+}
+
+.hierarchy-node-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hierarchy-tree--horizontal > .hierarchy-node-wrap {
+  min-width: 240px;
+}
+
+.hierarchy-node {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.hierarchy-children {
+  display: flex;
+  gap: 10px;
+}
+
+.hierarchy-children--vertical {
+  flex-direction: column;
+  padding-left: 24px;
+  border-left: 1px solid var(--stroke);
+}
+
+.hierarchy-children--horizontal {
+  align-items: flex-start;
+  padding-top: 10px;
+}
+
+.hierarchy-empty,
+.hierarchy-missing {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
