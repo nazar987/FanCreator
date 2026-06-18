@@ -37,6 +37,7 @@ export interface FanCreatorApi {
   }
   stories: {
     add(input: { projectId: string; title: string }): Promise<Project | null>
+    reorder(input: { projectId: string; order: string[] }): Promise<Project | null>
     update(input: {
       projectId: string
       storyId: string
@@ -67,7 +68,12 @@ export interface FanCreatorApi {
     delete(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     restore(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
     purge(input: { projectId: string; storyId: string; chapterId: string }): Promise<Project | null>
-    reorder(input: { projectId: string; storyId: string; order: string[] }): Promise<Project | null>
+    reorder(input: {
+      projectId: string
+      storyId: string
+      parentId?: string | null
+      order: string[]
+    }): Promise<Project | null>
     setParent(input: {
       projectId: string
       storyId: string
@@ -135,6 +141,12 @@ export interface FanCreatorApi {
     add(input: { projectId: string; hierarchyId: string; parentId: string | null; title: string }): Promise<Project | null>
     update(input: { projectId: string; hierarchyId: string; nodeId: string; title: string }): Promise<Project | null>
     delete(input: { projectId: string; hierarchyId: string; nodeId: string }): Promise<Project | null>
+    reorder(input: {
+      projectId: string
+      hierarchyId: string
+      parentId: string | null
+      order: string[]
+    }): Promise<Project | null>
   }
   timelineEvents: {
     add(input: { projectId: string; timelineId: string; title: string; parentId?: string | null }): Promise<Project | null>
@@ -148,6 +160,12 @@ export interface FanCreatorApi {
       projectId: string
       timelineId: string
       eventId: string
+    }): Promise<Project | null>
+    reorder(input: {
+      projectId: string
+      timelineId: string
+      parentId?: string | null
+      order: string[]
     }): Promise<Project | null>
   }
   assets: {

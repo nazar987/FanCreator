@@ -15,6 +15,7 @@ const api: FanCreatorApi = {
   },
   stories: {
     add: (input) => invoke('stories:add', input),
+    reorder: (input) => invoke('stories:reorder', input),
     update: (input) => invoke('stories:update', input),
     delete: (input) => invoke('stories:delete', input),
     restore: (input) => invoke('stories:restore', input),
@@ -63,12 +64,14 @@ const api: FanCreatorApi = {
   hierarchyNodes: {
     add: (input) => invoke('hierarchyNodes:add', input),
     update: (input) => invoke('hierarchyNodes:update', input),
-    delete: (input) => invoke('hierarchyNodes:delete', input)
+    delete: (input) => invoke('hierarchyNodes:delete', input),
+    reorder: (input) => invoke('hierarchyNodes:reorder', input)
   },
   timelineEvents: {
     add: (input) => invoke('timelineEvents:add', input),
     update: (input) => invoke('timelineEvents:update', input),
-    delete: (input) => invoke('timelineEvents:delete', input)
+    delete: (input) => invoke('timelineEvents:delete', input),
+    reorder: (input) => invoke('timelineEvents:reorder', input)
   },
   assets: {
     saveImage: (input) => invoke('assets:saveImage', input)

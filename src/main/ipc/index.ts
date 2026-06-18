@@ -132,6 +132,23 @@ export function registerIpc(): void {
     })
   )
 
+  ipcMain.handle('stories:reorder', (_e, { projectId, order }) =>
+    mutate(projectId, (p) => {
+      const byId = new Map(p.stories.map((story) => [story.id, story]))
+      const inOrder = new Set(order)
+      const reordered = order
+        .map((id: string, index: number) => {
+          const story = byId.get(id)
+          return story && !story.deletedAt ? { ...story, order: index } : null
+        })
+        .filter(Boolean) as Story[]
+      const rest = p.stories
+        .filter((story) => !inOrder.has(story.id))
+        .map((story, index) => ({ ...story, order: reordered.length + index }))
+      p.stories = [...reordered, ...rest]
+    })
+  )
+
   // Удаление = в корзину (мягко, п.30). Восстановление/окончательное удаление — отдельно.
   ipcMain.handle('stories:delete', (_e, { projectId, storyId }) =>
     mutate(projectId, (p) => {
@@ -259,21 +276,29 @@ export function registerIpc(): void {
     })
   )
 
-  ipcMain.handle('chapters:reorder', (_e, { projectId, storyId, order }) =>
+  ipcMain.handle('chapters:reorder', (_e, { projectId, storyId, parentId, order }) =>
     mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       if (!s) return
+      const parentKey = parentId ?? null
       const byId = new Map(s.chapters.map((c) => [c.id, c]))
       const reordered = order
         .map((id: string, i: number) => {
           const c = byId.get(id)
-          return c ? { ...c, order: i } : null
+          return c && !c.deletedAt && (c.parentId ?? null) === parentKey ? { ...c, order: i } : null
         })
         .filter(Boolean) as Chapter[]
-      // сохраняем главы из корзины, которых нет в order (мягко удалённые)
-      const inOrder = new Set(order)
-      const trashed = s.chapters.filter((c) => !inOrder.has(c.id))
-      s.chapters = [...reordered, ...trashed]
+      const byReorderedId = new Map(reordered.map((c) => [c.id, c]))
+      let nextOrder = reordered.length
+      s.chapters = s.chapters.map((c) => {
+        const replacement = byReorderedId.get(c.id)
+        if (replacement) return replacement
+        if (!c.deletedAt && (c.parentId ?? null) === parentKey) {
+          return { ...c, order: nextOrder++ }
+        }
+        return c
+      })
+      s.updatedAt = now()
     })
   )
 
@@ -502,6 +527,27 @@ export function registerIpc(): void {
     })
   )
 
+  ipcMain.handle('hierarchyNodes:reorder', (_e, { projectId, hierarchyId, parentId, order }) =>
+    mutate(projectId, (p) => {
+      const hierarchy = p.hierarchies?.find((item) => item.id === hierarchyId)
+      if (!hierarchy) return
+      const parentKey = parentId ?? null
+      const byId = new Map(hierarchy.nodes.map((node) => [node.id, node]))
+      const reordered = order
+        .map((id: string) => {
+          const node = byId.get(id)
+          return node && node.parentId === parentKey ? node : null
+        })
+        .filter(Boolean) as Hierarchy['nodes']
+      const inOrder = new Set(reordered.map((node) => node.id))
+      hierarchy.nodes = [
+        ...hierarchy.nodes.filter((node) => node.parentId !== parentKey),
+        ...reordered,
+        ...hierarchy.nodes.filter((node) => node.parentId === parentKey && !inOrder.has(node.id))
+      ]
+    })
+  )
+
   ipcMain.handle('timelineEvents:add', (_e, { projectId, timelineId, title, parentId }) =>
     mutate(projectId, (p) => {
       const timeline = p.timelines.find((item) => item.id === timelineId)
@@ -544,6 +590,29 @@ export function registerIpc(): void {
       timeline.events = timeline.events
         .filter((item) => !remove.has(item.id))
         .map((item, index) => ({ ...item, order: index }))
+    })
+  )
+
+  ipcMain.handle('timelineEvents:reorder', (_e, { projectId, timelineId, parentId, order }) =>
+    mutate(projectId, (p) => {
+      const timeline = p.timelines.find((item) => item.id === timelineId)
+      if (!timeline) return
+      const parentKey = parentId ?? null
+      const byId = new Map(timeline.events.map((item) => [item.id, item]))
+      const reordered = order
+        .map((id: string, index: number) => {
+          const event = byId.get(id)
+          return event && (event.parentId ?? null) === parentKey ? { ...event, order: index } : null
+        })
+        .filter(Boolean) as TimelineEvent[]
+      const byReorderedId = new Map(reordered.map((event) => [event.id, event]))
+      let nextOrder = reordered.length
+      timeline.events = timeline.events.map((event) => {
+        const replacement = byReorderedId.get(event.id)
+        if (replacement) return replacement
+        if ((event.parentId ?? null) === parentKey) return { ...event, order: nextOrder++ }
+        return event
+      })
     })
   )
 
