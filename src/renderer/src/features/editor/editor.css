@@ -193,6 +193,7 @@
   font-family: var(--font-serif);
   font-size: 16px;
   line-height: 1.7;
+  tab-size: 4; /* ширина табуляции (Tab как в Word) */
 }
 
 /* нумерация страниц от pagination-plus — приглушённый цвет на бумаге */

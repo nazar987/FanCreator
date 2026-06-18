@@ -70,16 +70,28 @@ export const ParagraphIndent = Extension.create({
 
   addKeyboardShortcuts() {
     return {
+      // Tab как в Word: в начале абзаца — красная строка; в середине — табуляция (\t).
       Tab: ({ editor }) => {
-        // в списках Tab должен делать вложенность — не перехватываем
-        if (editor.isActive('listItem')) return false
-        editor.commands.indent()
-        // всегда «съедаем» Tab, чтобы фокус не перескакивал по элементам страницы (#2)
-        return true
+        if (editor.isActive('listItem')) return false // списки: вложенность пунктов
+        const { selection } = editor.state
+        const atStart = selection.empty && selection.$from.parentOffset === 0
+        if (atStart) editor.commands.indent()
+        else editor.commands.insertContent('\t')
+        return true // всегда «съедаем» Tab — фокус не перескакивает (#2)
       },
       'Shift-Tab': ({ editor }) => {
         if (editor.isActive('listItem')) return false
-        editor.commands.outdent()
+        const { selection } = editor.state
+        const atStart = selection.empty && selection.$from.parentOffset === 0
+        if (atStart) {
+          editor.commands.outdent()
+          return true
+        }
+        // удалить предшествующую табуляцию, иначе уменьшить красную строку
+        const from = selection.from
+        const before = editor.state.doc.textBetween(Math.max(0, from - 1), from)
+        if (before === '\t') editor.commands.deleteRange({ from: from - 1, to: from })
+        else editor.commands.outdent()
         return true
       }
     }
