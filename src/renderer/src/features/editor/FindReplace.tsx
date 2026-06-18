@@ -42,6 +42,7 @@ export function FindReplace({
       const m = collectMatches(editor, q)
       setMatches(m)
       setIndex(0)
+      editor.commands.setSearch(q) // подсветка всех совпадений (#1)
       if (m[0]) editor.chain().setTextSelection(m[0]).scrollIntoView().run()
     },
     [editor]
@@ -52,10 +53,18 @@ export function FindReplace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
+  // снять подсветку при закрытии панели
+  React.useEffect(() => {
+    return () => {
+      editor.commands.setSearch('')
+    }
+  }, [editor])
+
   const go = (dir: 1 | -1): void => {
     if (!matches.length) return
     const next = (index + dir + matches.length) % matches.length
     setIndex(next)
+    editor.commands.setSearchCurrent(next)
     editor.chain().setTextSelection(matches[next]).scrollIntoView().run()
   }
 

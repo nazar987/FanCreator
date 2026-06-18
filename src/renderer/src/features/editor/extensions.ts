@@ -19,6 +19,7 @@ import { LineHeight } from './LineHeight'
 import { ParagraphIndent } from './ParagraphIndent'
 import { InternalLink } from './InternalLink'
 import { WikiLink } from './WikiLink'
+import { SearchHighlight } from './SearchHighlight'
 
 /** Размеры страницы A4 при 96 dpi. */
 export const A4 = {
@@ -32,6 +33,7 @@ export function buildExtensions(opts: {
   onOpenInternalLink: (chapterId: string) => void
 }): Extensions {
   return [
+    SearchHighlight,
     InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
     WikiLink,
     // StarterKit v3 уже включает Link и Underline — отдельно их не добавляем,
@@ -41,7 +43,9 @@ export function buildExtensions(opts: {
       link: { openOnClick: false, autolink: true }
     }),
     TextStyle,
-    FontFamily.configure({ types: ['textStyle'] }),
+    // включаем блоки, чтобы шрифт сохранялся при вставке из Word/Google Docs (#3),
+    // где font-family часто задан на абзаце, а не только на span
+    FontFamily.configure({ types: ['textStyle', 'paragraph', 'heading', 'listItem'] }),
     FontSize,
     LineHeight,
     ParagraphIndent,

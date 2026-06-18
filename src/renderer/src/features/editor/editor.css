@@ -113,6 +113,16 @@
   text-align: center;
 }
 
+/* подсветка совпадений поиска (#1) */
+.fc-search-hit {
+  background: rgba(255, 208, 0, 0.45);
+  border-radius: 2px;
+}
+.fc-search-hit--current {
+  background: #ff9f1a;
+  color: #1d1c1a;
+}
+
 /* ---------- Тело: оглавление + лист ---------- */
 .editor-body {
   flex: 1;
