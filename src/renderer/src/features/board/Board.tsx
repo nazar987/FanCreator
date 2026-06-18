@@ -136,6 +136,11 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     return `M ${x1} ${y1} C ${x1} ${y1 + bend * dir}, ${x2} ${y2 - bend * dir}, ${x2} ${y2}`
   }
 
+  const lineAngle = (x1: number, y1: number, x2: number, y2: number): number => {
+    const raw = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI
+    return raw > 90 || raw < -90 ? raw + 180 : raw
+  }
+
   const stickerAtWorld = (x: number, y: number): BoardSticker | undefined =>
     [...stickersRef.current]
       .reverse()
@@ -242,6 +247,11 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     if (el.closest('.board-sticker-menu, textarea, .board-resize-handle, .board-arrow-handle, .board-link-chip')) return
     e.preventDefault()
     e.stopPropagation()
+    setStickers((items) => {
+      const target = items.find((item) => item.id === s.id)
+      if (!target || items[items.length - 1]?.id === s.id) return items
+      return [...items.filter((item) => item.id !== s.id), target]
+    })
     setIsDragging(true)
     interaction.current = {
       mode: 'sticker',
@@ -610,6 +620,9 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
               const y2 = to.y + to.h / 2
               const isSel = arrow.id === selectedArrow
               const d = curvedPath(x1, y1, x2, y2)
+              const labelX = (x1 + x2) / 2
+              const labelY = (y1 + y2) / 2 - 8
+              const labelAngle = lineAngle(x1, y1, x2, y2)
               return (
                 <g key={arrow.id} className="board-arrow-g" onPointerDown={(e) => {
                   e.stopPropagation()
@@ -632,7 +645,12 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                     opacity={isSel ? 1 : 0.9}
                   />
                   {arrow.label && (
-                    <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 8} className="board-arrow-label">
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      className="board-arrow-label"
+                      transform={`rotate(${labelAngle} ${labelX} ${labelY})`}
+                    >
                       {arrow.label}
                     </text>
                   )}
