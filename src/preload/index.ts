@@ -13,9 +13,16 @@ const api: FanCreatorApi = {
     setCover: (input) => invoke('projects:setCover', input),
     pickCover: (input) => invoke('projects:pickCover', input)
   },
+  folders: {
+    add: (input) => invoke('folders:add', input),
+    rename: (input) => invoke('folders:rename', input),
+    move: (input) => invoke('folders:move', input),
+    delete: (input) => invoke('folders:delete', input)
+  },
   stories: {
     add: (input) => invoke('stories:add', input),
     reorder: (input) => invoke('stories:reorder', input),
+    setFolder: (input) => invoke('stories:setFolder', input),
     update: (input) => invoke('stories:update', input),
     delete: (input) => invoke('stories:delete', input),
     restore: (input) => invoke('stories:restore', input),

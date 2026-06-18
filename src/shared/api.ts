@@ -35,9 +35,20 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
     pickCover(input: { projectId: string }): Promise<Project | null>
   }
+  folders: {
+    add(input: { projectId: string; title: string; parentId?: string | null }): Promise<Project | null>
+    rename(input: { projectId: string; folderId: string; title: string }): Promise<Project | null>
+    move(input: { projectId: string; folderId: string; parentId: string | null }): Promise<Project | null>
+    delete(input: { projectId: string; folderId: string }): Promise<Project | null>
+  }
   stories: {
-    add(input: { projectId: string; title: string }): Promise<Project | null>
+    add(input: { projectId: string; title: string; folderId?: string | null }): Promise<Project | null>
     reorder(input: { projectId: string; order: string[] }): Promise<Project | null>
+    setFolder(input: {
+      projectId: string
+      storyId: string
+      folderId: string | null
+    }): Promise<Project | null>
     update(input: {
       projectId: string
       storyId: string

@@ -62,6 +62,7 @@ export function registerIpc(): void {
       theme: null,
       createdAt: now(),
       updatedAt: now(),
+      folders: [],
       stories: [],
       characters: [],
       boards: [],
@@ -106,10 +107,11 @@ export function registerIpc(): void {
   })
 
   // ---------- Stories ----------
-  ipcMain.handle('stories:add', (_e, { projectId, title }) =>
+  ipcMain.handle('stories:add', (_e, { projectId, title, folderId }) =>
     mutate(projectId, (p) => {
       const story: Story = {
         id: uid(),
+        folderId: folderId ?? null,
         title,
         coverPath: null,
         synopsis: '',
@@ -198,6 +200,50 @@ export function registerIpc(): void {
       if (s) s.coverPath = assetUrl(projectId, fileName)
     })
   })
+
+  // ---------- Folders (#10) ----------
+  ipcMain.handle('folders:add', (_e, { projectId, title, parentId }) =>
+    mutate(projectId, (p) => {
+      p.folders ??= []
+      p.folders.push({ id: uid(), parentId: parentId ?? null, title, order: p.folders.length })
+    })
+  )
+  ipcMain.handle('folders:rename', (_e, { projectId, folderId, title }) =>
+    mutate(projectId, (p) => {
+      const f = p.folders?.find((x) => x.id === folderId)
+      if (f) f.title = title
+    })
+  )
+  ipcMain.handle('folders:move', (_e, { projectId, folderId, parentId }) =>
+    mutate(projectId, (p) => {
+      const f = p.folders?.find((x) => x.id === folderId)
+      if (!f || folderId === parentId) return
+      // защита от цикла: нельзя вложить папку в собственного потомка
+      let cursor: string | null = parentId ?? null
+      while (cursor) {
+        if (cursor === folderId) return
+        cursor = p.folders.find((x) => x.id === cursor)?.parentId ?? null
+      }
+      f.parentId = parentId ?? null
+    })
+  )
+  ipcMain.handle('folders:delete', (_e, { projectId, folderId }) =>
+    mutate(projectId, (p) => {
+      const f = p.folders?.find((x) => x.id === folderId)
+      if (!f) return
+      const up = f.parentId ?? null
+      // подпапки и истории поднимаем к родителю — данные не теряем
+      for (const sub of p.folders) if (sub.parentId === folderId) sub.parentId = up
+      for (const s of p.stories) if (s.folderId === folderId) s.folderId = up
+      p.folders = p.folders.filter((x) => x.id !== folderId)
+    })
+  )
+  ipcMain.handle('stories:setFolder', (_e, { projectId, storyId, folderId }) =>
+    mutate(projectId, (p) => {
+      const s = p.stories.find((x) => x.id === storyId)
+      if (s) s.folderId = folderId ?? null
+    })
+  )
 
   // ---------- Chapters ----------
   ipcMain.handle('chapters:add', (_e, { projectId, storyId, title, parentId }) =>

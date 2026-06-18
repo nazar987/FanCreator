@@ -53,9 +53,19 @@ export interface Hierarchy {
   nodes: HierarchyNode[]
 }
 
+/** Папка для организации историй внутри проекта (#10). Может вкладываться в подпапки. */
+export interface Folder {
+  id: string
+  parentId: string | null
+  title: string
+  order: number
+}
+
 /** История внутри проекта. Может иметь обложку (п.19). */
 export interface Story {
   id: string
+  /** Папка, в которой лежит история (null/undefined — в корне проекта). */
+  folderId?: string | null
   title: string
   /** Путь к файлу обложки в формате asset://<projectId>/<file>. */
   coverPath: string | null
@@ -172,6 +182,7 @@ export interface Project {
   theme: ThemeName | null
   createdAt: number
   updatedAt: number
+  folders: Folder[]
   stories: Story[]
   characters: Character[]
   boards: Board[]

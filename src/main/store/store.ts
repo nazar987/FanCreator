@@ -60,9 +60,11 @@ export async function initStore(): Promise<void> {
 
 /** Приводит проект к актуальной схеме (поля, появившиеся в новых версиях). */
 function normalizeProject(project: Project): Project {
+  project.folders ??= []
   project.boards ??= []
   project.templates ??= []
   project.timelines ??= []
+  project.hierarchies ??= []
   normalizeBoardStickers(project)
   return project
 }
@@ -282,6 +284,7 @@ function normalizeLegacyProject(legacy: any): Project {
       createdAt: ch.createdAt ?? now(),
       updatedAt: ch.updatedAt ?? now()
     })),
+    folders: legacy.folders ?? [],
     boards: legacy.boards ?? [],
     templates: legacy.templates ?? [],
     timelines: (legacy.timelines ?? []).map((timeline: any) => ({
