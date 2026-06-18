@@ -73,11 +73,14 @@ export const ParagraphIndent = Extension.create({
       Tab: ({ editor }) => {
         // в списках Tab должен делать вложенность — не перехватываем
         if (editor.isActive('listItem')) return false
-        return editor.commands.indent()
+        editor.commands.indent()
+        // всегда «съедаем» Tab, чтобы фокус не перескакивал по элементам страницы (#2)
+        return true
       },
       'Shift-Tab': ({ editor }) => {
         if (editor.isActive('listItem')) return false
-        return editor.commands.outdent()
+        editor.commands.outdent()
+        return true
       }
     }
   }
