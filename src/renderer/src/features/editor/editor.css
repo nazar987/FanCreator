@@ -194,6 +194,7 @@
   font-size: 16px;
   line-height: 1.7;
   tab-size: 4; /* ширина табуляции (Tab как в Word) */
+  zoom: var(--page-zoom, 1); /* масштаб листа (S-7) */
 }
 
 /* нумерация страниц от pagination-plus — приглушённый цвет на бумаге */
@@ -364,6 +365,26 @@
 }
 .editor-status-sep {
   color: var(--text-faint);
+}
+.editor-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.editor-zoom button {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+.editor-zoom button:hover {
+  color: var(--text);
+  border-color: var(--stroke-strong);
 }
 
 /* ---------- Внутренние ссылки / подстраницы (п.14) ---------- */

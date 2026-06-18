@@ -97,6 +97,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const [showFind, setShowFind] = React.useState(false)
   const [pageCount, setPageCount] = React.useState(1)
   const [wordCount, setWordCount] = React.useState(chapter?.wordCount ?? 0)
+  const [zoom, setZoom] = React.useState(1) // масштаб листа (S-7)
   const [saved, setSaved] = React.useState(true)
   // S-P: оглавление главы (заголовки H1–H3)
   const [tocOpen, setTocOpen] = React.useState(false)
@@ -469,7 +470,15 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
             )}
           </aside>
         )}
-        <div className="editor-scroll">
+        <div
+          className="editor-scroll"
+          style={{ ['--page-zoom' as string]: zoom }}
+          onWheel={(e) => {
+            if (!e.ctrlKey) return
+            e.preventDefault()
+            setZoom((z) => Math.min(2, Math.max(0.5, +(z + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2))))
+          }}
+        >
           <EditorContent editor={editor} />
         </div>
       </div>
@@ -479,6 +488,18 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         <span className="editor-status-sep">·</span>
         <span>{pageCount} стр.</span>
         <span className="spacer" />
+        <span className="editor-zoom">
+          <button title="Уменьшить" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(2)))}>
+            −
+          </button>
+          <button title="Сбросить масштаб" onClick={() => setZoom(1)}>
+            {Math.round(zoom * 100)}%
+          </button>
+          <button title="Увеличить" onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}>
+            +
+          </button>
+        </span>
+        <span className="editor-status-sep">·</span>
         <span className="faint">{saved ? 'Сохранено' : 'Сохранение…'}</span>
       </div>
 
