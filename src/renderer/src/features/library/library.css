@@ -300,7 +300,68 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ---------- Материалы проекта (доски/таймлайны/иерархии) ---------- */
+/* ============================================================
+   Comfort pass — больше воздуха, мягче поверхности (удобство и комфорт)
+   ============================================================ */
+.library-workspace .shelf-inner { max-width: 1280px; padding: 38px 44px 96px; }
+.library-header { margin-bottom: 26px; }
+
+/* Сводка проекта — мягкие отдельные карточки вместо слитной полоски */
+.library-summary {
+  gap: 12px;
+  margin-bottom: 30px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.library-summary > div {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 132px;
+  padding: 13px 18px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow-sm);
+}
+.library-summary strong { font-size: 22px; font-weight: 800; line-height: 1.1; }
+
+.library-section { margin-bottom: 40px; }
+.library-section h2 { font-size: 15px; }
+
+.library-folder-grid { gap: 12px; }
+.library-folder-card { gap: 13px; padding: 14px; border-radius: var(--r-lg); }
+
+/* Карточки историй — просторнее и крупнее обложка */
+.library-story-grid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.library-story-card {
+  gap: 18px;
+  min-height: 190px;
+  padding: 16px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  border-radius: 18px;
+}
+.library-story-card:hover { box-shadow: var(--shadow-lg); }
+.library-story-cover { width: 120px; }
+.library-story-cover .cover { height: 178px; border-radius: 12px; }
+.library-story-heading > button { font-size: 16px; }
+.library-story-body p { margin: 10px 0 9px; font-size: 12.5px; line-height: 1.55; }
+.library-story-progress { height: 6px; border-radius: 3px; }
+.library-story-meta { margin-top: 9px; font-size: 11px; }
+
+/* Пикеры цвета на полке — спокойнее: появляются при наведении на карточку */
+.library-story-heading .color-palette-root,
+.library-folder-card .color-palette-root {
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.library-story-card:hover .color-palette-root,
+.library-folder-card:hover .color-palette-root,
+.color-palette-root:focus-within { opacity: 1; }
+
+/* ---------- Материалы проекта (доски/таймлайны) ---------- */
 .library-material-group { margin-bottom: 16px; }
 .library-material-head {
   display: flex;
@@ -318,7 +379,6 @@
 }
 .library-material-label--board { color: #5bb8e6; }
 .library-material-label--timeline { color: #f0b84b; }
-.library-material-label--hierarchy { color: #8b8cf0; }
 .library-material-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -344,7 +404,6 @@
 }
 .library-material-card--board { border-left-color: #5bb8e6; }
 .library-material-card--timeline { border-left-color: #f0b84b; }
-.library-material-card--hierarchy { border-left-color: #8b8cf0; }
 .library-material-icon { display: flex; color: var(--text-dim); }
 .library-material-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; }
 .library-material-del {

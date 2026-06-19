@@ -8,8 +8,7 @@ import {
   Users,
   LayoutDashboard,
   Clock3,
-  CircleHelp,
-  GitFork
+  CircleHelp
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -21,14 +20,6 @@ export function TabBar(): React.JSX.Element {
   const { tabs, activeTabId, setActiveTab, closeTab, openTab, current, applyProject } = useStore()
 
   const addMenu = (e: React.MouseEvent): void => {
-    const openHierarchy = (hierarchy: NonNullable<typeof current>['hierarchies'][number]): void =>
-      openTab({
-        id: `hierarchy:${hierarchy.id}`,
-        kind: 'hierarchy',
-        title: hierarchy.title,
-        hierarchyId: hierarchy.id
-      })
-
     const items: MenuItem[] = [
       {
         label: 'Библиотека',
@@ -96,22 +87,6 @@ export function TabBar(): React.JSX.Element {
             })
           }
         }
-      },
-      {
-        label: 'Новая иерархия',
-        icon: <GitFork size={15} />,
-        onClick: async () => {
-          if (!current) return
-          const title = await promptText({
-            title: 'Новая иерархия',
-            placeholder: 'Название иерархии'
-          })
-          if (!title) return
-          const project = await window.api.hierarchies.add({ projectId: current.id, title })
-          applyProject(project)
-          const hierarchy = project?.hierarchies[project.hierarchies.length - 1]
-          if (hierarchy) openHierarchy(hierarchy)
-        }
       }
     ]
     openContextMenu(e, items)
@@ -137,8 +112,6 @@ export function TabBar(): React.JSX.Element {
             <LayoutDashboard size={14} />
           ) : t.kind === 'timeline' ? (
             <Clock3 size={14} />
-          ) : t.kind === 'hierarchy' ? (
-            <GitFork size={14} />
           ) : (
             <FileText size={14} />
           )}

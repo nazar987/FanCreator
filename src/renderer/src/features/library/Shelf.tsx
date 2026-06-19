@@ -8,7 +8,6 @@ import {
   Search,
   LayoutDashboard,
   Clock3,
-  GitFork,
   Plus,
   Trash2
 } from 'lucide-react'
@@ -18,6 +17,7 @@ import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { CoverArt } from './CoverArt'
 import type { Folder, Story } from '@shared/types'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
+import { plural } from '../../shared/plural'
 
 type SortMode = 'updated' | 'title'
 
@@ -167,14 +167,6 @@ export function Shelf(): React.JSX.Element {
     const t = p?.timelines.at(-1)
     if (t) openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id })
   }
-  const addHierarchy = async (): Promise<void> => {
-    const title = await promptText({ title: 'Новая иерархия', placeholder: 'Название иерархии' })
-    if (!title) return
-    const p = await window.api.hierarchies.add({ projectId: current.id, title })
-    applyProject(p)
-    const h = p?.hierarchies.at(-1)
-    if (h) openTab({ id: `hierarchy:${h.id}`, kind: 'hierarchy', title: h.title, hierarchyId: h.id })
-  }
   const removeBoard = async (id: string, title: string): Promise<void> => {
     if (!(await confirmDialog({ title: `Удалить доску «${title}»?`, message: 'Все элементы и связи на доске будут удалены.', danger: true, confirmLabel: 'Удалить' }))) return
     applyProject(await window.api.boards.delete({ projectId: current.id, boardId: id }))
@@ -183,11 +175,6 @@ export function Shelf(): React.JSX.Element {
     if (!(await confirmDialog({ title: `Удалить таймлайн «${title}»?`, message: 'Все события таймлайна будут удалены.', danger: true, confirmLabel: 'Удалить' }))) return
     applyProject(await window.api.timelines.delete({ projectId: current.id, timelineId: id }))
   }
-  const removeHierarchy = async (id: string, title: string): Promise<void> => {
-    if (!(await confirmDialog({ title: `Удалить иерархию «${title}»?`, message: 'Все узлы иерархии будут удалены.', danger: true, confirmLabel: 'Удалить' }))) return
-    applyProject(await window.api.hierarchies.delete({ projectId: current.id, hierarchyId: id }))
-  }
-
   const totalWords = activeStories.reduce(
     (sum, story) => sum + story.chapters
       .filter((chapter) => !chapter.deletedAt)
@@ -214,9 +201,9 @@ export function Shelf(): React.JSX.Element {
         </header>
 
         <div className="library-summary">
-          <div><strong>{activeStories.length}</strong><span>историй</span></div>
-          <div><strong>{folders.length}</strong><span>папок</span></div>
-          <div><strong>{totalWords.toLocaleString('ru-RU')}</strong><span>слов</span></div>
+          <div><strong>{activeStories.length}</strong><span>{plural(activeStories.length, 'история', 'истории', 'историй')}</span></div>
+          <div><strong>{folders.length}</strong><span>{plural(folders.length, 'папка', 'папки', 'папок')}</span></div>
+          <div><strong>{totalWords.toLocaleString('ru-RU')}</strong><span>{plural(totalWords, 'слово', 'слова', 'слов')}</span></div>
         </div>
 
         <div className="library-controls">
@@ -255,7 +242,7 @@ export function Shelf(): React.JSX.Element {
                   </span>
                   <span className="library-folder-copy">
                     <strong>{folder.title}</strong>
-                    <small>{storyCountInFolder(folder.id)} историй</small>
+                    <small>{plural(storyCountInFolder(folder.id), 'история', 'истории', 'историй')}</small>
                   </span>
                   <ColorPalette value={folder.color ?? '#f0b84b'} title="Цвет папки" onChange={(color) => setFolderColor(folder, color)} />
                   <ChevronRight size={17} className="library-folder-arrow" />
@@ -294,8 +281,8 @@ export function Shelf(): React.JSX.Element {
                         <span style={{ width: `${chapters.length ? (done / chapters.length) * 100 : 0}%` }} />
                       </div>
                       <div className="library-story-meta">
-                        <span><BookOpen size={13} /> {chapters.length} глав · {done} готово</span>
-                        <span>{words.toLocaleString('ru-RU')} слов</span>
+                        <span><BookOpen size={13} /> {plural(chapters.length, 'глава', 'главы', 'глав')} · {done} готово</span>
+                        <span>{words.toLocaleString('ru-RU')} {plural(words, 'слово', 'слова', 'слов')}</span>
                       </div>
                     </div>
                   </article>
@@ -316,7 +303,7 @@ export function Shelf(): React.JSX.Element {
           <section className="library-section">
             <div className="library-section-head">
               <h2>Материалы проекта</h2>
-              <span>{current.boards.length + current.timelines.length + current.hierarchies.length}</span>
+              <span>{current.boards.length + current.timelines.length}</span>
             </div>
             <MaterialGroup
               label="Доски"
@@ -335,15 +322,6 @@ export function Shelf(): React.JSX.Element {
               onCreate={addTimeline}
               onOpen={(it) => openTab({ id: `timeline:${it.id}`, kind: 'timeline', title: it.title, timelineId: it.id })}
               onDelete={(it) => removeTimeline(it.id, it.title)}
-            />
-            <MaterialGroup
-              label="Иерархии"
-              tone="hierarchy"
-              icon={<GitFork size={15} />}
-              items={current.hierarchies.map((h) => ({ id: h.id, title: h.title }))}
-              onCreate={addHierarchy}
-              onOpen={(it) => openTab({ id: `hierarchy:${it.id}`, kind: 'hierarchy', title: it.title, hierarchyId: it.id })}
-              onDelete={(it) => removeHierarchy(it.id, it.title)}
             />
           </section>
         )}
@@ -367,7 +345,7 @@ function MaterialGroup({
   onDelete
 }: {
   label: string
-  tone: 'board' | 'timeline' | 'hierarchy'
+  tone: 'board' | 'timeline'
   icon: React.ReactNode
   items: MaterialItem[]
   onCreate: () => void

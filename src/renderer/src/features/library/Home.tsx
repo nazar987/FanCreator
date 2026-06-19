@@ -7,6 +7,7 @@ import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { ThemeSwitcher } from '../../app/ThemeSwitcher'
 import { CoverArt } from './CoverArt'
 import { startHelpTour } from '../help/HelpTour'
+import { plural } from '../../shared/plural'
 import type { ProjectSummary } from '@shared/types'
 
 export function Home(): React.JSX.Element {
@@ -120,7 +121,8 @@ export function Home(): React.JSX.Element {
                 <div>
                   <div className="book-title truncate">{p.title}</div>
                   <div className="book-meta">
-                    {p.storyCount} историй · {p.chapterCount} глав
+                    {plural(p.storyCount, 'история', 'истории', 'историй')} ·{' '}
+                    {plural(p.chapterCount, 'глава', 'главы', 'глав')}
                   </div>
                   <div style={{ marginTop: 6 }}>
                     <Hashtags tags={p.tags} />
