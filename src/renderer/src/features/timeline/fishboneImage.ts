@@ -21,15 +21,20 @@ const esc = (s: string): string =>
 
 const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 
-function buildSvg(title: string, events: TimelineEvent[]): { svg: string; width: number; height: number } {
+function buildSvg(
+  title: string,
+  events: TimelineEvent[],
+  childrenOf: (parentId: string) => TimelineEvent[]
+): { svg: string; width: number; height: number } {
   const STEP = 220
   const START_X = 90
-  const SPINE_Y = 210
-  const REACH = 140
+  const SPINE_Y = 240
+  const REACH = 150
   const NODE_W = 180
   const NODE_H = 64
-  const width = START_X + events.length * STEP + 260
-  const height = 420
+  const SUB_LEN = 60
+  const width = START_X + events.length * STEP + 300
+  const height = 500
   const endX = START_X + events.length * STEP + 40
 
   const bones = events
@@ -40,8 +45,21 @@ function buildSvg(title: string, events: TimelineEvent[]): { svg: string; width:
       const nodeCY = up ? SPINE_Y - REACH : SPINE_Y + REACH
       const nx = nodeCX - NODE_W / 2
       const ny = nodeCY - NODE_H / 2
+      // под-кости вдоль главной кости
+      const kids = childrenOf(ev.id)
+      const subs = kids
+        .map((kid, k) => {
+          const t = (k + 1) / (kids.length + 1)
+          const px = footX + t * (nodeCX - footX)
+          const py = SPINE_Y + t * (nodeCY - SPINE_Y)
+          return `
+        <line x1="${px}" y1="${py}" x2="${px + SUB_LEN}" y2="${py}" stroke="${C.edge}" stroke-width="1.5"/>
+        <text x="${px + SUB_LEN + 6}" y="${py + 4}" font-family="Manrope, sans-serif" font-size="12" fill="${C.dim}">${esc(clip(kid.title, 18))}</text>`
+        })
+        .join('')
       return `
         <line x1="${footX}" y1="${SPINE_Y}" x2="${nodeCX}" y2="${nodeCY}" stroke="${C.edge}" stroke-width="2"/>
+        ${subs}
         <rect x="${nx}" y="${ny}" width="${NODE_W}" height="${NODE_H}" rx="10" fill="${C.node}" stroke="${C.edge}"/>
         <circle cx="${nx}" cy="${ny}" r="11" fill="${C.accent}"/>
         <text x="${nx}" y="${ny + 4}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="12" font-weight="700" fill="#14161f">${i + 1}</text>
@@ -66,9 +84,10 @@ function buildSvg(title: string, events: TimelineEvent[]): { svg: string; width:
 
 export function buildFishboneImage(
   title: string,
-  events: TimelineEvent[]
+  events: TimelineEvent[],
+  childrenOf: (parentId: string) => TimelineEvent[] = () => []
 ): Promise<{ dataUrl: string; width: number; height: number }> {
-  const { svg, width, height } = buildSvg(title, events)
+  const { svg, width, height } = buildSvg(title, events, childrenOf)
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {

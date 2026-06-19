@@ -84,8 +84,80 @@
 }
 
 .hierarchy-children--horizontal {
+  position: relative;
   align-items: flex-start;
-  padding-top: 10px;
+  padding-top: 24px;
+}
+
+/* ============================================================
+   Соединители оргсхемы (S-9)
+   ============================================================ */
+
+/* --- Горизонтальная ориентация: классическая нисходящая оргсхема --- */
+/* родитель центрируется над блоком детей */
+.hierarchy-tree--horizontal .hierarchy-node-wrap {
+  align-items: center;
+}
+/* вертикаль от родителя вниз к горизонтальной шине детей */
+.hierarchy-children--horizontal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 24px;
+  border-left: 2px solid var(--stroke-strong);
+}
+/* каждый ребёнок: половинки горизонтальной шины + вертикальный стояк вниз к узлу */
+.hierarchy-children--horizontal > .hierarchy-node-group > * {
+  position: relative;
+  padding-top: 24px;
+}
+.hierarchy-children--horizontal > .hierarchy-node-group > *::before,
+.hierarchy-children--horizontal > .hierarchy-node-group > *::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 24px;
+  border-top: 2px solid var(--stroke-strong);
+}
+.hierarchy-children--horizontal > .hierarchy-node-group > *::after {
+  right: auto;
+  left: 50%;
+  border-left: 2px solid var(--stroke-strong);
+}
+/* единственный ребёнок — только прямой стояк (шину прячем) */
+.hierarchy-children--horizontal > .hierarchy-node-group > *:only-child {
+  padding-top: 24px;
+}
+.hierarchy-children--horizontal > .hierarchy-node-group > *:only-child::before,
+.hierarchy-children--horizontal > .hierarchy-node-group > *:only-child::after {
+  display: none;
+}
+/* края шины без выступов наружу */
+.hierarchy-children--horizontal > .hierarchy-node-group > *:first-child::before,
+.hierarchy-children--horizontal > .hierarchy-node-group > *:last-child::after {
+  border-top-color: transparent;
+}
+/* стояк для крайних детей и единственного — через отдельную вертикаль по центру шины */
+.hierarchy-children--horizontal > .hierarchy-node-group > *:last-child::before {
+  border-right: 2px solid var(--stroke-strong);
+}
+
+/* --- Вертикальная ориентация: отступ-гид + горизонтальные засечки к узлам --- */
+.hierarchy-children--vertical > .hierarchy-node-group > * {
+  position: relative;
+}
+.hierarchy-children--vertical > .hierarchy-node-group > *::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 22px;
+  width: 18px;
+  height: 0;
+  border-top: 1px solid var(--stroke);
 }
 
 .hierarchy-empty,

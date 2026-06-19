@@ -208,3 +208,41 @@
 .fishbone-node:hover .fishbone-node-del {
   opacity: 1;
 }
+
+/* под-кости (S-9): небольшие узлы-причины на главной кости */
+.fishbone-subnode {
+  position: absolute;
+  transform: translateY(-50%);
+  max-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+.fishbone-subnode:hover {
+  border-color: var(--accent);
+}
+.fishbone-subnode-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.fishbone-subnode-del {
+  display: flex;
+  border: none;
+  background: transparent;
+  color: #ff8a8a;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.fishbone-subnode:hover .fishbone-subnode-del {
+  opacity: 1;
+}

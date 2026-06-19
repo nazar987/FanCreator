@@ -26,26 +26,46 @@ interface TimelineEventCardProps {
   dragHandleProps?: DraggableProvidedDragHandleProps | null
 }
 
-/** Раскладка «рыбья кость» (Исикава): хребет + наклонные кости-события (S-C). */
+/** Раскладка «рыбья кость» (Исикава): хребет + наклонные кости-события + под-кости (S-C, S-9). */
 function Fishbone({
   title,
   events,
+  childrenOf,
   onEdit,
   onDelete
 }: {
   title: string
   events: TimelineEvent[]
+  childrenOf: (parentId: string) => TimelineEvent[]
   onEdit: (event: TimelineEvent) => void
   onDelete: (event: TimelineEvent) => Promise<void>
 }): React.JSX.Element {
-  const STEP = 200
+  const STEP = 220
   const START_X = 80
-  const SPINE_Y = 200
-  const REACH = 130
-  const BONE_DX = 34
+  const SPINE_Y = 220
+  const REACH = 150
+  const BONE_DX = 36
+  const SUB_LEN = 58 // длина горизонтальной под-кости
 
-  const width = START_X + events.length * STEP + 200
-  const height = 400
+  // геометрия каждой главной кости + её под-костей
+  const bones = events.map((event, i) => {
+    const footX = START_X + (i + 1) * STEP - STEP / 2
+    const up = i % 2 === 0
+    const nodeX = footX - BONE_DX
+    const nodeY = up ? SPINE_Y - REACH : SPINE_Y + REACH
+    const kids = childrenOf(event.id)
+    // точки крепления под-костей вдоль главной кости (между хребтом и узлом)
+    const subs = kids.map((kid, k) => {
+      const t = (k + 1) / (kids.length + 1)
+      const px = footX + t * (nodeX - footX)
+      const py = SPINE_Y + t * (nodeY - SPINE_Y)
+      return { kid, px, py }
+    })
+    return { event, i, footX, nodeX, nodeY, subs }
+  })
+
+  const width = START_X + events.length * STEP + 260
+  const height = 480
   const endX = START_X + events.length * STEP + 40
 
   return (
@@ -67,24 +87,30 @@ function Fishbone({
             strokeWidth="4"
             markerEnd="url(#fishbone-head)"
           />
-          {/* кости */}
-          {events.map((event, i) => {
-            const footX = START_X + (i + 1) * STEP - STEP / 2
-            const up = i % 2 === 0
-            const nodeX = footX - BONE_DX
-            const nodeY = up ? SPINE_Y - REACH : SPINE_Y + REACH
-            return (
+          {/* главные кости + под-кости */}
+          {bones.map((b) => (
+            <g key={b.event.id}>
               <line
-                key={event.id}
-                x1={footX}
+                x1={b.footX}
                 y1={SPINE_Y}
-                x2={nodeX}
-                y2={nodeY}
+                x2={b.nodeX}
+                y2={b.nodeY}
                 stroke="var(--stroke-strong)"
                 strokeWidth="2"
               />
-            )
-          })}
+              {b.subs.map((s) => (
+                <line
+                  key={s.kid.id}
+                  x1={s.px}
+                  y1={s.py}
+                  x2={s.px + SUB_LEN}
+                  y2={s.py}
+                  stroke="var(--stroke-strong)"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </g>
+          ))}
         </svg>
 
         {/* «голова рыбы» — цель/итог */}
@@ -92,36 +118,52 @@ function Fishbone({
           {title}
         </div>
 
-        {/* узлы-события */}
-        {events.map((event, i) => {
-          const footX = START_X + (i + 1) * STEP - STEP / 2
-          const up = i % 2 === 0
-          const nodeX = footX - BONE_DX
-          const nodeY = up ? SPINE_Y - REACH : SPINE_Y + REACH
-          return (
+        {/* узлы-события и под-события */}
+        {bones.map((b) => (
+          <React.Fragment key={b.event.id}>
             <div
-              key={event.id}
               className="fishbone-node"
-              style={{ left: nodeX, top: nodeY }}
-              title={event.note || undefined}
-              onClick={() => onEdit(event)}
+              style={{ left: b.nodeX, top: b.nodeY }}
+              title={b.event.note || undefined}
+              onClick={() => onEdit(b.event)}
             >
-              <div className="fishbone-node-order">{i + 1}</div>
-              <div className="fishbone-node-title truncate">{event.title}</div>
-              {event.note && <div className="fishbone-node-note">{event.note}</div>}
+              <div className="fishbone-node-order">{b.i + 1}</div>
+              <div className="fishbone-node-title truncate">{b.event.title}</div>
+              {b.event.note && <div className="fishbone-node-note">{b.event.note}</div>}
               <button
                 className="fishbone-node-del"
                 title="Удалить событие"
                 onClick={(e) => {
                   e.stopPropagation()
-                  void onDelete(event)
+                  void onDelete(b.event)
                 }}
               >
                 <Trash2 size={13} />
               </button>
             </div>
-          )
-        })}
+            {b.subs.map((s) => (
+              <div
+                key={s.kid.id}
+                className="fishbone-subnode"
+                style={{ left: s.px + SUB_LEN + 4, top: s.py }}
+                title={s.kid.note || undefined}
+                onClick={() => onEdit(s.kid)}
+              >
+                <span className="fishbone-subnode-title truncate">{s.kid.title}</span>
+                <button
+                  className="fishbone-subnode-del"
+                  title="Удалить под-событие"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void onDelete(s.kid)
+                  }}
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   )
@@ -334,7 +376,9 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
 
   const exportToBoard = async (e: React.MouseEvent): Promise<void> => {
     if (!current || topEvents.length === 0) return
-    const { dataUrl, width, height } = await buildFishboneImage(timeline.title, topEvents)
+    const { dataUrl, width, height } = await buildFishboneImage(timeline.title, topEvents, (parentId) =>
+      childEvents(parentId)
+    )
     const imagePath = await window.api.assets.saveImage({ projectId: current.id, dataUrl })
 
     const w = Math.min(560, width)
@@ -438,8 +482,8 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
         ) : (
           <Fishbone
             title={timeline.title}
-            // SENIOR: под-кости на схеме
             events={topEvents}
+            childrenOf={(parentId) => childEvents(parentId)}
             onEdit={async (event) => {
               const title = await promptText({ title: 'Событие', initial: event.title })
               if (title && title !== event.title) await updateEvent(event.id, { title })
