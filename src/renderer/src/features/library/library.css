@@ -629,3 +629,18 @@
   font-weight: 600;
   font-size: 14px;
 }
+
+/* T-D1: единая типографическая иерархия библиотеки */
+.home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
+.home-sub { font-size: var(--fs-body); }
+.library-summary strong { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.library-summary span,
+.book-meta,
+.library-story-body p { font-size: var(--fs-meta); }
+.library-section h2,
+.book-title,
+.library-story-heading > button { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.library-folder-copy strong,
+.library-material-title { font-size: var(--fs-body); font-weight: var(--fw-semibold); }
+.library-folder-copy small,
+.library-story-meta { font-size: var(--fs-caption); }

@@ -424,6 +424,12 @@
   height: 100%;
 }
 
+/* T-D1: заголовок и мета доски */
+.board-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.board-subtitle,
+.board-preview-sub { font-size: var(--fs-meta); }
+.board-preview-title { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+
 /* S-F: вики-карточка привязанной сущности */
 .board-link-chip {
   cursor: pointer;
@@ -469,3 +475,9 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* T-D1: типографика плавающей карточки */
+.board-preview-title { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.board-preview-kind { font-size: var(--fs-caption); }
+.board-preview-sub,
+.board-preview-note { font-size: var(--fs-meta); }

@@ -256,6 +256,15 @@
   cursor: pointer;
 }
 
+/* T-D1: единая типографическая иерархия персонажей */
+.characters-head .home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
+.characters-head .home-sub { font-size: var(--fs-body); }
+.characters-section h2,
+.character-templates-head h3 { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.location-panel-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.character-card-head,
+.character-template-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
+
 .character-template-fields {
   display: flex;
   flex-direction: column;

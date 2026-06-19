@@ -456,7 +456,7 @@ export function Characters(): React.JSX.Element {
       <div className="characters-inner">
         <div className="characters-head">
           <div>
-            <div className="home-title" style={{ fontSize: 24 }}>
+            <div className="home-title">
               Персонажи
             </div>
             <div className="home-sub">

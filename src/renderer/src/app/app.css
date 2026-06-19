@@ -258,3 +258,10 @@
   line-height: 1.6;
   margin: 0 0 24px;
 }
+
+/* T-D1: типографика каркаса приложения */
+.brand { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.tree-section-title { font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+.tree-row,
+.tree-chapter { font-size: var(--fs-body); }
+.welcome h1 { font-size: var(--fs-display); font-weight: var(--fw-bold); }

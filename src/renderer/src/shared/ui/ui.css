@@ -456,6 +456,18 @@
   color: var(--text-faint);
 }
 
+/* T-D1: базовая типографика UI-kit */
+.btn,
+.input,
+.ctx-item { font-size: var(--fs-body); }
+.btn { font-weight: var(--fw-semibold); }
+.btn--sm,
+.modal-control { font-size: var(--fs-meta); }
+.modal h3 { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.ctx-label,
+.color-palette-label { font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+
+
 /* ---------- Tooltip (простой через title в основном) ---------- */
 
 /* ---------- Анимации ---------- */

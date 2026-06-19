@@ -310,3 +310,11 @@
 .fishbone-subnode:hover .fishbone-subnode-del {
   opacity: 1;
 }
+
+/* T-D1: заголовки и мета таймлайна */
+.timeline-head .home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
+.timeline-event-title,
+.dendro-node-title,
+.fishbone-node-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
+.timeline-event-note,
+.fishbone-node-note { font-size: var(--fs-meta); }
