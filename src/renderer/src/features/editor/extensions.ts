@@ -20,6 +20,7 @@ import { ParagraphIndent } from './ParagraphIndent'
 import { InternalLink } from './InternalLink'
 import { WikiLink } from './WikiLink'
 import { SearchHighlight } from './SearchHighlight'
+import { WordDelete } from './WordDelete'
 
 /** Размеры страницы A4 при 96 dpi. */
 export const A4 = {
@@ -33,6 +34,7 @@ export function buildExtensions(opts: {
   onOpenInternalLink: (chapterId: string) => void
 }): Extensions {
   return [
+    WordDelete,
     SearchHighlight,
     InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
     WikiLink,
