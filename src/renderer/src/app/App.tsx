@@ -2,6 +2,7 @@ import React from 'react'
 import { useStore } from '../store/store'
 import { DialogHost } from '../shared/ui/dialogs'
 import { ContextMenuHost } from '../shared/ui/ContextMenu'
+import { CommandPalette } from '../shared/ui/CommandPalette'
 import { Sidebar } from './Sidebar'
 import { TabBar } from './TabBar'
 import { Home } from '../features/library/Home'
@@ -48,6 +49,7 @@ export function App(): React.JSX.Element {
         </>
       )}
 
+      <CommandPalette />
       <DialogHost />
       <ContextMenuHost />
       <HelpTour />
