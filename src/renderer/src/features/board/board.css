@@ -476,6 +476,12 @@
   overflow: hidden;
 }
 
+/* T-D3: стекло плавающего превью связи */
+.board-link-preview {
+  background: var(--glass-surface);
+  backdrop-filter: blur(16px) saturate(1.15);
+}
+
 /* T-D1: типографика плавающей карточки */
 .board-preview-title { font-size: var(--fs-title); font-weight: var(--fw-bold); }
 .board-preview-kind { font-size: var(--fs-caption); }

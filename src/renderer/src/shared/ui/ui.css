@@ -476,6 +476,20 @@
   border-color: color-mix(in srgb, var(--accent) 26%, var(--stroke));
 }
 
+/* T-D3: стекло используется только на оверлеях */
+.modal-overlay {
+  background: var(--glass-backdrop);
+  backdrop-filter: blur(16px) saturate(1.08);
+}
+.modal,
+.ctx-menu,
+.color-palette-panel {
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(16px) saturate(1.18);
+  border-color: color-mix(in srgb, var(--stroke-strong) 82%, white 6%);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 
 /* ---------- Tooltip (простой через title в основном) ---------- */
 

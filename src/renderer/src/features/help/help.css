@@ -24,6 +24,10 @@
   color: var(--text);
   box-shadow: var(--shadow-lg);
 }
+.help-tour-card {
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(16px) saturate(1.15);
+}
 
 .help-tour-count {
   margin-bottom: 8px;

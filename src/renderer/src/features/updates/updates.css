@@ -14,6 +14,10 @@
   font-size: 13.5px;
   animation: pop 0.18s var(--ease);
 }
+.update-banner {
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(16px) saturate(1.15);
+}
 .update-banner--ready {
   padding: 12px 14px;
   border-color: var(--accent);
