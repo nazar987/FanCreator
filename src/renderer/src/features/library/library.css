@@ -644,3 +644,24 @@
 .library-material-title { font-size: var(--fs-body); font-weight: var(--fw-semibold); }
 .library-folder-copy small,
 .library-story-meta { font-size: var(--fs-caption); }
+
+/* T-D2: единый ритм интерактивных карточек, без анимации при загрузке */
+.project-card,
+.library-story-card,
+.library-folder-card,
+.library-material-card,
+.book {
+  transition: transform var(--t-med), border-color var(--t-med), box-shadow var(--t-med), background var(--t-med);
+}
+.library-story-card,
+.library-folder-card { animation: none; }
+.project-card:hover,
+.library-story-card:hover,
+.library-folder-card:hover,
+.library-material-card:hover,
+.library-material-card:focus-visible,
+.book:hover {
+  transform: translateY(-4px);
+  border-color: var(--stroke-strong);
+  box-shadow: var(--shadow-lg), 0 0 24px -18px var(--accent-glow);
+}

@@ -265,3 +265,13 @@
 .tree-row,
 .tree-chapter { font-size: var(--fs-body); }
 .welcome h1 { font-size: var(--fs-display); font-weight: var(--fw-bold); }
+
+/* T-D2: тихая подсветка навигации без изменения геометрии */
+.tree-row:hover {
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--panel-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 4px 16px -14px var(--accent-glow);
+}
+.tree-row--active {
+  box-shadow: inset 2px 0 0 var(--accent), 0 5px 18px -15px var(--accent-glow);
+}

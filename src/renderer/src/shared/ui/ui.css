@@ -467,6 +467,15 @@
 .ctx-label,
 .color-palette-label { font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
 
+/* T-D2: мягкая обратная связь кнопок */
+.btn:hover:not(:disabled) {
+  box-shadow: 0 8px 20px -16px var(--accent-glow);
+}
+.btn--ghost:hover:not(:disabled),
+.btn--soft:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--stroke));
+}
+
 
 /* ---------- Tooltip (простой через title в основном) ---------- */
 
