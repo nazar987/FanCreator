@@ -6,8 +6,21 @@
 
 :root {
   /* типографика */
-  --font-ui: 'Manrope', 'Inter', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Lora', Georgia, serif;
+
+  /* единая шкала UI; типографика контента редактора управляется отдельно */
+  --fs-display: 2rem;
+  --fs-h1: 1.75rem;
+  --fs-h2: 1.25rem;
+  --fs-title: 0.9375rem;
+  --fs-body: 0.875rem;
+  --fs-meta: 0.75rem;
+  --fs-caption: 0.6875rem;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
 
   /* радиусы */
   --r-sm: 8px;
@@ -21,31 +34,71 @@
   --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 0 1px var(--accent-soft), 0 12px 40px -12px var(--accent-glow);
 
+  /* высоты (elevation) для слоистых поверхностей — S-D1 */
+  --elev-1: 0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  --elev-2: 0 12px 32px -12px rgba(0, 0, 0, 0.62);
+  --elev-3: 0 30px 70px -22px rgba(0, 0, 0, 0.72);
+  /* фокус-кольцо */
+  --ring: 0 0 0 2px var(--accent-glow);
+
+  /* Фоллбэки новых токенов S-D1 для тем, где они ещё не заданы явно (порт — T-D5).
+     var() резолвится лениво, поэтому подхватывает значения активной темы. */
+  --accent-hover: var(--accent);
+  --surface-0: var(--bg);
+  --surface-1: var(--panel-solid);
+  --surface-2: var(--panel-solid);
+  --surface-3: var(--panel-2);
+
   /* анимации */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --t-fast: 0.14s var(--ease);
   --t-med: 0.26s var(--ease);
+
+  /* полупрозрачные поверхности только для оверлеев */
+  --glass-surface: color-mix(in srgb, var(--panel-solid) 84%, transparent);
+  --glass-surface-strong: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  --glass-backdrop: rgba(4, 5, 10, 0.52);
 }
 
-/* ---------- Тёмная (по умолчанию) ---------- */
+/*
+  Семантическая шкала поверхностей (S-D1). Значения задаются в каждой теме:
+    --surface-0  — самый глубокий фон (стол)
+    --surface-1  — панели/сайдбар/таб-бар
+    --surface-2  — карточки
+    --surface-3  — приподнятые/активные элементы
+  Легаси-токены --panel / --panel-solid / --panel-2 теперь маппятся на эту шкалу,
+  поэтому глубину получает весь интерфейс без переписывания компонентов.
+*/
+
+/* ---------- Тёмная (по умолчанию) — прототип слоистых поверхностей S-D1 ---------- */
 :root,
 [data-theme='dark'] {
-  --bg: #0c0d13;
-  --bg-grad: radial-gradient(1200px 600px at 80% -10%, #1a1b2e 0%, transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, #161a2c 0%, transparent 55%), #0c0d13;
-  --panel: rgba(24, 26, 38, 0.72);
-  --panel-solid: #15171f;
-  --panel-2: rgba(34, 37, 54, 0.6);
-  --stroke: rgba(255, 255, 255, 0.08);
-  --stroke-strong: rgba(255, 255, 255, 0.16);
-  --text: #eef0f6;
-  --text-dim: #9aa0b4;
-  --text-faint: #6b7187;
-  --accent: #8b8cf0;
-  --accent-2: #b18cf0;
-  --accent-contrast: #0c0d13;
-  --accent-soft: rgba(139, 140, 240, 0.22);
-  --accent-glow: rgba(139, 140, 240, 0.5);
+  /* шкала глубины: стол → панели → карточки → активное */
+  --surface-0: #080a11;
+  --surface-1: #0e1320;
+  --surface-2: #141a2a;
+  --surface-3: #1e2740;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1200px 620px at 82% -12%, #1a1c33 0%, transparent 60%),
+    radial-gradient(950px 520px at -12% 112%, #141a2e 0%, transparent 55%), #080a11;
+  /* панели/сайдбар/таб-бар — полупрозрачный surface-1 под blur */
+  --panel: rgba(14, 19, 32, 0.74);
+  /* карточки — surface-2 */
+  --panel-solid: var(--surface-2);
+  /* приподнятое/hover — к surface-3 */
+  --panel-2: rgba(30, 39, 64, 0.55);
+  --stroke: rgba(255, 255, 255, 0.07);
+  --stroke-strong: rgba(255, 255, 255, 0.14);
+  --text: #eef1f8;
+  --text-dim: #9aa2ba;
+  --text-faint: #69708a;
+  --accent: #a78bfa;
+  --accent-hover: #b99dff;
+  --accent-2: #7c7af2;
+  --accent-contrast: #14101f;
+  --accent-soft: rgba(167, 139, 250, 0.18);
+  --accent-glow: rgba(167, 139, 250, 0.32);
   --paper: #f7f5ef;
   --paper-text: #1d1c1a;
 }
@@ -169,6 +222,8 @@ body,
 }
 body {
   font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
   color: var(--text);
   background: var(--bg);
   background-image: var(--bg-grad);
@@ -184,6 +239,17 @@ button {
 }
 a {
   color: var(--accent);
+}
+
+/* единое фокус-кольцо для клавиатурной навигации (S-D1) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Скроллбары */
@@ -203,4 +269,15 @@ a {
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
