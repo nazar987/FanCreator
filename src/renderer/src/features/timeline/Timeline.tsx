@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Trash2, List, GitFork, ImageDown, GripVertical } from 'lucide-react'
+import { Plus, Trash2, List, GitFork, Network, ImageDown, GripVertical } from 'lucide-react'
 import {
   DragDropContext,
   Draggable,
@@ -13,6 +13,7 @@ import { Button, Card, Input } from '../../shared/ui/components'
 import { confirmDialog, promptText } from '../../shared/ui/dialogs'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
 import { buildFishboneImage } from './fishboneImage'
+import { Dendrogram } from './Dendrogram'
 
 interface TimelineEventCardProps {
   event: TimelineEvent
@@ -251,7 +252,7 @@ function TimelineEventCard({
 export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Element {
   const { current, applyProject, openTab } = useStore()
   const timeline = current?.timelines.find((item) => item.id === timelineId)
-  const [view, setView] = React.useState<'list' | 'fishbone'>('list')
+  const [view, setView] = React.useState<'list' | 'fishbone' | 'dendro'>('list')
 
   if (!current || !timeline) {
     return <div className="timeline-missing dim">Таймлайн не найден</div>
@@ -459,6 +460,13 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
               >
                 <GitFork size={15} /> Рыбья кость
               </button>
+              <button
+                className={view === 'dendro' ? 'is-active' : ''}
+                onClick={() => setView('dendro')}
+                title="Дендрограмма (дерево, как турнирная сетка)"
+              >
+                <Network size={15} /> Дерево
+              </button>
             </div>
             {view === 'fishbone' && events.length > 0 && (
               <Button variant="soft" onClick={exportToBoard} title="Сохранить схему как элемент доски">
@@ -479,7 +487,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
           <DragDropContext onDragEnd={reorderEvents}>
             <div className="timeline-list">{renderEventGroup(null, 0)}</div>
           </DragDropContext>
-        ) : (
+        ) : view === 'fishbone' ? (
           <Fishbone
             title={timeline.title}
             events={topEvents}
@@ -489,6 +497,17 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
               if (title && title !== event.title) await updateEvent(event.id, { title })
             }}
             onDelete={deleteEvent}
+          />
+        ) : (
+          <Dendrogram
+            events={topEvents}
+            childrenOf={(parentId) => childEvents(parentId)}
+            onEdit={async (event) => {
+              const title = await promptText({ title: 'Событие', initial: event.title })
+              if (title && title !== event.title) await updateEvent(event.id, { title })
+            }}
+            onAddChild={(event) => void addEvent(event.id)}
+            onDelete={(event) => void deleteEvent(event)}
           />
         )}
       </div>

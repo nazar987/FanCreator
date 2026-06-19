@@ -8,36 +8,19 @@ import {
   Users,
   LayoutDashboard,
   Clock3,
-  Trash2,
   CircleHelp,
   GitFork
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
-import { confirmDialog, promptText } from '../shared/ui/dialogs'
+import { promptText } from '../shared/ui/dialogs'
 import { startHelpTour } from '../features/help/HelpTour'
 
 export function TabBar(): React.JSX.Element {
   const { tabs, activeTabId, setActiveTab, closeTab, openTab, current, applyProject } = useStore()
 
   const addMenu = (e: React.MouseEvent): void => {
-    const openBoard = (board: NonNullable<typeof current>['boards'][number]): void =>
-      openTab({
-        id: `board:${board.id}`,
-        kind: 'board',
-        title: board.title,
-        boardId: board.id
-      })
-
-    const openTimeline = (timeline: NonNullable<typeof current>['timelines'][number]): void =>
-      openTab({
-        id: `timeline:${timeline.id}`,
-        kind: 'timeline',
-        title: timeline.title,
-        timelineId: timeline.id
-      })
-
     const openHierarchy = (hierarchy: NonNullable<typeof current>['hierarchies'][number]): void =>
       openTab({
         id: `hierarchy:${hierarchy.id}`,
@@ -45,45 +28,6 @@ export function TabBar(): React.JSX.Element {
         title: hierarchy.title,
         hierarchyId: hierarchy.id
       })
-
-    const deleteBoard = async (board: NonNullable<typeof current>['boards'][number]): Promise<void> => {
-      if (!current) return
-      const ok = await confirmDialog({
-        title: `Удалить доску «${board.title}»?`,
-        message: 'Все элементы и связи на этой доске будут удалены.',
-        confirmLabel: 'Удалить',
-        danger: true
-      })
-      if (!ok) return
-      applyProject(await window.api.boards.delete({ projectId: current.id, boardId: board.id }))
-      closeTab(`board:${board.id}`)
-    }
-
-    const deleteTimeline = async (timeline: NonNullable<typeof current>['timelines'][number]): Promise<void> => {
-      if (!current) return
-      const ok = await confirmDialog({
-        title: `Удалить таймлайн «${timeline.title}»?`,
-        message: 'Все события этого таймлайна будут удалены.',
-        confirmLabel: 'Удалить',
-        danger: true
-      })
-      if (!ok) return
-      applyProject(await window.api.timelines.delete({ projectId: current.id, timelineId: timeline.id }))
-      closeTab(`timeline:${timeline.id}`)
-    }
-
-    const deleteHierarchy = async (hierarchy: NonNullable<typeof current>['hierarchies'][number]): Promise<void> => {
-      if (!current) return
-      const ok = await confirmDialog({
-        title: `Удалить иерархию «${hierarchy.title}»?`,
-        message: 'Все узлы этой иерархии будут удалены.',
-        confirmLabel: 'Удалить',
-        danger: true
-      })
-      if (!ok) return
-      applyProject(await window.api.hierarchies.delete({ projectId: current.id, hierarchyId: hierarchy.id }))
-      closeTab(`hierarchy:${hierarchy.id}`)
-    }
 
     const items: MenuItem[] = [
       {
@@ -168,49 +112,7 @@ export function TabBar(): React.JSX.Element {
           const hierarchy = project?.hierarchies[project.hierarchies.length - 1]
           if (hierarchy) openHierarchy(hierarchy)
         }
-      },
-      { type: 'label', label: 'Доски проекта' },
-      ...(current?.boards.map((board) => ({
-        label: board.title,
-        icon: <LayoutDashboard size={15} />,
-        submenu: [
-          { label: 'Открыть', icon: <LayoutDashboard size={15} />, onClick: () => openBoard(board) },
-          {
-            label: 'Удалить',
-            icon: <Trash2 size={15} />,
-            danger: true,
-            onClick: () => deleteBoard(board)
-          }
-        ]
-      })) ?? []),
-      { type: 'label', label: 'Таймлайны проекта' },
-      ...(current?.timelines.map((timeline) => ({
-        label: timeline.title,
-        icon: <Clock3 size={15} />,
-        submenu: [
-          { label: 'Открыть', icon: <Clock3 size={15} />, onClick: () => openTimeline(timeline) },
-          {
-            label: 'Удалить',
-            icon: <Trash2 size={15} />,
-            danger: true,
-            onClick: () => deleteTimeline(timeline)
-          }
-        ]
-      })) ?? []),
-      { type: 'label', label: 'Иерархии проекта' },
-      ...(current?.hierarchies.map((hierarchy) => ({
-        label: hierarchy.title,
-        icon: <GitFork size={15} />,
-        submenu: [
-          { label: 'Открыть', icon: <GitFork size={15} />, onClick: () => openHierarchy(hierarchy) },
-          {
-            label: 'Удалить',
-            icon: <Trash2 size={15} />,
-            danger: true,
-            onClick: () => deleteHierarchy(hierarchy)
-          }
-        ]
-      })) ?? [])
+      }
     ]
     openContextMenu(e, items)
   }

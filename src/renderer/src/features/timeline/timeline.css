@@ -125,6 +125,70 @@
   color: var(--text);
 }
 
+/* ---------- Дендрограмма (дерево / турнирная сетка) ---------- */
+.dendro-scroll {
+  overflow: auto;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+.dendro {
+  position: relative;
+  padding: 8px;
+}
+.dendro-svg {
+  position: absolute;
+  inset: 8px;
+  overflow: visible;
+}
+.dendro-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 54px;
+  padding: 8px 10px;
+  background: var(--panel-solid);
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+}
+.dendro-node:hover {
+  border-color: var(--accent);
+}
+.dendro-node-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.dendro-node-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.dendro-node:hover .dendro-node-actions {
+  opacity: 1;
+}
+.dendro-node-actions button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.dendro-node-actions button:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
 /* ---------- Рыбья кость (S-C) ---------- */
 .fishbone-scroll {
   overflow: auto;
