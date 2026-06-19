@@ -4,6 +4,7 @@ import type {
   Story,
   Chapter,
   Character,
+  CharacterFolder,
   CharacterTemplate,
   SearchResult,
   ChapterStatus,
@@ -100,11 +101,18 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
   }
   characters: {
-    add(input: { projectId: string; name: string }): Promise<Project | null>
+    add(input: { projectId: string; name: string; folderId?: string | null }): Promise<Project | null>
     update(input: {
       projectId: string
       characterId: string
-      patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId'>>
+      patch: Partial<
+        Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId' | 'folderId' | 'images'>
+      >
+    }): Promise<Project | null>
+    setFolder(input: {
+      projectId: string
+      characterId: string
+      folderId: string | null
     }): Promise<Project | null>
     delete(input: { projectId: string; characterId: string }): Promise<Project | null>
     /** Применить шаблон к группе. characterIds=null → ко всем привязанным к шаблону. */
@@ -113,6 +121,17 @@ export interface FanCreatorApi {
       templateId: string
       characterIds: string[] | null
     }): Promise<Project | null>
+  }
+  /** Папки/локации персонажей (#16): группировка + описание локации и концепт-арты. */
+  characterFolders: {
+    add(input: { projectId: string; title: string; parentId?: string | null }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      folderId: string
+      patch: Partial<Pick<CharacterFolder, 'title' | 'description' | 'color' | 'images'>>
+    }): Promise<Project | null>
+    move(input: { projectId: string; folderId: string; parentId: string | null }): Promise<Project | null>
+    delete(input: { projectId: string; folderId: string }): Promise<Project | null>
   }
   templates: {
     add(input: { projectId: string; name: string }): Promise<Project | null>

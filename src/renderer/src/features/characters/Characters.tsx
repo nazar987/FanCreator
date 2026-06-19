@@ -1,15 +1,36 @@
 import React from 'react'
-import { ClipboardList, Plus, Trash2, UserRound } from 'lucide-react'
-import type { Character, CharacterField, CharacterTemplate, Project } from '@shared/types'
+import { ChevronRight, ClipboardList, Folder as FolderIcon, FolderPlus, Plus, Trash2, UserRound } from 'lucide-react'
+import type { Character, CharacterField, CharacterFolder, CharacterTemplate, Project } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
 import { confirmDialog, promptText } from '../../shared/ui/dialogs'
 import { TagEditor } from '../../shared/ui/TagEditor'
+import { ColorPalette } from '../../shared/ui/ColorPalette'
+import { AutoTextarea } from '../../shared/ui/AutoTextarea'
+import { ImageStrip } from '../../shared/ui/ImageStrip'
+import { plural } from '../../shared/plural'
+
+/** Плоский список папок с отступами по глубине — для выпадающего «переместить». */
+function flattenFolders(folders: CharacterFolder[]): { folder: CharacterFolder; depth: number }[] {
+  const out: { folder: CharacterFolder; depth: number }[] = []
+  const walk = (parentId: string | null, depth: number): void => {
+    folders
+      .filter((f) => (f.parentId ?? null) === parentId)
+      .sort((a, b) => a.order - b.order)
+      .forEach((folder) => {
+        out.push({ folder, depth })
+        walk(folder.id, depth + 1)
+      })
+  }
+  walk(null, 0)
+  return out
+}
 
 interface CharacterCardProps {
   character: Character
   projectId: string
   templates: CharacterTemplate[]
+  folderOptions: { folder: CharacterFolder; depth: number }[]
   selected: boolean
   onToggleSelect: () => void
   onProjectChange: (project: Project | null) => void
@@ -19,6 +40,7 @@ function CharacterCard({
   character,
   projectId,
   templates,
+  folderOptions,
   selected,
   onToggleSelect,
   onProjectChange
@@ -41,15 +63,13 @@ function CharacterCard({
   }, [templates])
 
   const update = async (
-    patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields'>>
+    patch: Partial<Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'images'>>
   ): Promise<void> => {
-    onProjectChange(
-      await window.api.characters.update({
-        projectId,
-        characterId: character.id,
-        patch
-      })
-    )
+    onProjectChange(await window.api.characters.update({ projectId, characterId: character.id, patch }))
+  }
+
+  const setFolder = async (folderId: string | null): Promise<void> => {
+    onProjectChange(await window.api.characters.setFolder({ projectId, characterId: character.id, folderId }))
   }
 
   const updateField = (fieldId: string, patch: Partial<CharacterField>): void => {
@@ -59,10 +79,7 @@ function CharacterCard({
   }
 
   const addField = async (): Promise<void> => {
-    const label = await promptText({
-      title: 'Название характеристики',
-      placeholder: 'Например, биография'
-    })
+    const label = await promptText({ title: 'Название характеристики', placeholder: 'Например, биография' })
     if (!label) return
     const next = [...fields, { id: crypto.randomUUID(), label, value: '' }]
     setFields(next)
@@ -115,13 +132,7 @@ function CharacterCard({
             <UserRound size={24} />
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          icon
-          title="Удалить персонажа"
-          onClick={removeCharacter}
-        >
+        <Button variant="ghost" size="sm" icon title="Удалить персонажа" onClick={removeCharacter}>
           <Trash2 size={16} />
         </Button>
       </div>
@@ -169,12 +180,35 @@ function CharacterCard({
         />
       </label>
 
+      <label className="character-control">
+        <span>Папка / локация</span>
+        <select
+          className="input"
+          value={character.folderId ?? ''}
+          onChange={(event) => setFolder(event.target.value || null)}
+        >
+          <option value="">Без папки</option>
+          {folderOptions.map(({ folder, depth }) => (
+            <option key={folder.id} value={folder.id}>
+              {'— '.repeat(depth)}
+              {folder.title}
+            </option>
+          ))}
+        </select>
+      </label>
+
       <div className="character-control">
         <span>Теги</span>
-        <TagEditor
-          tags={character.tags}
-          placeholder="Добавить тег"
-          onChange={(tags) => update({ tags })}
+        <TagEditor tags={character.tags} placeholder="Добавить тег" onChange={(tags) => update({ tags })} />
+      </div>
+
+      <div className="character-control">
+        <span>Наброски / концепт-арт</span>
+        <ImageStrip
+          projectId={projectId}
+          images={character.images ?? []}
+          onChange={(images) => update({ images })}
+          emptyHint="Перетащите картинку или нажмите «Добавить»."
         />
       </div>
 
@@ -198,7 +232,7 @@ function CharacterCard({
                 <Trash2 size={15} />
               </Button>
             </div>
-            <textarea
+            <AutoTextarea
               className="input character-field-value"
               value={field.value}
               placeholder="Описание"
@@ -216,18 +250,88 @@ function CharacterCard({
   )
 }
 
+interface LocationPanelProps {
+  folder: CharacterFolder
+  projectId: string
+  onProjectChange: (project: Project | null) => void
+  onDelete: () => void
+}
+
+/** Карточка локации: описание + концепт-арты для папки персонажей. */
+function LocationPanel({ folder, projectId, onProjectChange, onDelete }: LocationPanelProps): React.JSX.Element {
+  const [description, setDescription] = React.useState(folder.description ?? '')
+
+  React.useEffect(() => {
+    setDescription(folder.description ?? '')
+  }, [folder.id, folder.description])
+
+  const patch = async (
+    next: Partial<Pick<CharacterFolder, 'title' | 'description' | 'color' | 'images'>>
+  ): Promise<void> => {
+    onProjectChange(await window.api.characterFolders.update({ projectId, folderId: folder.id, patch: next }))
+  }
+
+  const rename = async (): Promise<void> => {
+    const title = await promptText({ title: 'Переименовать папку', initial: folder.title })
+    if (!title || title === folder.title) return
+    await patch({ title })
+  }
+
+  return (
+    <Card className="location-panel">
+      <div className="location-panel-head">
+        <span className="location-panel-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
+          <FolderIcon size={22} fill="currentColor" />
+        </span>
+        <button className="location-panel-title" onClick={rename} title="Переименовать">
+          {folder.title}
+        </button>
+        <ColorPalette
+          value={folder.color ?? '#7aa2f7'}
+          title="Цвет папки"
+          onChange={(color) => patch({ color })}
+        />
+        <Button variant="ghost" size="sm" icon title="Удалить папку" onClick={onDelete}>
+          <Trash2 size={16} />
+        </Button>
+      </div>
+
+      <label className="character-control">
+        <span>Описание локации</span>
+        <AutoTextarea
+          className="input"
+          value={description}
+          placeholder="Опишите регион, атмосферу, особенности…"
+          onChange={(event) => setDescription(event.target.value)}
+          onBlur={() => {
+            if (description !== (folder.description ?? '')) patch({ description })
+          }}
+        />
+      </label>
+
+      <div className="character-control">
+        <span>Концепт-арты локации</span>
+        <ImageStrip
+          projectId={projectId}
+          images={folder.images ?? []}
+          onChange={(images) => patch({ images })}
+          emptyHint="Атмосферные референсы, карты, скетчи локации."
+        />
+      </div>
+    </Card>
+  )
+}
+
 export function Characters(): React.JSX.Element {
   const { current, applyProject } = useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
+  const [folderId, setFolderId] = React.useState<string | null>(null)
 
-  // держим groupTemplateId валидным и сбрасываем выбор от удалённых персонажей
   React.useEffect(() => {
     const templates = current?.templates ?? []
-    setGroupTemplateId((cur) =>
-      templates.some((t) => t.id === cur) ? cur : templates[0]?.id ?? ''
-    )
+    setGroupTemplateId((cur) => (templates.some((t) => t.id === cur) ? cur : templates[0]?.id ?? ''))
   }, [current?.templates])
 
   React.useEffect(() => {
@@ -238,10 +342,84 @@ export function Characters(): React.JSX.Element {
     })
   }, [current?.characters])
 
+  // если текущая папка удалена — возвращаемся в корень
+  React.useEffect(() => {
+    const folders = current?.characterFolders ?? []
+    if (folderId && !folders.some((f) => f.id === folderId)) setFolderId(null)
+  }, [current?.characterFolders, folderId])
+
   if (!current) return <div />
 
+  const folders = current.characterFolders ?? []
+  const selectedFolder = folders.find((f) => f.id === folderId) ?? null
+  const childFolders = folders
+    .filter((f) => (f.parentId ?? null) === folderId)
+    .sort((a, b) => a.order - b.order)
+  const folderCharacters = current.characters.filter((c) => (c.folderId ?? null) === folderId)
+  const flatFolders = flattenFolders(folders)
+
+  const folderPath = (): CharacterFolder[] => {
+    const path: CharacterFolder[] = []
+    const visited = new Set<string>()
+    let cursor = selectedFolder
+    while (cursor && !visited.has(cursor.id)) {
+      visited.add(cursor.id)
+      path.unshift(cursor)
+      cursor = folders.find((f) => f.id === cursor?.parentId) ?? null
+    }
+    return path
+  }
+
+  const descendantIds = (rootId: string): Set<string> => {
+    const ids = new Set<string>([rootId])
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const folder of folders) {
+        if (folder.parentId && ids.has(folder.parentId) && !ids.has(folder.id)) {
+          ids.add(folder.id)
+          changed = true
+        }
+      }
+    }
+    return ids
+  }
+
+  const charCountInFolder = (id: string): number => {
+    const ids = descendantIds(id)
+    return current.characters.filter((c) => c.folderId && ids.has(c.folderId)).length
+  }
+
   const addCharacter = async (): Promise<void> => {
-    applyProject(await window.api.characters.add({ projectId: current.id, name: 'Новый персонаж' }))
+    applyProject(
+      await window.api.characters.add({ projectId: current.id, name: 'Новый персонаж', folderId })
+    )
+  }
+
+  const addFolder = async (): Promise<void> => {
+    const title = await promptText({
+      title: selectedFolder ? 'Новая подпапка' : 'Новая папка / локация',
+      placeholder: 'Например, Мордор'
+    })
+    if (!title) return
+    applyProject(
+      await window.api.characterFolders.add({ projectId: current.id, title, parentId: folderId })
+    )
+  }
+
+  const deleteFolder = async (folder: CharacterFolder): Promise<void> => {
+    if (
+      !(await confirmDialog({
+        title: `Удалить папку «${folder.title}»?`,
+        message: 'Персонажи и подпапки внутри переместятся на уровень выше — данные не пропадут.',
+        danger: true,
+        confirmLabel: 'Удалить'
+      }))
+    )
+      return
+    const parent = folder.parentId ?? null
+    applyProject(await window.api.characterFolders.delete({ projectId: current.id, folderId: folder.id }))
+    setFolderId(parent)
   }
 
   const toggleSelect = (id: string): void =>
@@ -251,9 +429,15 @@ export function Characters(): React.JSX.Element {
       return next
     })
 
-  const allSelected = current.characters.length > 0 && selected.size === current.characters.length
+  const visibleIds = folderCharacters.map((c) => c.id)
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))
   const toggleAll = (): void =>
-    setSelected(allSelected ? new Set() : new Set(current.characters.map((c) => c.id)))
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach((id) => next.delete(id))
+      else visibleIds.forEach((id) => next.add(id))
+      return next
+    })
 
   const applyToSelected = async (): Promise<void> => {
     if (!groupTemplateId || selected.size === 0) return
@@ -275,11 +459,17 @@ export function Characters(): React.JSX.Element {
             <div className="home-title" style={{ fontSize: 24 }}>
               Персонажи
             </div>
-            <div className="home-sub">{current.characters.length} персонажей в проекте</div>
+            <div className="home-sub">
+              {plural(current.characters.length, 'персонаж', 'персонажа', 'персонажей')} ·{' '}
+              {plural(folders.length, 'папка', 'папки', 'папок')}
+            </div>
           </div>
           <div className="row">
             <Button variant="soft" onClick={() => setTemplatesOpen(true)}>
               <ClipboardList size={17} /> Шаблоны
+            </Button>
+            <Button variant="soft" onClick={addFolder}>
+              <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
             </Button>
             <Button variant="primary" onClick={addCharacter}>
               <Plus size={17} /> Добавить персонажа
@@ -287,21 +477,73 @@ export function Characters(): React.JSX.Element {
           </div>
         </div>
 
-        {current.characters.length > 0 && (
+        <div className="library-breadcrumbs characters-breadcrumbs" aria-label="Путь к папке">
+          <button className={!selectedFolder ? 'is-current' : ''} onClick={() => setFolderId(null)}>
+            Все персонажи
+          </button>
+          {folderPath().map((folder, index, path) => (
+            <React.Fragment key={folder.id}>
+              <ChevronRight size={14} />
+              <button
+                className={index === path.length - 1 ? 'is-current' : ''}
+                onClick={() => setFolderId(folder.id)}
+              >
+                {folder.title}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+
+        {selectedFolder && (
+          <LocationPanel
+            key={selectedFolder.id}
+            folder={selectedFolder}
+            projectId={current.id}
+            onProjectChange={applyProject}
+            onDelete={() => deleteFolder(selectedFolder)}
+          />
+        )}
+
+        {childFolders.length > 0 && (
+          <section className="characters-section">
+            <h2>{selectedFolder ? 'Подпапки' : 'Папки / локации'}</h2>
+            <div className="library-folder-grid">
+              {childFolders.map((folder) => (
+                <div
+                  className="library-folder-card"
+                  role="button"
+                  tabIndex={0}
+                  key={folder.id}
+                  onClick={() => setFolderId(folder.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
+                  }}
+                >
+                  <span className="library-folder-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
+                    <FolderIcon size={30} fill="currentColor" />
+                  </span>
+                  <span className="library-folder-copy">
+                    <strong>{folder.title}</strong>
+                    <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
+                  </span>
+                  <ChevronRight size={17} className="library-folder-arrow" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {folderCharacters.length > 0 && (
           <div className="characters-selectbar">
-            <label className="character-select" title="Выбрать всех персонажей">
+            <label className="character-select" title="Выбрать персонажей этой папки">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} />
               <span>Выбрать всех</span>
             </label>
             <div className="characters-select-state">
               <strong>{selected.size > 0 ? `Выбрано: ${selected.size}` : 'Ничего не выбрано'}</strong>
-              <span className="dim">
-                Выбор нужен, чтобы применить шаблон анкеты сразу к нескольким персонажам.
-              </span>
+              <span className="dim">Выбор нужен, чтобы применить шаблон анкеты сразу к нескольким.</span>
               {current.templates.length === 0 && (
-                <span className="dim">
-                  Создайте шаблон во вкладке «Шаблоны», чтобы применять к группе.
-                </span>
+                <span className="dim">Создайте шаблон во вкладке «Шаблоны», чтобы применять к группе.</span>
               )}
             </div>
             <div className="characters-select-actions">
@@ -310,7 +552,6 @@ export function Characters(): React.JSX.Element {
                 value={groupTemplateId}
                 onChange={(e) => setGroupTemplateId(e.target.value)}
                 disabled={current.templates.length === 0}
-                title={current.templates.length === 0 ? 'Сначала создайте шаблон анкеты' : 'Шаблон для выбранных персонажей'}
               >
                 {current.templates.length === 0 ? (
                   <option value="">Нет шаблонов</option>
@@ -327,40 +568,33 @@ export function Characters(): React.JSX.Element {
                 size="sm"
                 onClick={applyToSelected}
                 disabled={selected.size === 0 || current.templates.length === 0}
-                title={
-                  current.templates.length === 0
-                    ? 'Сначала создайте шаблон анкеты'
-                    : selected.size === 0
-                      ? 'Выберите хотя бы одного персонажа'
-                      : 'Применить шаблон к выбранным персонажам'
-                }
               >
                 <ClipboardList size={15} /> Применить к выбранным
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelected(new Set())}
-                disabled={selected.size === 0}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
                 Снять
               </Button>
             </div>
           </div>
         )}
 
-        {current.characters.length === 0 ? (
+        {folderCharacters.length === 0 ? (
           <div className="dim characters-empty">
-            В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.
+            {selectedFolder
+              ? 'В этой папке пока нет персонажей. Добавьте первого кнопкой «Добавить персонажа».'
+              : childFolders.length > 0
+                ? 'Персонажи без папки появятся здесь. Откройте папку слева, чтобы увидеть её героев.'
+                : 'В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.'}
           </div>
         ) : (
           <div className="characters-grid">
-            {current.characters.map((character) => (
+            {folderCharacters.map((character) => (
               <CharacterCard
                 key={character.id}
                 character={character}
                 projectId={current.id}
                 templates={current.templates}
+                folderOptions={flatFolders}
                 selected={selected.has(character.id)}
                 onToggleSelect={() => toggleSelect(character.id)}
                 onProjectChange={applyProject}
@@ -399,11 +633,7 @@ function TemplateManager({
 }: TemplateManagerProps): React.JSX.Element {
   const propagate = async (template: CharacterTemplate): Promise<void> => {
     onProjectChange(
-      await window.api.characters.applyTemplate({
-        projectId,
-        templateId: template.id,
-        characterIds: null
-      })
+      await window.api.characters.applyTemplate({ projectId, templateId: template.id, characterIds: null })
     )
   }
 
@@ -416,35 +646,18 @@ function TemplateManager({
   const renameTemplate = async (template: CharacterTemplate): Promise<void> => {
     const name = await promptText({ title: 'Переименовать шаблон', initial: template.name })
     if (!name || name === template.name) return
-    onProjectChange(
-      await window.api.templates.update({
-        projectId,
-        templateId: template.id,
-        patch: { name }
-      })
-    )
+    onProjectChange(await window.api.templates.update({ projectId, templateId: template.id, patch: { name } }))
   }
 
   const deleteTemplate = async (template: CharacterTemplate): Promise<void> => {
-    const ok = await confirmDialog({
-      title: `Удалить шаблон «${template.name}»?`,
-      danger: true,
-      confirmLabel: 'Удалить'
-    })
+    const ok = await confirmDialog({ title: `Удалить шаблон «${template.name}»?`, danger: true, confirmLabel: 'Удалить' })
     if (!ok) return
     onProjectChange(await window.api.templates.delete({ projectId, templateId: template.id }))
   }
 
-  const updateLabels = async (
-    template: CharacterTemplate,
-    fieldLabels: string[]
-  ): Promise<void> => {
+  const updateLabels = async (template: CharacterTemplate, fieldLabels: string[]): Promise<void> => {
     onProjectChange(
-      await window.api.templates.update({
-        projectId,
-        templateId: template.id,
-        patch: { fieldLabels }
-      })
+      await window.api.templates.update({ projectId, templateId: template.id, patch: { fieldLabels } })
     )
   }
 
@@ -474,13 +687,7 @@ function TemplateManager({
               <Card className="character-template-card" key={template.id}>
                 <div className="character-template-title">
                   <button onClick={() => renameTemplate(template)}>{template.name}</button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon
-                    title="Удалить шаблон"
-                    onClick={() => deleteTemplate(template)}
-                  >
+                  <Button variant="ghost" size="sm" icon title="Удалить шаблон" onClick={() => deleteTemplate(template)}>
                     <Trash2 size={15} />
                   </Button>
                 </div>
@@ -501,12 +708,7 @@ function TemplateManager({
                         size="sm"
                         icon
                         title="Удалить поле"
-                        onClick={() =>
-                          updateLabels(
-                            template,
-                            template.fieldLabels.filter((_, i) => i !== index)
-                          )
-                        }
+                        onClick={() => updateLabels(template, template.fieldLabels.filter((_, i) => i !== index))}
                       >
                         <Trash2 size={15} />
                       </Button>

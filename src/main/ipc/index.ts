@@ -8,6 +8,7 @@ import type {
   Story,
   Chapter,
   Character,
+  CharacterFolder,
   SearchResult,
   Board,
   CharacterTemplate,
@@ -65,6 +66,7 @@ export function registerIpc(): void {
       folders: [],
       stories: [],
       characters: [],
+      characterFolders: [],
       boards: [],
       templates: [],
       timelines: [],
@@ -379,7 +381,7 @@ export function registerIpc(): void {
   )
 
   // ---------- Characters ----------
-  ipcMain.handle('characters:add', (_e, { projectId, name }) =>
+  ipcMain.handle('characters:add', (_e, { projectId, name, folderId }) =>
     mutate(projectId, (p) => {
       const character: Character = {
         id: uid(),
@@ -389,10 +391,22 @@ export function registerIpc(): void {
         templateId: null,
         fields: [],
         avatarPath: null,
+        folderId: folderId ?? null,
+        images: [],
         createdAt: now(),
         updatedAt: now()
       }
       p.characters.push(character)
+    })
+  )
+
+  ipcMain.handle('characters:setFolder', (_e, { projectId, characterId, folderId }) =>
+    mutate(projectId, (p) => {
+      const ch = p.characters.find((c) => c.id === characterId)
+      if (ch) {
+        ch.folderId = folderId ?? null
+        ch.updatedAt = now()
+      }
     })
   )
 
@@ -429,6 +443,52 @@ export function registerIpc(): void {
         ch.templateId = templateId
         ch.updatedAt = now()
       }
+    })
+  )
+
+  // ---------- Character folders / локации ----------
+  ipcMain.handle('characterFolders:add', (_e, { projectId, title, parentId }) =>
+    mutate(projectId, (p) => {
+      p.characterFolders ??= []
+      const folder: CharacterFolder = {
+        id: uid(),
+        parentId: parentId ?? null,
+        title,
+        description: '',
+        color: '#7aa2f7',
+        images: [],
+        order: p.characterFolders.length
+      }
+      p.characterFolders.push(folder)
+    })
+  )
+  ipcMain.handle('characterFolders:update', (_e, { projectId, folderId, patch }) =>
+    mutate(projectId, (p) => {
+      const f = p.characterFolders?.find((x) => x.id === folderId)
+      if (f) Object.assign(f, patch)
+    })
+  )
+  ipcMain.handle('characterFolders:move', (_e, { projectId, folderId, parentId }) =>
+    mutate(projectId, (p) => {
+      const f = p.characterFolders?.find((x) => x.id === folderId)
+      if (!f || folderId === parentId) return
+      let cursor: string | null = parentId ?? null
+      while (cursor) {
+        if (cursor === folderId) return
+        cursor = p.characterFolders.find((x) => x.id === cursor)?.parentId ?? null
+      }
+      f.parentId = parentId ?? null
+    })
+  )
+  ipcMain.handle('characterFolders:delete', (_e, { projectId, folderId }) =>
+    mutate(projectId, (p) => {
+      const f = p.characterFolders?.find((x) => x.id === folderId)
+      if (!f) return
+      const up = f.parentId ?? null
+      // подпапки и персонажей поднимаем к родителю — данные не теряем
+      for (const sub of p.characterFolders) if (sub.parentId === folderId) sub.parentId = up
+      for (const c of p.characters) if (c.folderId === folderId) c.folderId = up
+      p.characterFolders = p.characterFolders.filter((x) => x.id !== folderId)
     })
   )
 

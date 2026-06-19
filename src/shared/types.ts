@@ -100,8 +100,26 @@ export interface Character {
   templateId: string | null
   fields: CharacterField[]
   avatarPath: string | null
+  /** Папка/локация, в которой состоит персонаж (null — без папки). */
+  folderId?: string | null
+  /** Концепт-арты и наброски персонажа (asset://-пути). */
+  images?: string[]
   createdAt: number
   updatedAt: number
+}
+
+/**
+ * Папка персонажей (локация/регион): группирует персонажей и сама может нести
+ * описание локации и концепт-арты. Может вкладываться в подпапки.
+ */
+export interface CharacterFolder {
+  id: string
+  parentId: string | null
+  title: string
+  description?: string
+  color?: string
+  images?: string[]
+  order: number
 }
 
 export interface CharacterTemplate {
@@ -188,6 +206,7 @@ export interface Project {
   folders: Folder[]
   stories: Story[]
   characters: Character[]
+  characterFolders: CharacterFolder[]
   boards: Board[]
   templates: CharacterTemplate[]
   timelines: Timeline[]

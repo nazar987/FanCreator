@@ -44,8 +44,15 @@ const api: FanCreatorApi = {
   characters: {
     add: (input) => invoke('characters:add', input),
     update: (input) => invoke('characters:update', input),
+    setFolder: (input) => invoke('characters:setFolder', input),
     delete: (input) => invoke('characters:delete', input),
     applyTemplate: (input) => invoke('characters:applyTemplate', input)
+  },
+  characterFolders: {
+    add: (input) => invoke('characterFolders:add', input),
+    update: (input) => invoke('characterFolders:update', input),
+    move: (input) => invoke('characterFolders:move', input),
+    delete: (input) => invoke('characterFolders:delete', input)
   },
   templates: {
     add: (input) => invoke('templates:add', input),

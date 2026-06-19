@@ -2,6 +2,92 @@
    UI-kit FanCreator — лёгкие компоненты на CSS-переменных
    ============================================================ */
 
+/* ---------- Авто-растущее текстовое поле ---------- */
+.auto-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 38px;
+  line-height: 1.5;
+}
+
+/* ---------- Полоска изображений (наброски/концепт-арт) ---------- */
+.image-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px dashed var(--stroke);
+  border-radius: var(--r-md);
+  background: var(--panel-2);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.image-strip--drag {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.image-strip-item {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--stroke-strong);
+  background: var(--panel-solid);
+}
+.image-strip-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.image-strip-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.image-strip-item:hover .image-strip-del {
+  opacity: 1;
+}
+.image-strip-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 72px;
+  height: 72px;
+  border: 1px dashed var(--stroke-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+.image-strip-add:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.image-strip-add:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.image-strip-hint {
+  font-size: 12px;
+}
+
 /* ---------- Button ---------- */
 .color-palette-root { display: inline-flex; flex: 0 0 auto; }
 .color-palette-trigger {

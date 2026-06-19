@@ -63,6 +63,15 @@ function normalizeProject(project: Project): Project {
   project.folders ??= []
   for (const folder of project.folders) folder.color ??= '#f0b84b'
   for (const story of project.stories) story.color ??= '#8b8cf0'
+  project.characterFolders ??= []
+  for (const folder of project.characterFolders) {
+    folder.color ??= '#7aa2f7'
+    folder.images ??= []
+  }
+  for (const character of project.characters) {
+    character.folderId ??= null
+    character.images ??= []
+  }
   project.boards ??= []
   project.templates ??= []
   project.timelines ??= []
@@ -280,6 +289,8 @@ function normalizeLegacyProject(legacy: any): Project {
       tags: Array.isArray(ch.tags) ? ch.tags : [],
       templateId: null,
       avatarPath: null,
+      folderId: null,
+      images: [],
       fields: [
         ...(ch.summary ? [{ id: uid(), label: 'Кратко', value: ch.summary }] : []),
         ...(ch.bio ? [{ id: uid(), label: 'Биография', value: ch.bio }] : [])
@@ -287,6 +298,7 @@ function normalizeLegacyProject(legacy: any): Project {
       createdAt: ch.createdAt ?? now(),
       updatedAt: ch.updatedAt ?? now()
     })),
+    characterFolders: legacy.characterFolders ?? [],
     folders: (legacy.folders ?? []).map((folder: any) => ({
       ...folder,
       color: folder.color ?? '#f0b84b'

@@ -142,9 +142,55 @@
 }
 
 .character-field-value {
-  min-height: 96px;
-  resize: vertical;
+  min-height: 72px;
   line-height: 1.5;
+}
+
+/* ---------- Папки/локации персонажей ---------- */
+.characters-breadcrumbs {
+  margin-bottom: 16px;
+}
+.characters-section {
+  margin-bottom: 24px;
+}
+.characters-section h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.location-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border-radius: var(--r-lg);
+}
+.location-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.location-panel-icon {
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 3px 6px currentColor);
+}
+.location-panel-title {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+.location-panel-title:hover {
+  color: var(--accent);
 }
 
 .character-template-apply {
