@@ -5,6 +5,7 @@ export interface MenuItem {
   label?: string
   icon?: React.ReactNode
   danger?: boolean
+  disabled?: boolean
   onClick?: () => void
   /** Подменю (например, выбор статуса). */
   submenu?: MenuItem[]
@@ -77,7 +78,9 @@ export function ContextMenuHost(): React.JSX.Element | null {
       <button
         key={i}
         className={`ctx-item ${it.danger ? 'ctx-item--danger' : ''}`}
+        disabled={it.disabled}
         onMouseEnter={(e) => {
+          if (it.disabled) return
           if (it.submenu) {
             const nextX = Math.max(8, x + W * 2 - 6 > window.innerWidth - 8 ? x - W + 6 : x + W - 6)
             const nextY = Math.max(
