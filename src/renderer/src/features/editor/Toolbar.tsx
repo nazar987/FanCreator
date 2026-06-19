@@ -33,7 +33,7 @@ import {
   ListTree
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
-import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
+import { ColorPalette } from '../../shared/ui/ColorPalette'
 
 interface ToolbarProps {
   editor: Editor
@@ -67,12 +67,6 @@ const SIZES = [
   '20px', '24px', '28px', '32px', '36px', '48px', '60px', '72px'
 ]
 const LINE_HEIGHTS = ['1', '1.15', '1.4', '1.7', '2', '2.5']
-const TEXT_COLORS = [
-  '#1d1c1a', '#e03131', '#e8590c', '#f08c00', '#2f9e44',
-  '#1971c2', '#7048e8', '#c2255c', '#868e96', '#ffffff'
-]
-const HL_COLORS = ['#ffe066', '#b2f2bb', '#a5d8ff', '#ffc9c9', '#eebefa', '#ffd8a8']
-
 function Btn({
   active,
   onClick,
@@ -145,35 +139,6 @@ export function Toolbar({
     (editor.getAttributes('paragraph').lineHeight as string) ||
     (editor.getAttributes('heading').lineHeight as string) ||
     '1.7'
-
-  const textColorRef = React.useRef<HTMLInputElement>(null)
-  const hlColorRef = React.useRef<HTMLInputElement>(null)
-
-  // палитра цветов (п.27): пресеты + «другой цвет» (нативный пикер)
-  const openColorMenu = (e: React.MouseEvent, kind: 'text' | 'hl'): void => {
-    const colors = kind === 'text' ? TEXT_COLORS : HL_COLORS
-    const apply = (c: string): void => {
-      if (kind === 'text') editor.chain().focus().setColor(c).run()
-      else editor.chain().focus().toggleHighlight({ color: c }).run()
-    }
-    const items: MenuItem[] = [
-      { type: 'label', label: kind === 'text' ? 'Цвет текста' : 'Маркер выделения' },
-      ...colors.map((c) => ({
-        label: c,
-        icon: <span className="tb-swatch" style={{ background: c }} />,
-        onClick: () => apply(c)
-      })),
-      { type: 'sep' },
-      kind === 'text'
-        ? { label: 'Без цвета', onClick: () => editor.chain().focus().unsetColor().run() }
-        : { label: 'Убрать маркер', onClick: () => editor.chain().focus().unsetHighlight().run() },
-      {
-        label: 'Другой цвет…',
-        onClick: () => (kind === 'text' ? textColorRef : hlColorRef).current?.click()
-      }
-    ]
-    openContextMenu(e, items)
-  }
 
   const setBlock = (v: string): void => {
     if (v === 'p') editor.chain().focus().setParagraph().run()
@@ -271,23 +236,22 @@ export function Toolbar({
         <Strikethrough size={17} />
       </Btn>
 
-      <Btn title="Цвет текста" onClick={(e) => openColorMenu(e, 'text')}>
-        <Baseline size={17} />
-      </Btn>
-      <Btn title="Маркер выделения" onClick={(e) => openColorMenu(e, 'hl')}>
-        <Highlighter size={17} />
-      </Btn>
-      <input
-        ref={textColorRef}
-        type="color"
-        style={{ display: 'none' }}
-        onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+      <ColorPalette
+        className="tb-color-palette"
+        title="Цвет текста"
+        value={(editor.getAttributes('textStyle').color as string) || '#1d1c1a'}
+        trigger={<Baseline size={17} />}
+        onChange={(color) => editor.chain().focus().setColor(color).run()}
+        onClear={() => editor.chain().focus().unsetColor().run()}
       />
-      <input
-        ref={hlColorRef}
-        type="color"
-        style={{ display: 'none' }}
-        onChange={(e) => editor.chain().focus().toggleHighlight({ color: e.target.value }).run()}
+      <ColorPalette
+        className="tb-color-palette"
+        title="Маркер выделения"
+        value={(editor.getAttributes('highlight').color as string) || '#ffe066'}
+        trigger={<Highlighter size={17} />}
+        onChange={(color) => editor.chain().focus().setHighlight({ color }).run()}
+        onClear={() => editor.chain().focus().unsetHighlight().run()}
+        clearLabel="Убрать маркер"
       />
       <Sep />
 

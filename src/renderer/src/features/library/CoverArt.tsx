@@ -4,6 +4,7 @@ import { ImagePlus } from 'lucide-react'
 interface CoverArtProps {
   title: string
   coverPath: string | null
+  color?: string
   onClick?: () => void
   /** Перетащили файл-картинку — приходит dataURL. */
   onDropImage?: (dataUrl: string) => void
@@ -13,6 +14,7 @@ interface CoverArtProps {
 export function CoverArt({
   title,
   coverPath,
+  color = '#8b8cf0',
   onClick,
   onDropImage,
   onPick
@@ -32,6 +34,7 @@ export function CoverArt({
   return (
     <div
       className={`cover ${drag ? 'drag-over' : ''}`}
+      style={{ '--cover-color': color } as React.CSSProperties}
       onClick={onClick}
       onDragOver={(e) => {
         if (!onDropImage) return

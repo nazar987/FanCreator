@@ -113,6 +113,7 @@ export function registerIpc(): void {
         id: uid(),
         folderId: folderId ?? null,
         title,
+        color: '#8b8cf0',
         coverPath: null,
         synopsis: '',
         tags: [],
@@ -205,13 +206,25 @@ export function registerIpc(): void {
   ipcMain.handle('folders:add', (_e, { projectId, title, parentId }) =>
     mutate(projectId, (p) => {
       p.folders ??= []
-      p.folders.push({ id: uid(), parentId: parentId ?? null, title, order: p.folders.length })
+      p.folders.push({
+        id: uid(),
+        parentId: parentId ?? null,
+        title,
+        color: '#f0b84b',
+        order: p.folders.length
+      })
     })
   )
   ipcMain.handle('folders:rename', (_e, { projectId, folderId, title }) =>
     mutate(projectId, (p) => {
       const f = p.folders?.find((x) => x.id === folderId)
       if (f) f.title = title
+    })
+  )
+  ipcMain.handle('folders:setColor', (_e, { projectId, folderId, color }) =>
+    mutate(projectId, (p) => {
+      const f = p.folders?.find((x) => x.id === folderId)
+      if (f) f.color = color
     })
   )
   ipcMain.handle('folders:move', (_e, { projectId, folderId, parentId }) =>

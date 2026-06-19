@@ -192,8 +192,8 @@
   justify-content: flex-end;
   padding: 22px 18px 20px 30px;
   background:
-    radial-gradient(circle at 78% 18%, var(--accent-soft), transparent 34%),
-    linear-gradient(160deg, var(--accent-soft), var(--panel-2)),
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.28), transparent 34%),
+    linear-gradient(160deg, color-mix(in srgb, var(--cover-color) 78%, white), var(--cover-color)),
     linear-gradient(var(--panel-solid), var(--panel-solid));
   position: relative;
 }
@@ -213,7 +213,8 @@
   font-size: 19px;
   font-weight: 600;
   line-height: 1.25;
-  color: var(--text);
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   text-wrap: balance;
 }
 

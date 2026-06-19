@@ -38,6 +38,7 @@ export interface FanCreatorApi {
   folders: {
     add(input: { projectId: string; title: string; parentId?: string | null }): Promise<Project | null>
     rename(input: { projectId: string; folderId: string; title: string }): Promise<Project | null>
+    setColor(input: { projectId: string; folderId: string; color: string }): Promise<Project | null>
     move(input: { projectId: string; folderId: string; parentId: string | null }): Promise<Project | null>
     delete(input: { projectId: string; folderId: string }): Promise<Project | null>
   }
@@ -52,7 +53,7 @@ export interface FanCreatorApi {
     update(input: {
       projectId: string
       storyId: string
-      patch: Partial<Pick<Story, 'title' | 'synopsis' | 'tags' | 'genres' | 'status'>>
+      patch: Partial<Pick<Story, 'title' | 'color' | 'synopsis' | 'tags' | 'genres' | 'status'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; storyId: string }): Promise<Project | null>
     restore(input: { projectId: string; storyId: string }): Promise<Project | null>

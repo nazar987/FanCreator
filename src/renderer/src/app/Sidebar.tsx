@@ -32,6 +32,7 @@ import type { Story, Chapter, ChapterStatus, SearchResult, Folder } from '@share
 import { STATUS_LABEL } from '../shared/ui/components'
 import { StoryProperties } from '../features/library/StoryProperties'
 import { TrashView } from '../features/library/TrashView'
+import { ColorPalette } from '../shared/ui/ColorPalette'
 
 export function Sidebar(): React.JSX.Element {
   const { current, closeProject, applyProject, openTab, activeTabId } = useStore()
@@ -71,6 +72,12 @@ export function Sidebar(): React.JSX.Element {
     applyProject(await window.api.stories.pickCover({ projectId: current.id, storyId: s.id }))
   }
 
+  const setStoryColor = async (s: Story, color: string): Promise<void> => {
+    applyProject(
+      await window.api.stories.update({ projectId: current.id, storyId: s.id, patch: { color } })
+    )
+  }
+
   const deleteStory = async (s: Story): Promise<void> => {
     if (!(await confirmDialog({ title: `Удалить историю «${s.title}»?`, danger: true }))) return
     applyProject(await window.api.stories.delete({ projectId: current.id, storyId: s.id }))
@@ -91,6 +98,10 @@ export function Sidebar(): React.JSX.Element {
     const title = await promptText({ title: 'Переименовать папку', initial: f.title })
     if (!title || title === f.title) return
     applyProject(await window.api.folders.rename({ projectId: current.id, folderId: f.id, title }))
+  }
+
+  const setFolderColor = async (f: Folder, color: string): Promise<void> => {
+    applyProject(await window.api.folders.setColor({ projectId: current.id, folderId: f.id, color }))
   }
 
   const deleteFolder = async (f: Folder): Promise<void> => {
@@ -434,10 +445,16 @@ export function Sidebar(): React.JSX.Element {
         <span className={`chev ${expanded[s.id] ? 'chev--open' : ''}`}>
           <ChevronRight size={15} />
         </span>
-        <BookOpen size={15} />
+        <BookOpen size={15} style={{ color: s.color ?? '#8b8cf0' }} />
         <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
           {s.title}
         </span>
+        <ColorPalette
+          className="tree-color-picker"
+          value={s.color ?? '#8b8cf0'}
+          title="Цвет книги"
+          onChange={(color) => setStoryColor(s, color)}
+        />
         <span className="faint" style={{ fontSize: 12 }}>
           {s.chapters.filter((c) => !c.deletedAt).length}
         </span>
@@ -519,10 +536,16 @@ export function Sidebar(): React.JSX.Element {
           <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
             <ChevronRight size={15} />
           </span>
-          <FolderIcon size={15} />
+          <FolderIcon size={15} fill={f.color ?? '#f0b84b'} style={{ color: f.color ?? '#f0b84b' }} />
           <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
             {f.title}
           </span>
+          <ColorPalette
+            className="tree-color-picker"
+            value={f.color ?? '#f0b84b'}
+            title="Цвет папки"
+            onChange={(color) => setFolderColor(f, color)}
+          />
           <span className="faint" style={{ fontSize: 12 }}>
             {stories.length}
           </span>

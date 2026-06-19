@@ -58,6 +58,7 @@ export interface Folder {
   id: string
   parentId: string | null
   title: string
+  color?: string
   order: number
 }
 
@@ -67,6 +68,8 @@ export interface Story {
   /** Папка, в которой лежит история (null/undefined — в корне проекта). */
   folderId?: string | null
   title: string
+  /** Цвет книги в меню и на полке. */
+  color?: string
   /** Путь к файлу обложки в формате asset://<projectId>/<file>. */
   coverPath: string | null
   synopsis: string

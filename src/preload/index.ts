@@ -16,6 +16,7 @@ const api: FanCreatorApi = {
   folders: {
     add: (input) => invoke('folders:add', input),
     rename: (input) => invoke('folders:rename', input),
+    setColor: (input) => invoke('folders:setColor', input),
     move: (input) => invoke('folders:move', input),
     delete: (input) => invoke('folders:delete', input)
   },

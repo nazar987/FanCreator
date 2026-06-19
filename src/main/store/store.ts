@@ -61,6 +61,8 @@ export async function initStore(): Promise<void> {
 /** Приводит проект к актуальной схеме (поля, появившиеся в новых версиях). */
 function normalizeProject(project: Project): Project {
   project.folders ??= []
+  for (const folder of project.folders) folder.color ??= '#f0b84b'
+  for (const story of project.stories) story.color ??= '#8b8cf0'
   project.boards ??= []
   project.templates ??= []
   project.timelines ??= []
@@ -248,6 +250,7 @@ function normalizeLegacyProject(legacy: any): Project {
     updatedAt: legacy.updatedAt ?? now(),
     stories: (legacy.stories ?? []).map((s: any, si: number) => ({
       id: s.id,
+      color: s.color ?? '#8b8cf0',
       title: s.title ?? 'История',
       coverPath: s.coverPath ?? null,
       synopsis: s.synopsis ?? '',
@@ -284,7 +287,10 @@ function normalizeLegacyProject(legacy: any): Project {
       createdAt: ch.createdAt ?? now(),
       updatedAt: ch.updatedAt ?? now()
     })),
-    folders: legacy.folders ?? [],
+    folders: (legacy.folders ?? []).map((folder: any) => ({
+      ...folder,
+      color: folder.color ?? '#f0b84b'
+    })),
     boards: legacy.boards ?? [],
     templates: legacy.templates ?? [],
     timelines: (legacy.timelines ?? []).map((timeline: any) => ({

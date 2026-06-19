@@ -5,6 +5,7 @@ import { Button, Hashtags } from '../../shared/ui/components'
 import { promptText } from '../../shared/ui/dialogs'
 import { CoverArt } from './CoverArt'
 import type { Story } from '@shared/types'
+import { ColorPalette } from '../../shared/ui/ColorPalette'
 
 export function Shelf(): React.JSX.Element {
   const { current, applyProject, openTab } = useStore()
@@ -31,6 +32,12 @@ export function Shelf(): React.JSX.Element {
 
   const pickCover = async (s: Story): Promise<void> => {
     applyProject(await window.api.stories.pickCover({ projectId: current.id, storyId: s.id }))
+  }
+
+  const setStoryColor = async (s: Story, color: string): Promise<void> => {
+    applyProject(
+      await window.api.stories.update({ projectId: current.id, storyId: s.id, patch: { color } })
+    )
   }
 
   const openStory = (s: Story): void => {
@@ -89,12 +96,20 @@ export function Shelf(): React.JSX.Element {
                 <CoverArt
                   title={s.title}
                   coverPath={s.coverPath}
+                  color={s.color}
                   onClick={() => openStory(s)}
                   onDropImage={(d) => dropCover(s, d)}
                   onPick={() => pickCover(s)}
                 />
                 <div>
-                  <div className="book-title truncate">{s.title}</div>
+                  <div className="row" style={{ justifyContent: 'space-between' }}>
+                    <div className="book-title truncate">{s.title}</div>
+                    <ColorPalette
+                      value={s.color ?? '#8b8cf0'}
+                      title="Цвет книги"
+                      onChange={(color) => setStoryColor(s, color)}
+                    />
+                  </div>
                   <div className="book-meta">{s.chapters.length} глав</div>
                   <div style={{ marginTop: 6 }}>
                     <Hashtags tags={[...s.tags, ...s.genres]} />

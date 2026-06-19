@@ -24,6 +24,7 @@ import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { promptText } from '../../shared/ui/dialogs'
+import { ColorPalette } from '../../shared/ui/ColorPalette'
 
 const SHAPE_LABEL: Record<StickerShape, string> = {
   rect: 'Прямоугольник',
@@ -284,7 +285,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
         y: center.y - size.h / 2,
         w: size.w,
         h: size.h,
-        color: kind === 'shape' ? '#5bb8e6' : '#ffd166',
+        color: kind === 'shape' ? '#5bb8e6' : kind === 'text' ? '#e8e8ef' : '#ffd166',
         shape: shape ?? (kind === 'note' ? 'note' : 'rounded'),
         text: kind === 'text' ? 'Текст' : '',
         imagePath
@@ -457,16 +458,19 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
       }
     ]
 
+    if (kind !== 'image') {
+      items.push({
+        label: kind === 'text' ? 'Цвет текста' : 'Цвет',
+        submenu: STICKER_COLORS.map((color) => ({
+          label: color,
+          icon: <span className="board-menu-color" style={{ background: color }} />,
+          onClick: () => updateSticker(sticker.id, { color })
+        }))
+      })
+    }
+
     if (kind !== 'text' && kind !== 'image') {
       items.push(
-        {
-          label: 'Цвет',
-          submenu: STICKER_COLORS.map((color) => ({
-            label: color,
-            icon: <span className="board-menu-color" style={{ background: color }} />,
-            onClick: () => updateSticker(sticker.id, { color })
-          }))
-        },
         {
           label: 'Форма',
           submenu: shapeOptions.map((shape) => ({
@@ -693,12 +697,11 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                   <MoreVertical size={14} />
                 </button>
                 <div className="board-sticker-tools">
-                  {kind !== 'text' && kind !== 'image' && (
-                    <input
-                      type="color"
+                  {kind !== 'image' && (
+                    <ColorPalette
                       value={sticker.color}
-                      title="Цвет элемента"
-                      onChange={(e) => updateSticker(sticker.id, { color: e.target.value })}
+                      title={kind === 'text' ? 'Цвет текста' : 'Цвет элемента'}
+                      onChange={(color) => updateSticker(sticker.id, { color })}
                     />
                   )}
                   {kind !== 'text' && kind !== 'image' && (

@@ -328,11 +328,11 @@
 .board-sticker-kind--text {
   border-color: transparent;
   box-shadow: none;
-  color: var(--text);
+  color: var(--board-sticker-color);
 }
 
 .board-sticker-kind--text textarea {
-  color: var(--text);
+  color: var(--board-sticker-color);
   font-size: 20px;
   font-weight: 700;
 }
