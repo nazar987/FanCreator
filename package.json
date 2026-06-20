@@ -1,6 +1,6 @@
 {
   "name": "fancreator",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "FanCreator — приложение для написания историй и фанфиков",
   "author": "Nazio",
   "main": "./out/main/index.js",
