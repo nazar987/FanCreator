@@ -48,6 +48,9 @@ export function Shelf(): React.JSX.Element {
   const [folderId, setFolderId] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState('')
   const [sort, setSort] = React.useState<SortMode>('updated')
+  const [storiesOpen, setStoriesOpen] = React.useState(true)
+
+  React.useEffect(() => setStoriesOpen(true), [query, folderId])
 
   if (!current) return <div />
 
@@ -281,10 +284,17 @@ export function Shelf(): React.JSX.Element {
 
         <section className="library-section">
           <div className="library-section-head">
-            <h2>{normalizedQuery ? 'Результаты поиска' : selectedFolder ? 'Истории в папке' : 'Все истории'}</h2>
+            <button
+              className="library-section-toggle"
+              aria-expanded={storiesOpen}
+              onClick={() => setStoriesOpen((open) => !open)}
+            >
+              <ChevronRight size={15} className={storiesOpen ? 'is-open' : ''} />
+              <h2>{normalizedQuery ? 'Результаты поиска' : selectedFolder ? 'Истории в папке' : 'Все истории'}</h2>
+            </button>
             <span>{visibleStories.length}</span>
           </div>
-          {visibleStories.length > 0 ? (
+          {storiesOpen && (visibleStories.length > 0 ? (
             <div className="library-story-grid">
               {visibleStories.map((story) => {
                 const chapters = story.chapters.filter((chapter) => !chapter.deletedAt)
@@ -337,7 +347,7 @@ export function Shelf(): React.JSX.Element {
               <span>{normalizedQuery ? 'Попробуйте изменить запрос.' : 'Создайте новую историю или выберите другую папку.'}</span>
               {!normalizedQuery && <Button variant="primary" size="sm" onClick={addStory}><BookPlus size={15} /> Новая история</Button>}
             </div>
-          )}
+          ))}
         </section>
 
         {!normalizedQuery && (

@@ -165,6 +165,20 @@
 .library-section h2 { margin: 0 0 12px; font-size: 14px; font-weight: 800; }
 .library-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .library-section-head h2 { margin: 0; }
+.library-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px 4px 2px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.library-section-toggle:hover { background: var(--panel-2); }
+.library-section-toggle > svg { color: var(--text-faint); transition: transform var(--t-fast); }
+.library-section-toggle > svg.is-open { transform: rotate(90deg); }
 .library-section-head span {
   display: grid;
   place-items: center;
