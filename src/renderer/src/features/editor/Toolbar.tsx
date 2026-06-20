@@ -30,7 +30,9 @@ import {
   FileSymlink,
   FilePlus2,
   Globe,
-  ListTree
+  ListTree,
+  Paintbrush,
+  IndentIncrease
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
@@ -46,6 +48,8 @@ interface ToolbarProps {
   tocActive: boolean
   onImportDocx: () => void
   onExportDocx: () => void
+  onFormatPainter: () => void
+  painterActive: boolean
 }
 
 const FONTS = [
@@ -105,8 +109,13 @@ export function Toolbar({
   onToggleToc,
   tocActive,
   onImportDocx,
-  onExportDocx
+  onExportDocx,
+  onFormatPainter,
+  painterActive
 }: ToolbarProps): React.JSX.Element {
+  const redline =
+    (((editor.getAttributes('paragraph').indent as number) ||
+      (editor.getAttributes('heading').indent as number)) ?? 0) > 0
   // перерисовка при изменении выделения/состояния
   const [, force] = React.useReducer((x) => x + 1, 0)
   React.useEffect(() => {
@@ -283,6 +292,16 @@ export function Toolbar({
         onClick={() => editor.chain().focus().setTextAlign('justify').run()}
       >
         <AlignJustify size={17} />
+      </Btn>
+      <Btn
+        title="Красная строка (абзацный отступ)"
+        active={redline}
+        onClick={() => editor.chain().focus()[redline ? 'outdent' : 'indent']().run()}
+      >
+        <IndentIncrease size={17} />
+      </Btn>
+      <Btn title="Формат по образцу (как в Word)" active={painterActive} onClick={onFormatPainter}>
+        <Paintbrush size={17} />
       </Btn>
       <Sep />
 

@@ -49,6 +49,20 @@ function initialContent(chapter: Chapter | undefined): Content {
   return chapter.content as Content
 }
 
+/** Снимок оформления для «формата по образцу» (S-F5). */
+interface CapturedFormat {
+  bold: boolean
+  italic: boolean
+  underline: boolean
+  strike: boolean
+  fontFamily: string | null
+  fontSize: string | null
+  color: string | null
+  highlight: string | null
+  textAlign: string | null
+  lineHeight: string | null
+}
+
 export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const { current, patchChapter, openTab, applyProject } = useStore()
   const story = current?.stories.find((s) => s.id === storyId)
@@ -263,6 +277,65 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     if (!editor) return
     editor.chain().focus().setTextSelection(pos + 1).scrollIntoView().run()
   }
+
+  // S-F5: «формат по образцу» (как в Word) — снять оформление и применить к другому выделению
+  const painterRef = React.useRef<CapturedFormat | null>(null)
+  const [painterActive, setPainterActive] = React.useState(false)
+
+  const startFormatPainter = (): void => {
+    if (!editor) return
+    if (painterActive) {
+      setPainterActive(false)
+      return
+    }
+    const ts = editor.getAttributes('textStyle')
+    const para = editor.getAttributes('paragraph')
+    const head = editor.getAttributes('heading')
+    painterRef.current = {
+      bold: editor.isActive('bold'),
+      italic: editor.isActive('italic'),
+      underline: editor.isActive('underline'),
+      strike: editor.isActive('strike'),
+      fontFamily: ts.fontFamily ?? null,
+      fontSize: ts.fontSize ?? null,
+      color: ts.color ?? null,
+      highlight: (editor.getAttributes('highlight').color as string) ?? null,
+      textAlign: para.textAlign ?? head.textAlign ?? null,
+      lineHeight: para.lineHeight ?? head.lineHeight ?? null
+    }
+    setPainterActive(true)
+  }
+
+  React.useEffect(() => {
+    if (!editor || !painterActive) return
+    const apply = (): void => {
+      if (editor.state.selection.empty) return
+      const f = painterRef.current
+      if (!f) return
+      let c = editor.chain().focus()
+      c = f.bold ? c.setBold() : c.unsetBold()
+      c = f.italic ? c.setItalic() : c.unsetItalic()
+      c = f.underline ? c.setUnderline() : c.unsetUnderline()
+      c = f.strike ? c.setStrike() : c.unsetStrike()
+      c = f.fontFamily ? c.setFontFamily(f.fontFamily) : c.unsetFontFamily()
+      c = f.fontSize ? c.setFontSize(f.fontSize) : c.unsetFontSize()
+      c = f.color ? c.setColor(f.color) : c.unsetColor()
+      c = f.highlight ? c.setHighlight({ color: f.highlight }) : c.unsetHighlight()
+      if (f.textAlign) c = c.setTextAlign(f.textAlign)
+      if (f.lineHeight) c = c.setLineHeight(f.lineHeight)
+      c.run()
+      setPainterActive(false)
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setPainterActive(false)
+    }
+    editor.on('selectionUpdate', apply)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      editor.off('selectionUpdate', apply)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [editor, painterActive])
 
   // первичный расчёт числа страниц + оглавления
   React.useEffect(() => {
@@ -492,6 +565,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           tocActive={tocOpen}
           onImportDocx={importDocx}
           onExportDocx={exportDocx}
+          onFormatPainter={startFormatPainter}
+          painterActive={painterActive}
         />
         {showFind && <FindReplace editor={editor} onClose={() => setShowFind(false)} />}
       </div>
