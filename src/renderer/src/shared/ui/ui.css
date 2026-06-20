@@ -588,3 +588,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Адаптивные общие оверлеи ---------- */
+@media (max-width: 620px) {
+  .modal { width: calc(100vw - 24px); max-height: calc(100vh - 24px); padding: 16px; overflow-y: auto; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1 1 auto; }
+  .ctx-menu { max-width: calc(100vw - 16px); }
+  .image-lightbox { padding: 52px 44px; }
+  .image-lightbox-nav { width: 38px; height: 38px; }
+  .image-lightbox-nav--prev { left: 4px; }
+  .image-lightbox-nav--next { right: 4px; }
+}

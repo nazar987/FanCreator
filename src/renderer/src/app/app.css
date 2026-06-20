@@ -9,7 +9,7 @@
 
 /* ---------- Sidebar ---------- */
 .sidebar {
-  width: 312px;
+  width: clamp(240px, 22vw, 312px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -294,6 +294,33 @@
 .tree-row,
 .tree-chapter { font-size: var(--fs-body); }
 .welcome h1 { font-size: var(--fs-display); font-weight: var(--fw-bold); }
+
+/* ---------- Адаптивный каркас ---------- */
+@media (max-width: 960px) {
+  .sidebar-head { padding: 14px 12px 10px; }
+  .sidebar-scroll { padding-right: 8px; padding-left: 8px; }
+  .sidebar-foot { padding: 8px; flex-wrap: wrap; }
+  .tree-row { padding-right: 6px; padding-left: 6px; }
+  .tabbar { padding: 0 6px; }
+  .tab { max-width: 180px; padding-right: 8px; padding-left: 10px; }
+}
+
+@media (max-width: 720px) {
+  .sidebar { width: 210px; }
+  .brand { font-size: var(--fs-body); }
+  .tree-section-title { padding-right: 4px; padding-left: 4px; }
+  .tree-row { gap: 5px; font-size: var(--fs-meta); }
+  .tree-color-picker,
+  .tree-drag-handle { display: none; }
+  .tabbar-actions { gap: 1px; }
+  .theme-dots { gap: 3px; }
+  .theme-dot { width: 15px; height: 15px; }
+}
+
+@media (max-height: 680px) {
+  .sidebar-head { gap: 8px; padding-top: 10px; }
+  .tabbar { height: 40px; }
+}
 
 /* T-D2: тихая подсветка навигации без изменения геометрии */
 .tree-row:hover {

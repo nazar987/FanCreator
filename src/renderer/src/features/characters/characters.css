@@ -439,3 +439,25 @@
   font-size: 15px;
   font-weight: 800;
 }
+
+/* ---------- Адаптивные персонажи ---------- */
+@media (max-width: 1100px) {
+  .characters-inner { padding: 28px 28px 72px; }
+  .characters-head { align-items: flex-start; flex-direction: column; }
+  .characters-head > .row { width: 100%; flex-wrap: wrap; }
+  .characters-grid { grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); }
+  .characters-select-actions { width: 100%; margin-left: 0; flex-wrap: wrap; }
+}
+
+@media (max-width: 720px) {
+  .characters-inner { padding: 20px 16px 56px; }
+  .characters-head > .row .btn { flex: 1 1 auto; }
+  .characters-tiles { grid-template-columns: repeat(auto-fill, minmax(min(132px, 100%), 1fr)); }
+  .folder-panel-head { flex-wrap: wrap; }
+  .character-template-apply { grid-template-columns: 1fr; }
+  .character-page-inner { padding: 20px 16px 56px; }
+  .character-page-head { align-items: stretch; flex-direction: column; }
+  .character-avatar-frame { align-self: center; }
+  .character-page-meta { align-items: stretch; flex-direction: column; }
+  .character-page-section-head { align-items: flex-start; flex-wrap: wrap; }
+}

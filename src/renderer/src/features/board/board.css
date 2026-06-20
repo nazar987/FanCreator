@@ -476,6 +476,20 @@
   overflow: hidden;
 }
 
+/* ---------- Адаптивная доска ---------- */
+@media (max-width: 1050px) {
+  .board-toolbar { align-items: flex-start; flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+  .board-add-group { flex: 1 1 100%; }
+  .board-arrow-bar { flex-wrap: wrap; padding: 7px 14px; }
+}
+
+@media (max-width: 720px) {
+  .board-title { font-size: var(--fs-h2); }
+  .board-subtitle { max-width: 100%; }
+  .board-add-group .btn { flex: 1 1 auto; }
+  .board-link-preview { width: min(260px, calc(100vw - 24px)); }
+}
+
 /* T-D3: стекло плавающего превью связи */
 .board-link-preview {
   background: var(--glass-surface);

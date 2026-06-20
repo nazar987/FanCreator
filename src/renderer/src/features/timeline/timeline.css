@@ -311,6 +311,22 @@
   opacity: 1;
 }
 
+@media (max-width: 960px) {
+  .timeline-inner { padding: 22px 20px 60px; }
+  .timeline-head { align-items: flex-start; flex-wrap: wrap; }
+  .timeline-head > .row { flex-wrap: wrap; }
+}
+
+@media (max-width: 620px) {
+  .timeline-inner { padding: 16px 12px 48px; }
+  .timeline-event { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; }
+  .timeline-event-marker { width: 28px; height: 28px; }
+  .timeline-event-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .timeline-event-head .badge { grid-column: 2 / -1; justify-self: start; }
+  .timeline-view-switch { max-width: 100%; overflow-x: auto; }
+  .timeline-view-switch button { flex: 0 0 auto; padding: 0 9px; }
+}
+
 /* T-D1: заголовки и мета таймлайна */
 .timeline-head .home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
 .timeline-event-title,

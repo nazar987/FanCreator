@@ -468,6 +468,29 @@
   pointer-events: none;
   animation: pop 0.12s var(--ease);
 }
+
+/* ---------- Адаптивный редактор ---------- */
+@media (max-width: 1050px) {
+  .toolbar { max-height: 116px; overflow-y: auto; padding: 6px 8px; }
+  .tb-sep { margin: 0 2px; }
+  .editor-toc { flex-basis: 190px; }
+  .editor-scroll { overflow: auto; padding-top: 24px; }
+}
+
+@media (max-width: 760px) {
+  .find-panel { flex-wrap: wrap; }
+  .find-panel .input { flex: 1 1 150px; width: auto; }
+  .editor-body { flex-direction: column; }
+  .editor-toc {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: 132px;
+    border-right: 0;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .editor-scroll { padding: 16px 0 48px; }
+  .fc-prose { max-width: calc(100% - 24px); }
+}
 .fc-wiki-kind {
   font-size: 11px;
   text-transform: uppercase;
