@@ -139,6 +139,16 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       transformPastedHTML: (html) => {
         try {
           const doc = new DOMParser().parseFromString(html, 'text/html')
+          // S-F3: снимаем чужие font-size/font-family/line-height из буфера (Word/Docs) —
+          // иначе текст вставляется «без засечек 8pt», а пустые строки 16pt. Текст принимает
+          // стиль документа. Также убираем мусорные <o:p> из Word.
+          doc.querySelectorAll<HTMLElement>('[style]').forEach((el) => {
+            el.style.removeProperty('font-size')
+            el.style.removeProperty('font-family')
+            el.style.removeProperty('line-height')
+            if (!el.getAttribute('style')) el.removeAttribute('style')
+          })
+          doc.querySelectorAll('o\\:p').forEach((o) => o.remove())
           doc.querySelectorAll('p').forEach((p) => {
             const text = (p.textContent || '').replace(/ /g, ' ').trim()
             if (!text && !p.querySelector('img')) p.remove()
