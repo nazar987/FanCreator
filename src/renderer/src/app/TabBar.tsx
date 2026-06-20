@@ -38,9 +38,13 @@ export function TabBar(): React.JSX.Element {
         }
       },
       {
-        label: 'Персонажи',
+        label: 'Новый персонаж',
         icon: <Users size={15} />,
-        onClick: () => openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+        onClick: async () => {
+          if (!current) return
+          applyProject(await window.api.characters.add({ projectId: current.id }))
+          openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+        }
       },
       {
         label: 'Новый таймлайн',
