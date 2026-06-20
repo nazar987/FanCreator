@@ -36,6 +36,7 @@ interface StoreValue {
   activeTabId: string | null
   openTab: (tab: Omit<OpenTab, 'id'> & { id?: string }) => void
   closeTab: (id: string) => void
+  reorderTabs: (from: number, to: number) => void
   setActiveTab: (id: string) => void
 }
 
@@ -178,6 +179,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     })
   }, [])
 
+  const reorderTabs = React.useCallback((from: number, to: number) => {
+    setTabs((currentTabs) => {
+      const moving = currentTabs[from]
+      if (!moving || moving.id === 'shelf') return currentTabs
+      const next = [...currentTabs]
+      next.splice(from, 1)
+      next.splice(Math.max(1, Math.min(to, next.length)), 0, moving)
+      return next
+    })
+  }, [])
+
   const value: StoreValue = {
     theme,
     setTheme,
@@ -193,6 +205,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     activeTabId,
     openTab,
     closeTab,
+    reorderTabs,
     setActiveTab: setActiveTabId
   }
 

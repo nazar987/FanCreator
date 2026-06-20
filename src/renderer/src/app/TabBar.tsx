@@ -15,9 +15,15 @@ import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import { promptText } from '../shared/ui/dialogs'
 import { startHelpTour } from '../features/help/HelpTour'
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 
 export function TabBar(): React.JSX.Element {
-  const { tabs, activeTabId, setActiveTab, closeTab, openTab, current, applyProject } = useStore()
+  const { tabs, activeTabId, setActiveTab, closeTab, reorderTabs, openTab, current, applyProject } = useStore()
+
+  const onDragEnd = (result: DropResult): void => {
+    if (!result.destination || result.source.index === result.destination.index) return
+    reorderTabs(result.source.index, result.destination.index)
+  }
 
   const addMenu = (e: React.MouseEvent): void => {
     const items: MenuItem[] = [
@@ -98,16 +104,23 @@ export function TabBar(): React.JSX.Element {
 
   return (
     <div className="tabbar">
-      <div className="tabs-scroll">
-        {tabs.map((t) => (
-        <div
-          key={t.id}
-          className={`tab ${activeTabId === t.id ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab(t.id)}
-          onAuxClick={(e) => {
-            if (e.button === 1) closeTab(t.id)
-          }}
-        >
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="workspace-tabs" direction="horizontal">
+          {(dropProvided) => (
+            <div className="tabs-scroll" ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+              {tabs.map((t, index) => (
+                <Draggable key={t.id} draggableId={`tab:${t.id}`} index={index} isDragDisabled={t.id === 'shelf'}>
+                  {(dragProvided, snapshot) => (
+                    <div
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      {...dragProvided.dragHandleProps}
+                      className={`tab ${activeTabId === t.id ? 'tab--active' : ''} ${snapshot.isDragging ? 'tab--dragging' : ''}`}
+                      onClick={() => setActiveTab(t.id)}
+                      onAuxClick={(e) => {
+                        if (e.button === 1) closeTab(t.id)
+                      }}
+                    >
           {t.kind === 'shelf' ? (
             <Library size={14} />
           ) : t.kind === 'characters' ? (
@@ -134,9 +147,15 @@ export function TabBar(): React.JSX.Element {
               <X size={13} />
             </button>
           )}
-        </div>
-        ))}
-      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {dropProvided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <div className="tabbar-actions">
       <button
