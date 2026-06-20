@@ -39,6 +39,12 @@ interface StoreValue {
   closeTab: (id: string) => void
   reorderTabs: (from: number, to: number) => void
   setActiveTab: (id: string) => void
+
+  /** Целевая папка библиотеки (для перехода из сайдбара, S-F11). */
+  libraryFolderId: string | null
+  /** Счётчик «команд перехода» — Shelf реагирует на его изменение. */
+  libraryFolderNonce: number
+  goToLibraryFolder: (folderId: string | null) => void
 }
 
 const Ctx = React.createContext<StoreValue | null>(null)
@@ -54,6 +60,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const [current, setCurrent] = React.useState<Project | null>(null)
   const [tabs, setTabs] = React.useState<OpenTab[]>([SHELF_TAB])
   const [activeTabId, setActiveTabId] = React.useState<string | null>('shelf')
+  const [libraryFolderId, setLibraryFolderId] = React.useState<string | null>(null)
+  const [libraryFolderNonce, setLibraryFolderNonce] = React.useState(0)
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -185,6 +193,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     })
   }, [])
 
+  const goToLibraryFolder = React.useCallback((folderId: string | null) => {
+    setLibraryFolderId(folderId)
+    setLibraryFolderNonce((n) => n + 1)
+    setActiveTabId('shelf')
+  }, [])
+
   const reorderTabs = React.useCallback((from: number, to: number) => {
     setTabs((currentTabs) => {
       const moving = currentTabs[from]
@@ -212,7 +226,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     openTab,
     closeTab,
     reorderTabs,
-    setActiveTab: setActiveTabId
+    setActiveTab: setActiveTabId,
+    libraryFolderId,
+    libraryFolderNonce,
+    goToLibraryFolder
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

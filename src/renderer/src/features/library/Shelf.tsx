@@ -44,10 +44,17 @@ function compactNumber(value: number): string {
 }
 
 export function Shelf(): React.JSX.Element {
-  const { current, applyProject, openTab } = useStore()
-  const [folderId, setFolderId] = React.useState<string | null>(null)
+  const { current, applyProject, openTab, libraryFolderId, libraryFolderNonce } = useStore()
+  const [folderId, setFolderId] = React.useState<string | null>(libraryFolderId)
   const [query, setQuery] = React.useState('')
   const [sort, setSort] = React.useState<SortMode>('updated')
+
+  // S-F11: переход в папку из сайдбара («→ перейти»)
+  React.useEffect(() => {
+    setFolderId(libraryFolderId)
+    setQuery('')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libraryFolderNonce])
   const [storiesOpen, setStoriesOpen] = React.useState(true)
 
   React.useEffect(() => setStoriesOpen(true), [query, folderId])

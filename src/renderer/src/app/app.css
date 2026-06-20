@@ -112,6 +112,27 @@
 .tree-row:hover .tree-color-picker,
 .tree-color-picker:focus-within { opacity: 1; }
 .tree-color-picker .color-palette-trigger { width: 24px; height: 24px; }
+/* S-F11: кнопка «→ перейти в папку» (видна при наведении на строку) */
+.tree-goto {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+.tree-row:hover .tree-goto {
+  opacity: 1;
+}
+.tree-goto:hover {
+  background: var(--panel-2);
+  color: var(--accent);
+}
 .tree-children { animation: tree-reveal 180ms var(--ease); transform-origin: top; }
 @keyframes tree-reveal {
   from { opacity: 0; transform: translateY(-3px) scaleY(0.98); }

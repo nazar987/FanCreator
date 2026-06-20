@@ -18,7 +18,9 @@ import {
   FolderPlus,
   Users,
   Clock3,
-  LayoutDashboard
+  LayoutDashboard,
+  Palette,
+  ArrowRight
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -35,10 +37,15 @@ import type { Story, Chapter, ChapterStatus, SearchResult, Folder } from '@share
 import { STATUS_LABEL } from '../shared/ui/components'
 import { StoryProperties } from '../features/library/StoryProperties'
 import { TrashView } from '../features/library/TrashView'
-import { ColorPalette } from '../shared/ui/ColorPalette'
+
+/** Палитра для подменю «Цвет» (ПКМ) — S-F11. */
+const MENU_COLORS = ['#8b8cf0', '#7aa2f7', '#5bb8e6', '#5fd39a', '#f0b84b', '#f0a35b', '#f06b9b', '#b98cf5', '#9aa2ba']
+const colorSwatch = (c: string): React.JSX.Element => (
+  <span style={{ width: 14, height: 14, borderRadius: 4, background: c, display: 'inline-block' }} />
+)
 
 export function Sidebar(): React.JSX.Element {
-  const { current, closeProject, applyProject, openTab, activeTabId } = useStore()
+  const { current, closeProject, applyProject, openTab, activeTabId, goToLibraryFolder } = useStore()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const [search, setSearch] = React.useState('')
   const [results, setResults] = React.useState<SearchResult[]>([])
@@ -331,14 +338,25 @@ export function Sidebar(): React.JSX.Element {
     },
     { label: 'Свойства', icon: <Settings2 size={15} />, onClick: () => setPropertiesStory(s) },
     { label: 'Загрузить обложку', icon: <ImageIcon size={15} />, onClick: () => setStoryCover(s) },
+    {
+      label: 'Цвет книги',
+      icon: <Palette size={15} />,
+      submenu: MENU_COLORS.map((c) => ({ label: c, icon: colorSwatch(c), onClick: () => setStoryColor(s, c) }))
+    },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameStory(s) },
     { type: 'sep' },
     { label: 'Удалить историю', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteStory(s) }
   ]
 
   const folderMenu = (f: Folder): MenuItem[] => [
+    { label: 'Открыть в библиотеке', icon: <ArrowRight size={15} />, onClick: () => goToLibraryFolder(f.id) },
     { label: 'Новая подпапка', icon: <FolderPlus size={15} />, onClick: () => addFolder(f.id) },
     { label: 'Новая история здесь', icon: <Plus size={15} />, onClick: () => addStory(f.id) },
+    {
+      label: 'Цвет папки',
+      icon: <Palette size={15} />,
+      submenu: MENU_COLORS.map((c) => ({ label: c, icon: colorSwatch(c), onClick: () => setFolderColor(f, c) }))
+    },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameFolder(f) },
     { type: 'sep' },
     { label: 'Удалить папку', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteFolder(f) }
@@ -452,12 +470,6 @@ export function Sidebar(): React.JSX.Element {
         <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
           {s.title}
         </span>
-        <ColorPalette
-          className="tree-color-picker"
-          value={s.color ?? '#8b8cf0'}
-          title="Цвет книги"
-          onChange={(color) => setStoryColor(s, color)}
-        />
         <span className="faint" style={{ fontSize: 12 }}>
           {s.chapters.filter((c) => !c.deletedAt).length}
         </span>
@@ -543,12 +555,16 @@ export function Sidebar(): React.JSX.Element {
           <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
             {f.title}
           </span>
-          <ColorPalette
-            className="tree-color-picker"
-            value={f.color ?? '#f0b84b'}
-            title="Цвет папки"
-            onChange={(color) => setFolderColor(f, color)}
-          />
+          <button
+            className="tree-goto"
+            title="Открыть папку в библиотеке"
+            onClick={(e) => {
+              e.stopPropagation()
+              goToLibraryFolder(f.id)
+            }}
+          >
+            <ArrowRight size={14} />
+          </button>
           <span className="faint" style={{ fontSize: 12 }}>
             {stories.length}
           </span>
