@@ -100,17 +100,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
 
   const patchChapter = React.useCallback<StoreValue['patchChapter']>(
     (storyId, chapterId, patch) => {
+      // bump-аем updatedAt локально, иначе «Продолжить писать» и сортировка
+      // «Сначала недавние» не обновляются до перезапуска (S-F7)
+      const ts = Date.now()
       setCurrent((prev) => {
         if (!prev) return prev
         return {
           ...prev,
+          updatedAt: ts,
           stories: prev.stories.map((s) =>
             s.id !== storyId
               ? s
               : {
                   ...s,
+                  updatedAt: ts,
                   chapters: s.chapters.map((c) =>
-                    c.id === chapterId ? { ...c, ...patch } : c
+                    c.id === chapterId ? { ...c, ...patch, updatedAt: ts } : c
                   )
                 }
           )
