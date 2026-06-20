@@ -437,7 +437,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
       <div className="timeline-inner">
         <div className="timeline-head">
           <div>
-            <div className="home-title" style={{ fontSize: 24 }}>
+            <div className="home-title">
               {timeline.title}
             </div>
             <div className="home-sub">

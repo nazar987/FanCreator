@@ -160,7 +160,7 @@
 .library-breadcrumbs button.is-current { color: var(--text); font-weight: 700; }
 .library-tools { display: flex; align-items: center; gap: 8px; }
 .library-tools .input-wrap { width: min(280px, 28vw); }
-.library-sort { width: 170px; }
+.library-sort { width: 196px; min-width: 196px; }
 .library-section { margin-bottom: 30px; }
 .library-section h2 { margin: 0 0 12px; font-size: 14px; font-weight: 800; }
 .library-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }

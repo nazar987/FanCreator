@@ -425,7 +425,7 @@
 }
 
 /* T-D1: заголовок и мета доски */
-.board-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.board-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.4px; }
 .board-subtitle,
 .board-preview-sub { font-size: var(--fs-meta); }
 .board-preview-title { font-size: var(--fs-title); font-weight: var(--fw-bold); }
