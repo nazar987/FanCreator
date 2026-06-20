@@ -111,7 +111,7 @@ export function Sidebar(): React.JSX.Element {
     if (
       !(await confirmDialog({
         title: `Удалить папку «${f.title}»?`,
-        message: 'Истории и подпапки внутри переместятся на уровень выше — данные не пропадут.',
+        message: 'Папка удалится вместе с подпапками; истории внутри отправятся в Корзину.',
         danger: true,
         confirmLabel: 'Удалить'
       }))

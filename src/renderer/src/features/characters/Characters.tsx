@@ -411,7 +411,7 @@ export function Characters(): React.JSX.Element {
     if (
       !(await confirmDialog({
         title: `Удалить папку «${folder.title}»?`,
-        message: 'Персонажи и подпапки внутри переместятся на уровень выше — данные не пропадут.',
+        message: 'Папка удалится вместе с подпапками и персонажами внутри безвозвратно.',
         danger: true,
         confirmLabel: 'Удалить'
       }))

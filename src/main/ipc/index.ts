@@ -244,13 +244,22 @@ export function registerIpc(): void {
   )
   ipcMain.handle('folders:delete', (_e, { projectId, folderId }) =>
     mutate(projectId, (p) => {
-      const f = p.folders?.find((x) => x.id === folderId)
-      if (!f) return
-      const up = f.parentId ?? null
-      // подпапки и истории поднимаем к родителю — данные не теряем
-      for (const sub of p.folders) if (sub.parentId === folderId) sub.parentId = up
-      for (const s of p.stories) if (s.folderId === folderId) s.folderId = up
-      p.folders = p.folders.filter((x) => x.id !== folderId)
+      if (!p.folders?.some((x) => x.id === folderId)) return
+      // удаляем папку вместе с содержимым: собираем папку и все подпапки рекурсивно
+      const ids = new Set<string>([folderId])
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const f of p.folders) {
+          if (f.parentId && ids.has(f.parentId) && !ids.has(f.id)) {
+            ids.add(f.id)
+            changed = true
+          }
+        }
+      }
+      // истории внутри — в корзину (soft-delete, восстановимы), папки убираем
+      for (const s of p.stories) if (s.folderId && ids.has(s.folderId)) s.deletedAt = now()
+      p.folders = p.folders.filter((x) => !ids.has(x.id))
     })
   )
   ipcMain.handle('stories:setFolder', (_e, { projectId, storyId, folderId }) =>
@@ -482,13 +491,22 @@ export function registerIpc(): void {
   )
   ipcMain.handle('characterFolders:delete', (_e, { projectId, folderId }) =>
     mutate(projectId, (p) => {
-      const f = p.characterFolders?.find((x) => x.id === folderId)
-      if (!f) return
-      const up = f.parentId ?? null
-      // подпапки и персонажей поднимаем к родителю — данные не теряем
-      for (const sub of p.characterFolders) if (sub.parentId === folderId) sub.parentId = up
-      for (const c of p.characters) if (c.folderId === folderId) c.folderId = up
-      p.characterFolders = p.characterFolders.filter((x) => x.id !== folderId)
+      if (!p.characterFolders?.some((x) => x.id === folderId)) return
+      // удаляем папку вместе с содержимым (папка + подпапки рекурсивно)
+      const ids = new Set<string>([folderId])
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const f of p.characterFolders) {
+          if (f.parentId && ids.has(f.parentId) && !ids.has(f.id)) {
+            ids.add(f.id)
+            changed = true
+          }
+        }
+      }
+      // у персонажей нет корзины — удаляем безвозвратно
+      p.characters = p.characters.filter((c) => !(c.folderId && ids.has(c.folderId)))
+      p.characterFolders = p.characterFolders.filter((x) => !ids.has(x.id))
     })
   )
 
