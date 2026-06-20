@@ -115,11 +115,24 @@ function CharacterCard({
   const applyTemplate = async (): Promise<void> => {
     const template = templates.find((item) => item.id === selectedTemplateId)
     if (!template) return
-    const existing = new Set(fields.map((field) => field.label.trim().toLowerCase()))
-    const added = template.fieldLabels
-      .filter((label) => label.trim() && !existing.has(label.trim().toLowerCase()))
-      .map((label) => ({ id: crypto.randomUUID(), label, value: '' }))
-    const next = [...fields, ...added]
+    const replace = fields.length > 0 && await confirmDialog({
+      title: `Заменить анкету шаблоном «${template.name}»?`,
+      message: 'При замене останутся только поля шаблона. Значения полей с совпадающими названиями сохранятся. Отмена добавит только недостающие поля.',
+      confirmLabel: 'Заменить'
+    })
+    const byLabel = new Map(fields.map((field) => [field.label.trim().toLowerCase(), field]))
+    const templateLabels = template.fieldLabels.filter((label) => label.trim())
+    const next = replace
+      ? templateLabels.map((label) => {
+          const existing = byLabel.get(label.trim().toLowerCase())
+          return existing ? { ...existing, label } : { id: crypto.randomUUID(), label, value: '' }
+        })
+      : [
+          ...fields,
+          ...templateLabels
+            .filter((label) => !byLabel.has(label.trim().toLowerCase()))
+            .map((label) => ({ id: crypto.randomUUID(), label, value: '' }))
+        ]
     setFields(next)
     onProjectChange(
       await window.api.characters.update({
