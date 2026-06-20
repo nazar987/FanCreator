@@ -525,7 +525,7 @@ export function Sidebar(): React.JSX.Element {
 
   const renderFolder = (f: Folder, depth: number): React.JSX.Element => {
     const key = `folder:${f.id}`
-    const isOpen = expanded[key] ?? true
+    const isOpen = expanded[key] ?? false
     const subfolders = childFolders(f.id)
     const stories = folderStories(f.id)
     return (
