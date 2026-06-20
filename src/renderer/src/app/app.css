@@ -13,8 +13,10 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  backdrop-filter: blur(18px);
+  /* СПЛОШНОЙ фон без backdrop-filter: blur создаёт containing block и ломает
+     перетаскивание (@hello-pangea/dnd позиционирует перетаскиваемый элемент
+     фиксированно) — S-F1. */
+  background: var(--surface-1);
   border-right: 1px solid var(--stroke);
   height: 100%;
 }
