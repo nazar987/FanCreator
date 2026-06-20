@@ -271,15 +271,22 @@ a {
   color: var(--accent);
 }
 
-/* единое фокус-кольцо для клавиатурной навигации (S-D1) */
+/* единое фокус-кольцо для клавиатурной навигации (S-D1).
+   Редактируемые области (редактор, contenteditable) исключаем — иначе лист A4
+   обводится акцентной рамкой при наборе. */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[tabindex]:focus-visible {
+[tabindex]:focus-visible:not([contenteditable]):not(.ProseMirror) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+[contenteditable]:focus-visible,
+.ProseMirror:focus-visible,
+.ProseMirror:focus {
+  outline: none;
 }
 
 /* Скроллбары */

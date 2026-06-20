@@ -287,7 +287,7 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
         h: size.h,
         color: kind === 'shape' ? '#5bb8e6' : kind === 'text' ? '#e8e8ef' : '#ffd166',
         shape: shape ?? (kind === 'note' ? 'note' : 'rounded'),
-        text: kind === 'text' ? 'Текст' : '',
+        text: '',
         imagePath
       }
     ])
