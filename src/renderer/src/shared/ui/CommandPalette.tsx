@@ -151,7 +151,7 @@ export function CommandPalette(): React.JSX.Element | null {
         keywords: 'character персонаж герой',
         icon: <Users size={16} />,
         run: async () => {
-          applyProject(await window.api.characters.add({ projectId: pid, name: 'Новый персонаж' }))
+          applyProject(await window.api.characters.add({ projectId: pid }))
           openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
         }
       },

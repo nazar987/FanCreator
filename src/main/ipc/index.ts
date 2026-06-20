@@ -394,7 +394,7 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const character: Character = {
         id: uid(),
-        name,
+        name: name ?? '',
         role: '',
         tags: [],
         templateId: null,

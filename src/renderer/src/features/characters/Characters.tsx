@@ -160,6 +160,7 @@ function CharacterCard({
         <span>Имя</span>
         <Input
           value={name}
+          placeholder="Имя персонажа"
           onChange={(event) => setName(event.target.value)}
           onBlur={() => {
             const next = name.trim()
@@ -392,7 +393,7 @@ export function Characters(): React.JSX.Element {
 
   const addCharacter = async (): Promise<void> => {
     applyProject(
-      await window.api.characters.add({ projectId: current.id, name: 'Новый персонаж', folderId })
+      await window.api.characters.add({ projectId: current.id, folderId })
     )
   }
 

@@ -101,7 +101,7 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
   }
   characters: {
-    add(input: { projectId: string; name: string; folderId?: string | null }): Promise<Project | null>
+    add(input: { projectId: string; name?: string; folderId?: string | null }): Promise<Project | null>
     update(input: {
       projectId: string
       characterId: string
