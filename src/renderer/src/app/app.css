@@ -154,8 +154,9 @@
   height: 46px;
   padding: 0 10px;
   border-bottom: 1px solid var(--stroke);
-  background: var(--panel);
-  backdrop-filter: blur(18px);
+  /* сплошной фон без backdrop-filter: blur ломал бы перетаскивание вкладок
+     (@hello-pangea/dnd, как в S-F1) */
+  background: var(--surface-1);
   -webkit-app-region: drag;
 }
 .tabbar > * {
