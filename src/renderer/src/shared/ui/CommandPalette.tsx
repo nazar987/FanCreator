@@ -26,6 +26,13 @@ interface CmdItem {
   run: () => void | Promise<void>
 }
 
+// Внешний опенер палитры (для кнопок-подсказок «⌘K» и т.п.).
+let externalOpen: (() => void) | null = null
+/** Открыть command palette программно (например, по клику на чип «⌘K»). */
+export function openCommandPalette(): void {
+  externalOpen?.()
+}
+
 /** Подсчёт релевантности: подстрока → позиция; иначе подпоследовательность; иначе -1. */
 function matchScore(text: string, q: string): number {
   const idx = text.indexOf(q)
@@ -62,7 +69,11 @@ export function CommandPalette(): React.JSX.Element | null {
       }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    externalOpen = () => setOpen(true)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      externalOpen = null
+    }
   }, [])
 
   React.useEffect(() => {
