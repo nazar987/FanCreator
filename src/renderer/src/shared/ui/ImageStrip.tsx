@@ -1,5 +1,6 @@
 import React from 'react'
-import { ImagePlus, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { ChevronLeft, ChevronRight, ImagePlus, X } from 'lucide-react'
 
 interface ImageStripProps {
   projectId: string
@@ -26,6 +27,22 @@ export function ImageStrip({ projectId, images, onChange, emptyHint }: ImageStri
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [busy, setBusy] = React.useState(false)
   const [drag, setDrag] = React.useState(false)
+  const [viewIndex, setViewIndex] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    if (viewIndex === null) return
+    if (!images[viewIndex]) {
+      setViewIndex(null)
+      return
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setViewIndex(null)
+      if (event.key === 'ArrowLeft') setViewIndex((index) => index === null ? null : (index - 1 + images.length) % images.length)
+      if (event.key === 'ArrowRight') setViewIndex((index) => index === null ? null : (index + 1) % images.length)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [images, viewIndex])
 
   const addFiles = async (files: FileList | null): Promise<void> => {
     if (!files || files.length === 0) return
@@ -59,10 +76,20 @@ export function ImageStrip({ projectId, images, onChange, emptyHint }: ImageStri
         void addFiles(e.dataTransfer.files)
       }}
     >
-      {images.map((src) => (
-        <div className="image-strip-item" key={src}>
+      {images.map((src, index) => (
+        <div
+          className="image-strip-item"
+          key={src}
+          role="button"
+          tabIndex={0}
+          title="Открыть изображение"
+          onClick={() => setViewIndex(index)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') setViewIndex(index)
+          }}
+        >
           <img src={src} alt="" loading="lazy" />
-          <button className="image-strip-del" title="Удалить набросок" onClick={() => remove(src)}>
+          <button className="image-strip-del" title="Удалить набросок" onClick={(event) => { event.stopPropagation(); remove(src) }}>
             <X size={13} />
           </button>
         </div>
@@ -88,6 +115,28 @@ export function ImageStrip({ projectId, images, onChange, emptyHint }: ImageStri
         }}
       />
       {images.length === 0 && emptyHint && <span className="image-strip-hint dim">{emptyHint}</span>}
+      {viewIndex !== null && images[viewIndex] && createPortal(
+        <div className="image-lightbox" role="dialog" aria-modal="true" aria-label="Просмотр изображения" onClick={() => setViewIndex(null)}>
+          <button className="image-lightbox-close" title="Закрыть" onClick={() => setViewIndex(null)}>
+            <X size={22} />
+          </button>
+          {images.length > 1 && (
+            <button className="image-lightbox-nav image-lightbox-nav--prev" title="Предыдущее изображение"
+              onClick={(event) => { event.stopPropagation(); setViewIndex((viewIndex - 1 + images.length) % images.length) }}>
+              <ChevronLeft size={28} />
+            </button>
+          )}
+          <img src={images[viewIndex]} alt="Просматриваемый набросок" onClick={(event) => event.stopPropagation()} />
+          {images.length > 1 && (
+            <button className="image-lightbox-nav image-lightbox-nav--next" title="Следующее изображение"
+              onClick={(event) => { event.stopPropagation(); setViewIndex((viewIndex + 1) % images.length) }}>
+              <ChevronRight size={28} />
+            </button>
+          )}
+          <span className="image-lightbox-count">{viewIndex + 1} / {images.length}</span>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

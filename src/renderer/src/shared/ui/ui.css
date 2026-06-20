@@ -455,6 +455,48 @@
   letter-spacing: 0.5px;
   color: var(--text-faint);
 }
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 56px 72px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(16px);
+}
+.image-lightbox > img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  object-fit: contain;
+}
+.image-lightbox-close,
+.image-lightbox-nav {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 50%;
+  background: var(--glass-surface-strong);
+  color: var(--text);
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+}
+.image-lightbox-close { top: 20px; right: 20px; width: 40px; height: 40px; }
+.image-lightbox-nav { top: 50%; width: 46px; height: 46px; transform: translateY(-50%); }
+.image-lightbox-nav--prev { left: 18px; }
+.image-lightbox-nav--next { right: 18px; }
+.image-lightbox-count {
+  position: fixed;
+  bottom: 20px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--glass-surface-strong);
+  color: var(--text-dim);
+  font-size: var(--fs-meta);
+}
 
 /* T-D1: базовая типографика UI-kit */
 .btn,
