@@ -19,6 +19,7 @@ import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { CoverArt } from './CoverArt'
 import type { Folder, Story } from '@shared/types'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
+import { ContinueWriting } from './ContinueWriting'
 import { pl, plural } from '../../shared/plural'
 
 type SortMode = 'updated' | 'title'
@@ -226,6 +227,8 @@ export function Shelf(): React.JSX.Element {
           <div><strong>{folders.length}</strong><span>{plural(folders.length, 'папка', 'папки', 'папок')}</span></div>
           <div><strong>{totalWords.toLocaleString('ru-RU')}</strong><span>{plural(totalWords, 'слово', 'слова', 'слов')}</span></div>
         </div>
+
+        {!normalizedQuery && !selectedFolder && <ContinueWriting />}
 
         <div className="library-controls">
           <div className="library-breadcrumbs" aria-label="Путь к папке">
