@@ -49,6 +49,7 @@ function CharacterCard({
   const [role, setRole] = React.useState(character.role)
   const [fields, setFields] = React.useState(character.fields)
   const [selectedTemplateId, setSelectedTemplateId] = React.useState(templates[0]?.id ?? '')
+  const [collapsedFields, setCollapsedFields] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     setName(character.name)
@@ -90,6 +91,14 @@ function CharacterCard({
     const next = fields.filter((field) => field.id !== fieldId)
     setFields(next)
     await update({ fields: next })
+  }
+
+  const toggleField = (fieldId: string): void => {
+    setCollapsedFields((current) => {
+      const next = new Set(current)
+      next.has(fieldId) ? next.delete(fieldId) : next.add(fieldId)
+      return next
+    })
   }
 
   const removeCharacter = async (): Promise<void> => {
@@ -217,6 +226,16 @@ function CharacterCard({
         {fields.map((field) => (
           <div className="character-field" key={field.id}>
             <div className="character-field-head">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon
+                title={collapsedFields.has(field.id) ? 'Развернуть описание' : 'Свернуть описание'}
+                aria-expanded={!collapsedFields.has(field.id)}
+                onClick={() => toggleField(field.id)}
+              >
+                <ChevronRight size={15} className={collapsedFields.has(field.id) ? '' : 'character-field-chevron--open'} />
+              </Button>
               <Input
                 value={field.label}
                 aria-label="Название характеристики"
@@ -233,13 +252,15 @@ function CharacterCard({
                 <Trash2 size={15} />
               </Button>
             </div>
-            <AutoTextarea
-              className="input character-field-value"
-              value={field.value}
-              placeholder="Описание"
-              onChange={(event) => updateField(field.id, { value: event.target.value })}
-              onBlur={() => update({ fields })}
-            />
+            {!collapsedFields.has(field.id) && (
+              <AutoTextarea
+                className="input character-field-value"
+                value={field.value}
+                placeholder="Описание"
+                onChange={(event) => updateField(field.id, { value: event.target.value })}
+                onBlur={() => update({ fields })}
+              />
+            )}
           </div>
         ))}
       </div>

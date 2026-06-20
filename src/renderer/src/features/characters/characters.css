@@ -255,6 +255,8 @@
   text-align: left;
   cursor: pointer;
 }
+.character-field-chevron--open { transform: rotate(90deg); }
+.character-field-head svg { transition: transform var(--t-fast); }
 
 /* T-D1: единая типографическая иерархия персонажей */
 .characters-head .home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
