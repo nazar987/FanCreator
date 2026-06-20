@@ -85,7 +85,25 @@ export const WordDelete = Extension.create({
   addKeyboardShortcuts() {
     return {
       'Mod-Delete': () => deleteWordForward(this.editor.state, this.editor.view.dispatch),
-      'Mod-Backspace': () => deleteWordBackward(this.editor.state, this.editor.view.dispatch)
+      'Mod-Backspace': () => deleteWordBackward(this.editor.state, this.editor.view.dispatch),
+      // Backspace в начале пункта списка — как в Word: выводим пункт из списка
+      // (убираем маркер/номер), а не приклеиваем к предыдущему пункту.
+      Backspace: () => {
+        const { editor } = this
+        const { selection, schema } = editor.state
+        const listItem = schema.nodes.listItem
+        if (!selection.empty || !listItem) return false
+        const { $from } = selection
+        if ($from.parentOffset !== 0) return false
+        for (let d = $from.depth; d > 0; d--) {
+          if ($from.node(d).type === listItem) {
+            // первый параграф пункта и курсор в самом его начале
+            if ($from.index(d) === 0) return editor.chain().liftListItem('listItem').run()
+            return false
+          }
+        }
+        return false
+      }
     }
   }
 })
