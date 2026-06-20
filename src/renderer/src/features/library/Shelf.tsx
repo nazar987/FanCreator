@@ -5,11 +5,13 @@ import {
   ChevronRight,
   Folder as FolderIcon,
   FolderPlus,
+  FileText,
   Search,
   LayoutDashboard,
   Clock3,
   Plus,
-  Trash2
+  Trash2,
+  Users
 } from 'lucide-react'
 import { useStore } from '../../store/store'
 import { Button, Hashtags, Input, StatusBadge } from '../../shared/ui/components'
@@ -17,9 +19,28 @@ import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { CoverArt } from './CoverArt'
 import type { Folder, Story } from '@shared/types'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
-import { plural } from '../../shared/plural'
+import { pl, plural } from '../../shared/plural'
 
 type SortMode = 'updated' | 'title'
+
+function relativeTime(timestamp: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000))
+  if (seconds < 60) return 'только что'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${pl(minutes, 'минуту', 'минуты', 'минут')} назад`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${pl(hours, 'час', 'часа', 'часов')} назад`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${pl(days, 'день', 'дня', 'дней')} назад`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${pl(months, 'месяц', 'месяца', 'месяцев')} назад`
+  const years = Math.max(1, Math.floor(days / 365))
+  return `${pl(years, 'год', 'года', 'лет')} назад`
+}
+
+function compactNumber(value: number): string {
+  return new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+}
 
 export function Shelf(): React.JSX.Element {
   const { current, applyProject, openTab } = useStore()
@@ -277,12 +298,26 @@ export function Shelf(): React.JSX.Element {
                       <StatusBadge status={story.status} />
                       <p>{story.synopsis || 'Добавьте краткое описание истории в свойствах.'}</p>
                       <Hashtags tags={[...story.tags, ...story.genres].slice(0, 4)} />
+                      <div className="library-story-bento">
+                        <div className="library-story-stat" title={`${chapters.length} ${plural(chapters.length, 'глава', 'главы', 'глав')}, готово: ${done}`}>
+                          <BookOpen size={13} />
+                          <span><strong>{chapters.length}</strong><small>{plural(chapters.length, 'глава', 'главы', 'глав')}</small></span>
+                        </div>
+                        <div className="library-story-stat" title={`${current.characters.length} ${plural(current.characters.length, 'персонаж', 'персонажа', 'персонажей')} в проекте`}>
+                          <Users size={13} />
+                          <span><strong>{current.characters.length}</strong><small>{plural(current.characters.length, 'персонаж', 'персонажа', 'персонажей')}</small></span>
+                        </div>
+                        <div className="library-story-stat" title={`${words.toLocaleString('ru-RU')} ${plural(words, 'слово', 'слова', 'слов')}`}>
+                          <FileText size={13} />
+                          <span><strong>{compactNumber(words)}</strong><small>слов</small></span>
+                        </div>
+                        <div className="library-story-stat" title={new Date(story.updatedAt).toLocaleString('ru-RU')}>
+                          <Clock3 size={13} />
+                          <span><strong>{relativeTime(story.updatedAt)}</strong><small>изменено</small></span>
+                        </div>
+                      </div>
                       <div className="library-story-progress">
                         <span style={{ width: `${chapters.length ? (done / chapters.length) * 100 : 0}%` }} />
-                      </div>
-                      <div className="library-story-meta">
-                        <span><BookOpen size={13} /> {plural(chapters.length, 'глава', 'главы', 'глав')} · {done} готово</span>
-                        <span>{words.toLocaleString('ru-RU')} {plural(words, 'слово', 'слова', 'слов')}</span>
                       </div>
                     </div>
                   </article>
