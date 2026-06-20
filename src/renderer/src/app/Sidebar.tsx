@@ -15,7 +15,10 @@ import {
   GripVertical,
   MoveRight,
   Folder as FolderIcon,
-  FolderPlus
+  FolderPlus,
+  Users,
+  Clock3,
+  LayoutDashboard
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -569,6 +572,52 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
+  // S-D4: аддитивная сворачиваемая навигация по разделам проекта (под деревом историй)
+  const renderNavSection = (
+    key: string,
+    label: string,
+    icon: React.JSX.Element,
+    items: { id: string; title: string }[],
+    open: (item: { id: string; title: string }) => void,
+    activePrefix: string
+  ): React.JSX.Element => {
+    const isOpen = expanded[key] ?? false
+    return (
+      <div className="tree-node" key={key}>
+        <div className="tree-row" onClick={() => toggle(key)}>
+          <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
+            <ChevronRight size={15} />
+          </span>
+          {icon}
+          <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
+            {label}
+          </span>
+          <span className="faint" style={{ fontSize: 12 }}>
+            {items.length}
+          </span>
+        </div>
+        {isOpen && (
+          <div className="tree-children">
+            {items.map((it) => (
+              <div
+                key={it.id}
+                className={`tree-row tree-chapter ${
+                  activeTabId === `${activePrefix}${it.id}` ? 'tree-row--active' : ''
+                }`}
+                onClick={() => open(it)}
+              >
+                <FileText size={14} />
+                <span className="truncate" style={{ flex: 1 }}>
+                  {it.title}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <>
     <aside className="sidebar" data-tour="tree">
@@ -678,6 +727,41 @@ export function Sidebar(): React.JSX.Element {
                 )}
               </Droppable>
             </DragDropContext>
+
+            <div className="tree-section-title" style={{ marginTop: 8 }}>
+              Разделы проекта
+            </div>
+            <div
+              className={`tree-row ${activeTabId === 'characters' ? 'tree-row--active' : ''}`}
+              onClick={() => openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })}
+            >
+              <span style={{ width: 15 }} />
+              <Users size={15} />
+              <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
+                Персонажи
+              </span>
+              <span className="faint" style={{ fontSize: 12 }}>
+                {current.characters.length}
+              </span>
+            </div>
+            {current.timelines.length > 0 &&
+              renderNavSection(
+                'sec:timelines',
+                'Таймлайны',
+                <Clock3 size={15} />,
+                current.timelines.map((t) => ({ id: t.id, title: t.title })),
+                (t) => openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id }),
+                'timeline:'
+              )}
+            {current.boards.length > 0 &&
+              renderNavSection(
+                'sec:boards',
+                'Доски',
+                <LayoutDashboard size={15} />,
+                current.boards.map((b) => ({ id: b.id, title: b.title })),
+                (b) => openTab({ id: `board:${b.id}`, kind: 'board', title: b.title, boardId: b.id }),
+                'board:'
+              )}
           </>
         )}
       </div>
