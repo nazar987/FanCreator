@@ -112,6 +112,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  // S-F2: контрольная точка прокрутки — открываем главу там, где остановились
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const scrollSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const projectId = current?.id ?? ''
 
   const persistImage = React.useCallback(
@@ -126,7 +129,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const editor = useEditor({
     extensions: buildExtensions({ onOpenInternalLink: openChapterById }),
     content: initialContent(chapter),
-    autofocus: 'end',
+    // не фокусируемся в конец главы — иначе при открытии прокидывает в самый низ
+    // и курсор встаёт на новую строку (фидбэк S-F2). Позицию восстанавливаем сами.
+    autofocus: false,
     editorProps: {
       attributes: { class: 'fc-prose', spellcheck: 'true' },
       // S-L (п.2): чистим вставляемый HTML (Word/Google Docs) — убираем пустые абзацы,
@@ -253,6 +258,39 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   React.useEffect(() => {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
+
+  // S-F2: восстановить прокрутку главы + запомнить «последнюю главу» истории.
+  // Несколько попыток — пагинация доразмечает лист уже после монтирования.
+  React.useEffect(() => {
+    if (!editor) return
+    try {
+      localStorage.setItem(`fancreator.lastChapter.${storyId}`, chapterId)
+    } catch {
+      /* localStorage недоступен — не критично */
+    }
+    const saved = Number(localStorage.getItem(`fancreator.scroll.${chapterId}`) || 0)
+    if (!saved) return
+    const timers = [120, 320, 700].map((d) =>
+      setTimeout(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = saved
+      }, d)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [editor, storyId, chapterId])
+
+  // S-F2: сохраняем позицию прокрутки (с дебаунсом)
+  const handleScroll = React.useCallback((): void => {
+    const el = scrollRef.current
+    if (!el) return
+    if (scrollSaveTimer.current) clearTimeout(scrollSaveTimer.current)
+    scrollSaveTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(`fancreator.scroll.${chapterId}`, String(Math.round(el.scrollTop)))
+      } catch {
+        /* ignore */
+      }
+    }, 250)
+  }, [chapterId])
 
   // сохранить при размонтировании (переключении вкладки)
   React.useEffect(() => {
@@ -471,8 +509,10 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           </aside>
         )}
         <div
+          ref={scrollRef}
           className="editor-scroll"
           style={{ ['--page-zoom' as string]: zoom }}
+          onScroll={handleScroll}
           onWheel={(e) => {
             if (!e.ctrlKey) return
             e.preventDefault()

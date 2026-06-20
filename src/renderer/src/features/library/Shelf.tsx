@@ -147,9 +147,12 @@ export function Shelf(): React.JSX.Element {
   }
 
   const openStory = async (story: Story): Promise<void> => {
-    const first = story.chapters
+    const active = story.chapters
       .filter((chapter) => !chapter.deletedAt)
-      .sort((a, b) => a.order - b.order)[0]
+      .sort((a, b) => a.order - b.order)
+    // S-F2: открываем историю на последней просмотренной главе (контрольная точка истории)
+    const lastId = localStorage.getItem(`fancreator.lastChapter.${story.id}`)
+    const first = active.find((c) => c.id === lastId) ?? active[0]
     if (first) {
       openTab({
         id: `chapter:${first.id}`,
