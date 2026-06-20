@@ -182,7 +182,7 @@ function CharacterCard({
       </label>
 
       <label className="character-control">
-        <span>Папка / локация</span>
+        <span>Папка</span>
         <select
           className="input"
           value={character.folderId ?? ''}
@@ -251,15 +251,15 @@ function CharacterCard({
   )
 }
 
-interface LocationPanelProps {
+interface FolderPanelProps {
   folder: CharacterFolder
   projectId: string
   onProjectChange: (project: Project | null) => void
   onDelete: () => void
 }
 
-/** Карточка локации: описание + концепт-арты для папки персонажей. */
-function LocationPanel({ folder, projectId, onProjectChange, onDelete }: LocationPanelProps): React.JSX.Element {
+/** Карточка папки: описание и изображения для дополнительного контекста. */
+function FolderPanel({ folder, projectId, onProjectChange, onDelete }: FolderPanelProps): React.JSX.Element {
   const [description, setDescription] = React.useState(folder.description ?? '')
 
   React.useEffect(() => {
@@ -279,12 +279,12 @@ function LocationPanel({ folder, projectId, onProjectChange, onDelete }: Locatio
   }
 
   return (
-    <Card className="location-panel">
-      <div className="location-panel-head">
-        <span className="location-panel-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
+    <Card className="folder-panel">
+      <div className="folder-panel-head">
+        <span className="folder-panel-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
           <FolderIcon size={22} fill="currentColor" />
         </span>
-        <button className="location-panel-title" onClick={rename} title="Переименовать">
+        <button className="folder-panel-title" onClick={rename} title="Переименовать">
           {folder.title}
         </button>
         <ColorPalette
@@ -298,11 +298,11 @@ function LocationPanel({ folder, projectId, onProjectChange, onDelete }: Locatio
       </div>
 
       <label className="character-control">
-        <span>Описание локации</span>
+        <span>Описание</span>
         <AutoTextarea
           className="input"
           value={description}
-          placeholder="Опишите регион, атмосферу, особенности…"
+          placeholder="Опишите назначение, атмосферу или особенности…"
           onChange={(event) => setDescription(event.target.value)}
           onBlur={() => {
             if (description !== (folder.description ?? '')) patch({ description })
@@ -311,12 +311,12 @@ function LocationPanel({ folder, projectId, onProjectChange, onDelete }: Locatio
       </label>
 
       <div className="character-control">
-        <span>Концепт-арты локации</span>
+        <span>Изображения</span>
         <ImageStrip
           projectId={projectId}
           images={folder.images ?? []}
           onChange={(images) => patch({ images })}
-          emptyHint="Атмосферные референсы, карты, скетчи локации."
+          emptyHint="Референсы, карты, схемы или другие изображения."
         />
       </div>
     </Card>
@@ -399,7 +399,7 @@ export function Characters(): React.JSX.Element {
 
   const addFolder = async (): Promise<void> => {
     const title = await promptText({
-      title: selectedFolder ? 'Новая подпапка' : 'Новая папка / локация',
+      title: selectedFolder ? 'Новая подпапка' : 'Новая папка',
       placeholder: 'Например, Мордор'
     })
     if (!title) return
@@ -496,7 +496,7 @@ export function Characters(): React.JSX.Element {
         </div>
 
         {selectedFolder && (
-          <LocationPanel
+          <FolderPanel
             key={selectedFolder.id}
             folder={selectedFolder}
             projectId={current.id}
@@ -507,7 +507,7 @@ export function Characters(): React.JSX.Element {
 
         {childFolders.length > 0 && (
           <section className="characters-section">
-            <h2>{selectedFolder ? 'Подпапки' : 'Папки / локации'}</h2>
+            <h2>{selectedFolder ? 'Подпапки' : 'Папки'}</h2>
             <div className="library-folder-grid">
               {childFolders.map((folder) => (
                 <div

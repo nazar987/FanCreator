@@ -146,7 +146,7 @@
   line-height: 1.5;
 }
 
-/* ---------- Папки/локации персонажей ---------- */
+/* ---------- Папки персонажей ---------- */
 .characters-breadcrumbs {
   margin-bottom: 16px;
 }
@@ -158,7 +158,7 @@
   font-size: 14px;
   font-weight: 800;
 }
-.location-panel {
+.folder-panel {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -166,17 +166,17 @@
   padding: 18px;
   border-radius: var(--r-lg);
 }
-.location-panel-head {
+.folder-panel-head {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.location-panel-icon {
+.folder-panel-icon {
   display: grid;
   place-items: center;
   filter: drop-shadow(0 3px 6px currentColor);
 }
-.location-panel-title {
+.folder-panel-title {
   flex: 1;
   min-width: 0;
   padding: 2px 0;
@@ -189,7 +189,7 @@
   text-align: left;
   cursor: pointer;
 }
-.location-panel-title:hover {
+.folder-panel-title:hover {
   color: var(--accent);
 }
 
@@ -261,7 +261,7 @@
 .characters-head .home-sub { font-size: var(--fs-body); }
 .characters-section h2,
 .character-templates-head h3 { font-size: var(--fs-title); font-weight: var(--fw-bold); }
-.location-panel-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+.folder-panel-title { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
 .character-card-head,
 .character-template-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
 
