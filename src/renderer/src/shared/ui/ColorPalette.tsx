@@ -1,6 +1,8 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Palette } from 'lucide-react'
+import { Check, ChevronDown, Palette } from 'lucide-react'
+
+const lastColors = new Map<string, string>()
 
 const THEME_COLORS = [
   ['#ffffff', '#f2f2f2', '#d9e2f3', '#e2f0d9', '#fff2cc', '#fce4d6', '#f4cccc', '#eadcf8', '#d9ead3', '#d0e0e3'],
@@ -26,6 +28,7 @@ interface ColorPaletteProps {
 
 export function ColorPalette({ value, onChange, title = 'Выбрать цвет', className = '', trigger, onClear, clearLabel = 'Автоматический' }: ColorPaletteProps): React.JSX.Element {
   const [open, setOpen] = React.useState(false)
+  const [lastColor, setLastColor] = React.useState(() => lastColors.get(title) ?? value ?? '#8b8cf0')
   const [position, setPosition] = React.useState({ left: 0, top: 0 })
   const rootRef = React.useRef<HTMLSpanElement>(null)
   const panelRef = React.useRef<HTMLDivElement>(null)
@@ -56,18 +59,26 @@ export function ColorPalette({ value, onChange, title = 'Выбрать цвет
   }, [open])
 
   const select = (color: string): void => {
+    lastColors.set(title, color)
+    setLastColor(color)
     onChange(color)
     setOpen(false)
   }
 
   return (
     <span ref={rootRef} className={`color-palette-root ${className}`} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-      <button type="button" className="color-palette-trigger" title={title} aria-label={title} aria-expanded={open}
-        onMouseDown={(event) => event.preventDefault()} onClick={toggle}>
+      <button type="button" className="color-palette-trigger color-palette-quick" title={`${title}: применить последний цвет`}
+        aria-label={`${title}: применить последний цвет`} onMouseDown={(event) => event.preventDefault()}
+        onClick={(event) => { event.stopPropagation(); onChange(lastColor) }}>
         {trigger ?? <Palette size={15} />}
-        <span className="color-palette-current" style={{ background: value ?? '#8b8cf0' }} />
+        <span className="color-palette-current" style={{ background: lastColor }} />
       </button>
-      <input ref={nativeRef} className="color-palette-native" type="color" value={value ?? '#8b8cf0'}
+      <button type="button" className="color-palette-open" title={`Открыть палитру: ${title}`}
+        aria-label={`Открыть палитру: ${title}`} aria-expanded={open}
+        onMouseDown={(event) => event.preventDefault()} onClick={toggle}>
+        <ChevronDown size={12} />
+      </button>
+      <input ref={nativeRef} className="color-palette-native" type="color" value={lastColor}
         onChange={(event) => select(event.target.value)} />
       {open && createPortal(
         <div ref={panelRef} className="color-palette-panel" style={position} role="dialog" aria-label={title}
@@ -82,7 +93,7 @@ export function ColorPalette({ value, onChange, title = 'Выбрать цвет
             {THEME_COLORS.flat().map((color, index) => (
               <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
                 aria-label={color} key={`${color}-${index}`} onClick={() => select(color)}>
-                {value?.toLowerCase() === color && <Check size={12} />}
+                {lastColor.toLowerCase() === color && <Check size={12} />}
               </button>
             ))}
           </div>
@@ -91,7 +102,7 @@ export function ColorPalette({ value, onChange, title = 'Выбрать цвет
             {STANDARD_COLORS.map((color) => (
               <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
                 aria-label={color} key={color} onClick={() => select(color)}>
-                {value?.toLowerCase() === color && <Check size={12} />}
+                {lastColor.toLowerCase() === color && <Check size={12} />}
               </button>
             ))}
           </div>

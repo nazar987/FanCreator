@@ -96,8 +96,24 @@
   background: transparent; color: var(--text-dim); cursor: pointer;
 }
 .color-palette-trigger:hover,
-.color-palette-trigger[aria-expanded='true'] {
+.color-palette-open:hover,
+.color-palette-open[aria-expanded='true'] {
   border-color: var(--stroke); background: var(--panel-2); color: var(--text);
+}
+.color-palette-quick { border-radius: 7px 3px 3px 7px; }
+.color-palette-open {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 28px;
+  margin-left: -1px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-left-color: var(--stroke);
+  border-radius: 3px 7px 7px 3px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
 }
 .color-palette-current {
   position: absolute; right: 4px; bottom: 3px; left: 4px; height: 3px; border-radius: 2px;
