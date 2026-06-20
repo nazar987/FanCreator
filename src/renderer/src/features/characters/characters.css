@@ -276,3 +276,166 @@
 .character-template-field .input {
   flex: 1;
 }
+
+/* ============================================================
+   S-F9: карточки персонажей (сетка) + страница персонажа
+   ============================================================ */
+.characters-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+.character-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  background: var(--surface-2, var(--panel-solid));
+  cursor: pointer;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.character-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--stroke-strong);
+  box-shadow: var(--shadow-md);
+}
+.character-tile-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.character-tile:hover .character-tile-select,
+.character-tile-select:has(input:checked) {
+  opacity: 1;
+}
+.character-tile-avatar {
+  width: 96px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--stroke-strong);
+  border-radius: var(--r-md);
+  background: var(--panel-2);
+}
+.character-tile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.character-tile-name {
+  max-width: 100%;
+  font-weight: 700;
+  font-size: 14px;
+}
+.character-tile-role {
+  max-width: 100%;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* ---------- Страница персонажа ---------- */
+.character-page {
+  height: 100%;
+  overflow: auto;
+  background: var(--bg);
+}
+.character-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+}
+.character-page-missing {
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.character-page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+.character-avatar-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 150px;
+  height: 200px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+  background: var(--panel-2);
+}
+.character-avatar-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.character-avatar-edit,
+.character-avatar-remove {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+}
+.character-avatar-edit {
+  right: 6px;
+  bottom: 6px;
+}
+.character-avatar-remove {
+  right: 6px;
+  top: 6px;
+}
+.character-page-id {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+.character-page-name {
+  font-size: 20px;
+  font-weight: 800;
+}
+.character-page-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.character-page-meta .input {
+  flex: 1;
+}
+.character-page-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke);
+}
+.character-page-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.character-page-section-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}

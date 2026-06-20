@@ -358,7 +358,7 @@ function FolderPanel({ folder, projectId, onProjectChange, onDelete }: FolderPan
 }
 
 export function Characters(): React.JSX.Element {
-  const { current, applyProject } = useStore()
+  const { current, applyProject, openTab } = useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
@@ -425,10 +425,14 @@ export function Characters(): React.JSX.Element {
     return current.characters.filter((c) => c.folderId && ids.has(c.folderId)).length
   }
 
+  const openCharacter = (c: Character): void =>
+    openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
+
   const addCharacter = async (): Promise<void> => {
-    applyProject(
-      await window.api.characters.add({ projectId: current.id, folderId })
-    )
+    const p = await window.api.characters.add({ projectId: current.id, folderId })
+    applyProject(p)
+    const created = p?.characters.at(-1)
+    if (created) openCharacter(created)
   }
 
   const addFolder = async (): Promise<void> => {
@@ -622,18 +626,39 @@ export function Characters(): React.JSX.Element {
                 : 'В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.'}
           </div>
         ) : (
-          <div className="characters-grid">
+          <div className="characters-tiles">
             {folderCharacters.map((character) => (
-              <CharacterCard
+              <div
+                className="character-tile"
                 key={character.id}
-                character={character}
-                projectId={current.id}
-                templates={current.templates}
-                folderOptions={flatFolders}
-                selected={selected.has(character.id)}
-                onToggleSelect={() => toggleSelect(character.id)}
-                onProjectChange={applyProject}
-              />
+                role="button"
+                tabIndex={0}
+                onClick={() => openCharacter(character)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') openCharacter(character)
+                }}
+              >
+                <label
+                  className="character-tile-select"
+                  title="Выбрать персонажа"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(character.id)}
+                    onChange={() => toggleSelect(character.id)}
+                  />
+                </label>
+                <div className="character-tile-avatar" style={{ borderColor: character.color ?? '#7aa2f7' }}>
+                  {character.avatarPath ? (
+                    <img src={character.avatarPath} alt={character.name} />
+                  ) : (
+                    <UserRound size={30} style={{ color: character.color ?? '#7aa2f7' }} />
+                  )}
+                </div>
+                <div className="character-tile-name truncate">{character.name || 'Без имени'}</div>
+                {character.role && <div className="character-tile-role truncate">{character.role}</div>}
+              </div>
             ))}
           </div>
         )}

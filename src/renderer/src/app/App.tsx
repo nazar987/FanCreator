@@ -9,6 +9,7 @@ import { Home } from '../features/library/Home'
 import { Shelf } from '../features/library/Shelf'
 import { Editor } from '../features/editor/Editor'
 import { Characters } from '../features/characters/Characters'
+import { CharacterPage } from '../features/characters/CharacterPage'
 import { Board } from '../features/board/Board'
 import { Timeline } from '../features/timeline/Timeline'
 import { HelpTour } from '../features/help/HelpTour'
@@ -31,6 +32,9 @@ export function App(): React.JSX.Element {
             <div className="tab-content">
               {active?.kind === 'shelf' && <Shelf />}
               {active?.kind === 'characters' && <Characters />}
+              {active?.kind === 'character' && active.characterId && (
+                <CharacterPage key={active.characterId} characterId={active.characterId} />
+              )}
               {active?.kind === 'board' && active.boardId && (
                 <Board key={active.boardId} boardId={active.boardId} />
               )}

@@ -100,6 +100,8 @@ export interface Character {
   templateId: string | null
   fields: CharacterField[]
   avatarPath: string | null
+  /** Цвет карточки персонажа (S-F9). */
+  color?: string
   /** Папка/локация, в которой состоит персонаж (null — без папки). */
   folderId?: string | null
   /** Концепт-арты и наброски персонажа (asset://-пути). */

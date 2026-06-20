@@ -106,7 +106,10 @@ export interface FanCreatorApi {
       projectId: string
       characterId: string
       patch: Partial<
-        Pick<Character, 'name' | 'role' | 'tags' | 'fields' | 'templateId' | 'folderId' | 'images'>
+        Pick<
+          Character,
+          'name' | 'role' | 'tags' | 'fields' | 'templateId' | 'folderId' | 'images' | 'avatarPath' | 'color'
+        >
       >
     }): Promise<Project | null>
     setFolder(input: {
