@@ -11,6 +11,20 @@ interface CoverArtProps {
   onPick?: () => void
 }
 
+function coverTextColor(color: string): string {
+  const normalized = color.replace('#', '')
+  const hex = normalized.length === 3
+    ? normalized.split('').map((part) => part + part).join('')
+    : normalized
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return 'var(--text)'
+  const channels = [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255)
+  const [red, green, blue] = channels.map((value) =>
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  )
+  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+  return luminance > 0.2 ? 'var(--paper-text)' : 'var(--text)'
+}
+
 export function CoverArt({
   title,
   coverPath,
@@ -34,7 +48,7 @@ export function CoverArt({
   return (
     <div
       className={`cover ${drag ? 'drag-over' : ''}`}
-      style={{ '--cover-color': color } as React.CSSProperties}
+      style={{ '--cover-color': color, '--cover-text': coverTextColor(color) } as React.CSSProperties}
       onClick={onClick}
       onDragOver={(e) => {
         if (!onDropImage) return
