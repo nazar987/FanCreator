@@ -16,6 +16,125 @@ const STANDARD_COLORS = [
   '#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0'
 ]
 
+/** Содержимое палитры (цвета темы + стандартные + «другой цвет»). Переиспользуется
+ *  во всплывающей палитре и в императивном пикере (для ПКМ-меню). */
+function ColorPanel({
+  value,
+  onPick,
+  onClear,
+  clearLabel = 'Автоматический'
+}: {
+  value?: string
+  onPick: (color: string) => void
+  onClear?: () => void
+  clearLabel?: string
+}): React.JSX.Element {
+  const nativeRef = React.useRef<HTMLInputElement>(null)
+  const current = (value ?? '').toLowerCase()
+  return (
+    <>
+      {onClear && (
+        <button type="button" className="color-palette-auto" onClick={onClear}>
+          <span className="color-palette-auto-swatch" /> {clearLabel}
+        </button>
+      )}
+      <div className="color-palette-label">Цвета темы</div>
+      <div className="color-palette-grid">
+        {THEME_COLORS.flat().map((color, index) => (
+          <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
+            aria-label={color} key={`${color}-${index}`} onClick={() => onPick(color)}>
+            {current === color && <Check size={12} />}
+          </button>
+        ))}
+      </div>
+      <div className="color-palette-label">Стандартные цвета</div>
+      <div className="color-palette-grid color-palette-grid--standard">
+        {STANDARD_COLORS.map((color) => (
+          <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
+            aria-label={color} key={color} onClick={() => onPick(color)}>
+            {current === color && <Check size={12} />}
+          </button>
+        ))}
+      </div>
+      <input ref={nativeRef} className="color-palette-native" type="color" value={value ?? '#8b8cf0'}
+        onChange={(event) => onPick(event.target.value)} />
+      <button type="button" className="color-palette-more" onClick={() => nativeRef.current?.click()}>
+        <span className="color-palette-wheel" /> Другой цвет…
+      </button>
+    </>
+  )
+}
+
+/* ---- Императивный пикер: открыть ту же палитру из любого места (напр., ПКМ-меню) ---- */
+interface ColorPickerRequest {
+  value?: string
+  title?: string
+  onChange: (color: string) => void
+  onClear?: () => void
+  clearLabel?: string
+}
+let openExternal: ((req: ColorPickerRequest) => void) | null = null
+let lastPointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+
+/** Открыть палитру у курсора (для пунктов меню «Цвет»). */
+export function openColorPicker(req: ColorPickerRequest): void {
+  openExternal?.(req)
+}
+
+export function ColorPickerHost(): React.JSX.Element | null {
+  const [req, setReq] = React.useState<ColorPickerRequest | null>(null)
+  const [pos, setPos] = React.useState({ left: 0, top: 0 })
+  const panelRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    openExternal = (next) => {
+      setPos({
+        left: Math.max(8, Math.min(lastPointer.x, window.innerWidth - 252)),
+        top: Math.max(8, Math.min(lastPointer.y, window.innerHeight - 320))
+      })
+      setReq(next)
+    }
+    const track = (e: PointerEvent): void => {
+      lastPointer = { x: e.clientX, y: e.clientY }
+    }
+    window.addEventListener('pointerdown', track, true)
+    return () => {
+      openExternal = null
+      window.removeEventListener('pointerdown', track, true)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!req) return
+    const close = (e: PointerEvent): void => {
+      if (!panelRef.current?.contains(e.target as Node)) setReq(null)
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setReq(null)
+    }
+    const id = window.setTimeout(() => window.addEventListener('pointerdown', close), 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.clearTimeout(id)
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [req])
+
+  if (!req) return null
+  return createPortal(
+    <div ref={panelRef} className="color-palette-panel" style={pos} role="dialog" aria-label={req.title ?? 'Цвет'}>
+      <ColorPanel
+        value={req.value}
+        clearLabel={req.clearLabel}
+        onClear={req.onClear ? () => { req.onClear?.(); setReq(null) } : undefined}
+        onPick={(color) => { req.onChange(color); setReq(null) }}
+      />
+    </div>,
+    document.body
+  )
+}
+
 interface ColorPaletteProps {
   value?: string
   onChange: (color: string) => void
@@ -32,7 +151,6 @@ export function ColorPalette({ value, onChange, title = 'Выбрать цвет
   const [position, setPosition] = React.useState({ left: 0, top: 0 })
   const rootRef = React.useRef<HTMLSpanElement>(null)
   const panelRef = React.useRef<HTMLDivElement>(null)
-  const nativeRef = React.useRef<HTMLInputElement>(null)
 
   const toggle = (event: React.MouseEvent): void => {
     event.stopPropagation()
@@ -78,37 +196,15 @@ export function ColorPalette({ value, onChange, title = 'Выбрать цвет
         onMouseDown={(event) => event.preventDefault()} onClick={toggle}>
         <ChevronDown size={12} />
       </button>
-      <input ref={nativeRef} className="color-palette-native" type="color" value={lastColor}
-        onChange={(event) => select(event.target.value)} />
       {open && createPortal(
         <div ref={panelRef} className="color-palette-panel" style={position} role="dialog" aria-label={title}
           onMouseDown={(event) => event.preventDefault()} onClick={(event) => event.stopPropagation()}>
-          {onClear && (
-            <button type="button" className="color-palette-auto" onClick={() => { onClear(); setOpen(false) }}>
-              <span className="color-palette-auto-swatch" /> {clearLabel}
-            </button>
-          )}
-          <div className="color-palette-label">Цвета темы</div>
-          <div className="color-palette-grid">
-            {THEME_COLORS.flat().map((color, index) => (
-              <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
-                aria-label={color} key={`${color}-${index}`} onClick={() => select(color)}>
-                {lastColor.toLowerCase() === color && <Check size={12} />}
-              </button>
-            ))}
-          </div>
-          <div className="color-palette-label">Стандартные цвета</div>
-          <div className="color-palette-grid color-palette-grid--standard">
-            {STANDARD_COLORS.map((color) => (
-              <button type="button" className="color-palette-swatch" style={{ background: color }} title={color}
-                aria-label={color} key={color} onClick={() => select(color)}>
-                {lastColor.toLowerCase() === color && <Check size={12} />}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="color-palette-more" onClick={() => nativeRef.current?.click()}>
-            <span className="color-palette-wheel" /> Другой цвет…
-          </button>
+          <ColorPanel
+            value={lastColor}
+            clearLabel={clearLabel}
+            onClear={onClear ? () => { onClear(); setOpen(false) } : undefined}
+            onPick={select}
+          />
         </div>,
         document.body
       )}

@@ -38,12 +38,7 @@ import type { Story, Chapter, ChapterStatus, SearchResult, Folder } from '@share
 import { STATUS_LABEL } from '../shared/ui/components'
 import { StoryProperties } from '../features/library/StoryProperties'
 import { TrashView } from '../features/library/TrashView'
-
-/** Палитра для подменю «Цвет» (ПКМ) — S-F11. */
-const MENU_COLORS = ['#8b8cf0', '#7aa2f7', '#5bb8e6', '#5fd39a', '#f0b84b', '#f0a35b', '#f06b9b', '#b98cf5', '#9aa2ba']
-const colorSwatch = (c: string): React.JSX.Element => (
-  <span style={{ width: 14, height: 14, borderRadius: 4, background: c, display: 'inline-block' }} />
-)
+import { openColorPicker } from '../shared/ui/ColorPalette'
 
 export function Sidebar(): React.JSX.Element {
   const { current, closeProject, applyProject, openTab, activeTabId, goToLibraryFolder } = useStore()
@@ -342,7 +337,8 @@ export function Sidebar(): React.JSX.Element {
     {
       label: 'Цвет книги',
       icon: <Palette size={15} />,
-      submenu: MENU_COLORS.map((c) => ({ label: c, icon: colorSwatch(c), onClick: () => setStoryColor(s, c) }))
+      onClick: () =>
+        openColorPicker({ value: s.color ?? '#8b8cf0', title: 'Цвет книги', onChange: (c) => setStoryColor(s, c) })
     },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameStory(s) },
     { type: 'sep' },
@@ -356,7 +352,8 @@ export function Sidebar(): React.JSX.Element {
     {
       label: 'Цвет папки',
       icon: <Palette size={15} />,
-      submenu: MENU_COLORS.map((c) => ({ label: c, icon: colorSwatch(c), onClick: () => setFolderColor(f, c) }))
+      onClick: () =>
+        openColorPicker({ value: f.color ?? '#f0b84b', title: 'Цвет папки', onChange: (c) => setFolderColor(f, c) })
     },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameFolder(f) },
     { type: 'sep' },
