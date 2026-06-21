@@ -21,6 +21,7 @@ import { InternalLink } from './InternalLink'
 import { WikiLink } from './WikiLink'
 import { SearchHighlight } from './SearchHighlight'
 import { WordDelete } from './WordDelete'
+import { PageBreak } from './PageBreak'
 
 /** Размеры страницы A4 при 96 dpi. */
 export const A4 = {
@@ -35,6 +36,7 @@ export function buildExtensions(opts: {
 }): Extensions {
   return [
     WordDelete,
+    PageBreak,
     SearchHighlight,
     InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
     WikiLink,

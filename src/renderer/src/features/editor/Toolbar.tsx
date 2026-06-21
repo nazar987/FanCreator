@@ -32,7 +32,8 @@ import {
   Globe,
   ListTree,
   Paintbrush,
-  IndentIncrease
+  IndentIncrease,
+  SeparatorHorizontal
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
@@ -319,6 +320,9 @@ export function Toolbar({
       </Btn>
       <Btn title="Разделитель" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
         <Minus size={17} />
+      </Btn>
+      <Btn title="Разрыв страницы" onClick={() => editor.chain().focus().setPageBreak().run()}>
+        <SeparatorHorizontal size={17} />
       </Btn>
       <Sep />
 
