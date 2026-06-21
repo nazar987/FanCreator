@@ -46,25 +46,42 @@ export const ParagraphIndent = Extension.create({
 
   addCommands() {
     const types = this.options.types as string[]
-    return {
-      indent:
-        () =>
-        ({ editor, commands }) => {
-          const type = types.find((t) => editor.isActive(t))
-          if (!type) return false
-          const cur = (editor.getAttributes(type).indent as number) || 0
-          if (cur >= MAX) return false
-          return commands.updateAttributes(type, { indent: cur + 1 })
-        },
-      outdent:
-        () =>
-        ({ editor, commands }) => {
-          const type = types.find((t) => editor.isActive(t))
-          if (!type) return false
-          const cur = (editor.getAttributes(type).indent as number) || 0
-          if (cur <= 0) return false
-          return commands.updateAttributes(type, { indent: cur - 1 })
+    // Меняем отступ ИМЕННО у блока(ов) под курсором через setNodeMarkup по точной
+    // позиции — updateAttributes на границе абзаца мог применяться к соседней строке.
+    const apply =
+      (delta: number) =>
+      ({ state, dispatch }: { state: import('@tiptap/pm/state').EditorState; dispatch?: (tr: import('@tiptap/pm/state').Transaction) => void }) => {
+        const { selection } = state
+        let tr = state.tr
+        let changed = false
+        const bump = (attrs: Record<string, unknown>, pos: number): void => {
+          const cur = (attrs.indent as number) || 0
+          const next = Math.max(0, Math.min(MAX, cur + delta))
+          if (next !== cur) {
+            tr = tr.setNodeMarkup(pos, undefined, { ...attrs, indent: next })
+            changed = true
+          }
         }
+        if (selection.empty) {
+          const $f = selection.$from
+          for (let d = $f.depth; d >= 1; d--) {
+            const node = $f.node(d)
+            if (types.includes(node.type.name)) {
+              bump(node.attrs, $f.before(d))
+              break
+            }
+          }
+        } else {
+          state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+            if (types.includes(node.type.name)) bump(node.attrs, pos)
+          })
+        }
+        if (changed && dispatch) dispatch(tr)
+        return changed
+      }
+    return {
+      indent: () => apply(1),
+      outdent: () => apply(-1)
     }
   },
 
