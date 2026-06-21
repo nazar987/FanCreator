@@ -3,8 +3,8 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { TimelineEvent } from '@shared/types'
 
 /**
- * Дендрограмма (как турнирная сетка): дерево событий слева-направо с локтевыми
- * соединителями. Доп-вид таймлайна рядом с «рыбьей костью» (по просьбе заказчицы).
+ * Древовидная диаграмма (tree diagram): дерево событий слева-направо с прямыми
+ * локтевыми соединителями и прямоугольными узлами. Доп-вид таймлайна.
  */
 interface DendrogramProps {
   /** События верхнего уровня (корни). */
@@ -15,15 +15,16 @@ interface DendrogramProps {
   onDelete: (event: TimelineEvent) => void
 }
 
-const NODE_W = 196
-const NODE_H = 54
-const COL_W = 252
-const ROW_H = 76
+const NODE_W = 210
+const NODE_H = 68
+const COL_W = 300
+const ROW_H = 92
 
 interface Placed {
   event: TimelineEvent
   x: number
   y: number
+  depth: number
 }
 interface Link {
   x1: number
@@ -68,13 +69,13 @@ export function Dendrogram({
           })
         })
       }
-      nodes.push({ event, x, y })
+      nodes.push({ event, x, y, depth })
       return y
     }
 
     events.forEach((event) => layout(event, 0))
-    const width = (maxDepth + 1) * COL_W + 24
-    const height = Math.max(leaf, 1) * ROW_H + 16
+    const width = (maxDepth + 1) * COL_W + 28
+    const height = Math.max(leaf, 1) * ROW_H + 20
     return { nodes, links, width, height }
   }, [events, childrenOf])
 
@@ -88,28 +89,39 @@ export function Dendrogram({
               d={`M ${l.x1} ${l.y1} H ${l.midX} V ${l.y2} H ${l.x2}`}
               fill="none"
               stroke="var(--stroke-strong)"
-              strokeWidth={2}
+              strokeWidth={1.5}
+              shapeRendering="crispEdges"
             />
           ))}
         </svg>
-        {nodes.map(({ event, x, y }) => (
+        {nodes.map(({ event, x, y, depth }) => (
           <div
             key={event.id}
-            className="dendro-node"
-            style={{ left: x, top: y - NODE_H / 2, width: NODE_W }}
+            className={`dendro-node ${depth === 0 ? 'dendro-node--root' : ''}`}
+            style={{ left: x, top: y - NODE_H / 2, width: NODE_W, minHeight: NODE_H }}
             title={event.note || undefined}
-            onClick={() => onEdit(event)}
+            onDoubleClick={() => onEdit(event)}
           >
-            <span className="dendro-node-title truncate">{event.title}</span>
-            <span className="dendro-node-actions">
+            <div className="dendro-node-text">{event.title || 'Без названия'}</div>
+            <div className="dendro-node-actions">
               <button
-                title="Добавить под-событие"
+                title="Добавить дочерний узел"
                 onClick={(e) => {
                   e.stopPropagation()
                   onAddChild(event)
                 }}
               >
                 <Plus size={13} />
+              </button>
+              <button
+                title="Переименовать"
+                className="dendro-node-edit"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(event)
+                }}
+              >
+                ✎
               </button>
               <button
                 title="Удалить"
@@ -120,7 +132,7 @@ export function Dendrogram({
               >
                 <Trash2 size={13} />
               </button>
-            </span>
+            </div>
           </div>
         ))}
       </div>

@@ -143,30 +143,41 @@
 }
 .dendro-node {
   position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 54px;
-  padding: 8px 10px;
-  background: var(--panel-solid);
-  border: 1px solid var(--stroke-strong);
+  display: grid;
+  place-items: center;
+  padding: 10px 14px;
+  background: var(--surface-2, var(--panel-solid));
+  border: 1.5px solid var(--stroke-strong);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  transition: border-color var(--t-fast), transform var(--t-fast);
+  cursor: default;
+  text-align: center;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 .dendro-node:hover {
   border-color: var(--accent);
+  box-shadow: var(--shadow-md);
 }
-.dendro-node-title {
-  flex: 1;
-  min-width: 0;
+.dendro-node--root {
+  border-color: var(--accent);
+  background: linear-gradient(160deg, var(--accent-soft), var(--surface-2, var(--panel-solid)));
+}
+.dendro-node-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-weight: 600;
   font-size: 13.5px;
+  line-height: 1.3;
+  color: var(--text);
 }
 .dendro-node-actions {
+  position: absolute;
+  top: -11px;
+  right: 6px;
   display: flex;
-  gap: 2px;
+  gap: 3px;
   opacity: 0;
   transition: opacity var(--t-fast);
 }
@@ -178,10 +189,12 @@
   place-items: center;
   width: 22px;
   height: 22px;
-  border: none;
+  border: 1px solid var(--stroke-strong);
   border-radius: 5px;
-  background: var(--panel-2);
+  background: var(--panel-solid);
   color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
 }
 .dendro-node-actions button:hover {
