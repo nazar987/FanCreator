@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button, Input } from './components'
+import type { Folder } from '@shared/types'
 
 /** Императивные диалоги: prompt() и confirm() без window.* (электрон их блокирует). */
 
@@ -15,10 +16,21 @@ interface ConfirmOptions {
   confirmLabel?: string
   danger?: boolean
 }
+interface StoryPromptOptions {
+  title: string
+  placeholder?: string
+  folders: Folder[]
+  initialFolderId?: string | null
+}
+export interface StoryPromptResult {
+  title: string
+  folderId: string | null
+}
 
 type DialogState =
   | { kind: 'prompt'; opts: PromptOptions; resolve: (v: string | null) => void }
   | { kind: 'confirm'; opts: ConfirmOptions; resolve: (v: boolean) => void }
+  | { kind: 'story'; opts: StoryPromptOptions; resolve: (v: StoryPromptResult | null) => void }
   | null
 
 let setStateExternal: ((s: DialogState) => void) | null = null
@@ -35,9 +47,33 @@ export function confirmDialog(opts: ConfirmOptions): Promise<boolean> {
   })
 }
 
+/** Диалог создания истории: название + выбор папки. */
+export function promptStory(opts: StoryPromptOptions): Promise<StoryPromptResult | null> {
+  return new Promise((resolve) => {
+    setStateExternal?.({ kind: 'story', opts, resolve })
+  })
+}
+
+/** Плоский список папок с отступами для <select>. */
+function flattenForSelect(folders: Folder[]): { id: string; label: string }[] {
+  const out: { id: string; label: string }[] = []
+  const walk = (parentId: string | null, depth: number): void => {
+    folders
+      .filter((f) => (f.parentId ?? null) === parentId)
+      .sort((a, b) => a.order - b.order)
+      .forEach((f) => {
+        out.push({ id: f.id, label: `${'— '.repeat(depth)}${f.title}` })
+        walk(f.id, depth + 1)
+      })
+  }
+  walk(null, 0)
+  return out
+}
+
 export function DialogHost(): React.JSX.Element | null {
   const [state, setState] = React.useState<DialogState>(null)
   const [value, setValue] = React.useState('')
+  const [folderId, setFolderId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     setStateExternal = setState
@@ -48,6 +84,10 @@ export function DialogHost(): React.JSX.Element | null {
 
   React.useEffect(() => {
     if (state?.kind === 'prompt') setValue(state.opts.initial ?? '')
+    if (state?.kind === 'story') {
+      setValue('')
+      setFolderId(state.opts.initialFolderId ?? null)
+    }
   }, [state])
 
   if (!state) return null
@@ -56,8 +96,8 @@ export function DialogHost(): React.JSX.Element | null {
 
   const onKey = (e: React.KeyboardEvent): void => {
     if (e.key === 'Escape') {
-      if (state.kind === 'prompt') state.resolve(null)
-      else state.resolve(false)
+      if (state.kind === 'confirm') state.resolve(false)
+      else state.resolve(null)
       close()
     }
   }
@@ -99,6 +139,54 @@ export function DialogHost(): React.JSX.Element | null {
                 }}
               >
                 {state.opts.confirmLabel ?? 'Ок'}
+              </Button>
+            </div>
+          </>
+        ) : state.kind === 'story' ? (
+          <>
+            <Input
+              autoFocus
+              placeholder={(state.opts as StoryPromptOptions).placeholder}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  state.resolve({ title: value.trim(), folderId })
+                  close()
+                }
+              }}
+            />
+            <select
+              className="input"
+              style={{ marginTop: 10 }}
+              value={folderId ?? ''}
+              onChange={(e) => setFolderId(e.target.value || null)}
+            >
+              <option value="">Без папки</option>
+              {flattenForSelect((state.opts as StoryPromptOptions).folders).map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <div className="modal-actions">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  state.resolve(null)
+                  close()
+                }}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  state.resolve({ title: value.trim(), folderId })
+                  close()
+                }}
+              >
+                Создать
               </Button>
             </div>
           </>

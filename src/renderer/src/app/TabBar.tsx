@@ -13,7 +13,7 @@ import {
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
-import { promptText } from '../shared/ui/dialogs'
+import { promptText, promptStory } from '../shared/ui/dialogs'
 import { startHelpTour } from '../features/help/HelpTour'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 
@@ -37,9 +37,15 @@ export function TabBar(): React.JSX.Element {
         icon: <BookPlus size={15} />,
         onClick: async () => {
           if (!current) return
-          const title = await promptText({ title: 'Новая история', placeholder: 'Название' })
-          if (!title) return
-          applyProject(await window.api.stories.add({ projectId: current.id, title }))
+          const res = await promptStory({
+            title: 'Новая история',
+            placeholder: 'Название истории',
+            folders: current.folders ?? []
+          })
+          if (!res || !res.title) return
+          applyProject(
+            await window.api.stories.add({ projectId: current.id, title: res.title, folderId: res.folderId })
+          )
           openTab({ id: 'shelf', kind: 'shelf', title: 'Библиотека' })
         }
       },

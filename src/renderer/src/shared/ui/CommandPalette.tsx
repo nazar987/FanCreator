@@ -13,7 +13,7 @@ import {
   CornerDownLeft
 } from 'lucide-react'
 import { useStore } from '../../store/store'
-import { promptText } from './dialogs'
+import { promptText, promptStory } from './dialogs'
 import './cmdk.css'
 
 interface CmdItem {
@@ -126,9 +126,13 @@ export function CommandPalette(): React.JSX.Element | null {
         keywords: 'create story добавить книга',
         icon: <BookPlus size={16} />,
         run: async () => {
-          const t = await promptText({ title: 'Новая история', placeholder: 'Название истории' })
-          if (!t) return
-          applyProject(await window.api.stories.add({ projectId: pid, title: t }))
+          const res = await promptStory({
+            title: 'Новая история',
+            placeholder: 'Название истории',
+            folders: current.folders ?? []
+          })
+          if (!res || !res.title) return
+          applyProject(await window.api.stories.add({ projectId: pid, title: res.title, folderId: res.folderId }))
           openTab({ id: 'shelf', kind: 'shelf', title: 'Библиотека' })
         }
       },
