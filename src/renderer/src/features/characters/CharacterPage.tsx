@@ -7,7 +7,7 @@ import { confirmDialog, promptText } from '../../shared/ui/dialogs'
 import { TagEditor } from '../../shared/ui/TagEditor'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
 import { AutoTextarea } from '../../shared/ui/AutoTextarea'
-import { ImageStrip } from '../../shared/ui/ImageStrip'
+import { Collage } from '../../shared/ui/Collage'
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -293,11 +293,11 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
           <div className="character-page-section-head">
             <h3>Галерея</h3>
           </div>
-          <ImageStrip
+          <Collage
             projectId={projectId}
             images={character.images ?? []}
             onChange={(images) => update({ images })}
-            emptyHint="Иллюстрации и концепт-арты персонажа. Перетащите или нажмите «Добавить»."
+            emptyHint="Иллюстрации и концепт-арты персонажа. Перетащите сюда или нажмите «Добавить»."
           />
         </section>
       </div>
