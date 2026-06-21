@@ -221,6 +221,8 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
           </div>
         </header>
 
+        <div className="character-page-body">
+          <div className="character-page-col">
         <div className="character-control">
           <span>Теги</span>
           <TagEditor tags={character.tags} placeholder="Добавить тег" onChange={(tags) => update({ tags })} />
@@ -288,7 +290,9 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
             <Plus size={15} /> Добавить характеристику
           </Button>
         </section>
+          </div>
 
+          <div className="character-page-col">
         <section className="character-page-section">
           <div className="character-page-section-head">
             <h3>Галерея</h3>
@@ -300,6 +304,8 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
             emptyHint="Иллюстрации и концепт-арты персонажа. Перетащите сюда или нажмите «Добавить»."
           />
         </section>
+          </div>
+        </div>
       </div>
     </div>
   )
