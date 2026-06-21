@@ -20,7 +20,8 @@ import {
   Clock3,
   LayoutDashboard,
   Palette,
-  ArrowRight
+  ArrowRight,
+  UserRound
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -588,6 +589,63 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
+  // S-F8: дерево персонажей по папкам в сайдбаре
+  const childCharacterFolders = (parentId: string | null): Folder[] =>
+    ((current.characterFolders ?? []) as Folder[])
+      .filter((f) => (f.parentId ?? null) === parentId)
+      .sort((a, b) => a.order - b.order)
+  const charsInFolder = (folderId: string | null): typeof current.characters =>
+    current.characters.filter((c) => (c.folderId ?? null) === folderId)
+  const openCharacterPage = (c: (typeof current.characters)[number]): void =>
+    openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
+
+  const renderCharacterRow = (
+    c: (typeof current.characters)[number],
+    depth: number
+  ): React.JSX.Element => (
+    <div
+      key={c.id}
+      className={`tree-row tree-chapter ${activeTabId === `character:${c.id}` ? 'tree-row--active' : ''}`}
+      style={{ paddingLeft: 8 + depth * 14 }}
+      onClick={() => openCharacterPage(c)}
+    >
+      <span style={{ width: 15 }} />
+      <UserRound size={14} style={{ color: c.color ?? '#7aa2f7' }} />
+      <span className="truncate" style={{ flex: 1 }}>
+        {c.name || 'Без имени'}
+      </span>
+    </div>
+  )
+
+  const renderCharacterFolder = (f: Folder, depth: number): React.JSX.Element => {
+    const key = `cfolder:${f.id}`
+    const isOpen = expanded[key] ?? false
+    const subs = childCharacterFolders(f.id)
+    const chars = charsInFolder(f.id)
+    return (
+      <div className="tree-node" key={f.id}>
+        <div className="tree-row" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(key)}>
+          <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
+            <ChevronRight size={15} />
+          </span>
+          <FolderIcon size={15} fill={f.color ?? '#f0b84b'} style={{ color: f.color ?? '#f0b84b' }} />
+          <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
+            {f.title}
+          </span>
+          <span className="faint" style={{ fontSize: 12 }}>
+            {chars.length}
+          </span>
+        </div>
+        {isOpen && (
+          <div className="tree-children">
+            {subs.map((sf) => renderCharacterFolder(sf, depth + 1))}
+            {chars.map((c) => renderCharacterRow(c, depth + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // S-D4: аддитивная сворачиваемая навигация по разделам проекта (под деревом историй)
   const renderNavSection = (
     key: string,
@@ -747,18 +805,40 @@ export function Sidebar(): React.JSX.Element {
             <div className="tree-section-title" style={{ marginTop: 8 }}>
               Разделы проекта
             </div>
-            <div
-              className={`tree-row ${activeTabId === 'characters' ? 'tree-row--active' : ''}`}
-              onClick={() => openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })}
-            >
-              <span style={{ width: 15 }} />
-              <Users size={15} />
-              <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
-                Персонажи
-              </span>
-              <span className="faint" style={{ fontSize: 12 }}>
-                {current.characters.length}
-              </span>
+            <div className="tree-node">
+              <div className="tree-row" onClick={() => toggle('sec:characters')}>
+                <span className={`chev ${expanded['sec:characters'] ? 'chev--open' : ''}`}>
+                  <ChevronRight size={15} />
+                </span>
+                <Users size={15} />
+                <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
+                  Персонажи
+                </span>
+                <button
+                  className="tree-goto"
+                  title="Открыть раздел персонажей"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+                  }}
+                >
+                  <ArrowRight size={14} />
+                </button>
+                <span className="faint" style={{ fontSize: 12 }}>
+                  {current.characters.length}
+                </span>
+              </div>
+              {expanded['sec:characters'] && (
+                <div className="tree-children">
+                  {childCharacterFolders(null).map((f) => renderCharacterFolder(f, 0))}
+                  {charsInFolder(null).map((c) => renderCharacterRow(c, 0))}
+                  {current.characters.length === 0 && (
+                    <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
+                      Пока нет персонажей.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {current.timelines.length > 0 &&
               renderNavSection(
