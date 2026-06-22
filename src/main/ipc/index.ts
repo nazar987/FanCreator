@@ -2,6 +2,7 @@ import { ipcMain, dialog } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
+import { importDocxToHtml } from '../docx/importDocx'
 import HTMLtoDOCX from 'html-to-docx'
 import type {
   Project,
@@ -807,32 +808,40 @@ export function registerIpc(): void {
     })
     if (canceled || !filePaths[0]) return readProject(projectId)
     const buffer = await fs.readFile(filePaths[0])
-    // переносим картинки из Word: сохраняем в assets проекта, src → asset://
-    const { value: html } = await mammoth.convertToHtml(
-      { buffer },
-      {
-        convertImage: mammoth.images.imgElement(async (image) => {
-          const imgBuffer = await image.read()
-          const ext = `.${(image.contentType || 'image/png').split('/')[1].replace('jpeg', 'jpg')}`
-          const fileName = await saveAsset(projectId, imgBuffer as Buffer, ext)
-          return { src: assetUrl(projectId, fileName) }
-        })
-      }
-    )
-    // чистим импортированный HTML так же, как вставку (S-G2):
-    //  - убираем пустые абзацы Word (давали лишние пустые строки между абзацами);
-    //  - снимаем чужой шрифт/размер, чтобы текст принял стиль документа.
-    const cleanedHtml = html
-      .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '')
-      .replace(/<p[^>]*>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/gi, '')
-      .replace(/\s(?:font-size|font-family|line-height)\s*:\s*[^;"']*;?/gi, '')
-    const plainText = cleanedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    // S-G7: импорт с сохранением форматирования (свой OOXML-парсер).
+    let html = ''
+    try {
+      html = await importDocxToHtml(buffer as Buffer, async (buf, ext) =>
+        assetUrl(projectId, await saveAsset(projectId, buf, ext))
+      )
+    } catch {
+      html = ''
+    }
+    if (!html.trim()) {
+      // фоллбэк: mammoth (структура без точных шрифтов) + чистка пустых абзацев
+      const res = await mammoth.convertToHtml(
+        { buffer },
+        {
+          convertImage: mammoth.images.imgElement(async (image) => {
+            const imgBuffer = await image.read()
+            const ext = `.${(image.contentType || 'image/png').split('/')[1].replace('jpeg', 'jpg')}`
+            const fileName = await saveAsset(projectId, imgBuffer as Buffer, ext)
+            return { src: assetUrl(projectId, fileName) }
+          })
+        }
+      )
+      html = res.value
+        .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '')
+        .replace(/<p[^>]*>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/gi, '')
+        .replace(/\s(?:font-size|font-family|line-height)\s*:\s*[^;"']*;?/gi, '')
+    }
+    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     return mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       const c = s?.chapters.find((c) => c.id === chapterId)
       if (c) {
         // сохраняем как HTML-строку; редактор умеет принять HTML при загрузке
-        c.content = { html: cleanedHtml }
+        c.content = { html }
         c.plainText = plainText
         c.wordCount = countWords(plainText)
         c.updatedAt = now()
