@@ -9,6 +9,18 @@ import { ColorPalette } from '../../shared/ui/ColorPalette'
 import { AutoTextarea } from '../../shared/ui/AutoTextarea'
 import { Collage } from '../../shared/ui/Collage'
 
+/** Свёрнутые поля персонажа: запоминаем между переключениями (S-G6). По умолчанию
+ *  всё свёрнуто. */
+function loadCollapsed(characterId: string, fields: CharacterField[]): Set<string> {
+  try {
+    const raw = localStorage.getItem(`fancreator.charFields.${characterId}`)
+    if (raw) return new Set(JSON.parse(raw) as string[])
+  } catch {
+    /* ignore */
+  }
+  return new Set(fields.map((f) => f.id))
+}
+
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -33,7 +45,9 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
   const [name, setName] = React.useState(character?.name ?? '')
   const [role, setRole] = React.useState(character?.role ?? '')
   const [fields, setFields] = React.useState<CharacterField[]>(character?.fields ?? [])
-  const [collapsed, setCollapsed] = React.useState<Set<string>>(new Set())
+  const [collapsed, setCollapsed] = React.useState<Set<string>>(() =>
+    loadCollapsed(characterId, character?.fields ?? [])
+  )
   const [templateId, setTemplateId] = React.useState(templates[0]?.id ?? '')
   const avatarInput = React.useRef<HTMLInputElement>(null)
 
@@ -43,6 +57,12 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
     setRole(character.role)
     setFields(character.fields)
   }, [character])
+
+  // при смене персонажа — восстановить свёрнутость его полей
+  React.useEffect(() => {
+    setCollapsed(loadCollapsed(characterId, character?.fields ?? []))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [characterId])
 
   React.useEffect(() => {
     setTemplateId((cur) => (templates.some((t) => t.id === cur) ? cur : templates[0]?.id ?? ''))
@@ -83,6 +103,11 @@ export function CharacterPage({ characterId }: { characterId: string }): React.J
     setCollapsed((cur) => {
       const next = new Set(cur)
       next.has(id) ? next.delete(id) : next.add(id)
+      try {
+        localStorage.setItem(`fancreator.charFields.${characterId}`, JSON.stringify([...next]))
+      } catch {
+        /* ignore */
+      }
       return next
     })
 
