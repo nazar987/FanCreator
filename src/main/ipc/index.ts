@@ -819,13 +819,20 @@ export function registerIpc(): void {
         })
       }
     )
-    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    // чистим импортированный HTML так же, как вставку (S-G2):
+    //  - убираем пустые абзацы Word (давали лишние пустые строки между абзацами);
+    //  - снимаем чужой шрифт/размер, чтобы текст принял стиль документа.
+    const cleanedHtml = html
+      .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '')
+      .replace(/<p[^>]*>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/gi, '')
+      .replace(/\s(?:font-size|font-family|line-height)\s*:\s*[^;"']*;?/gi, '')
+    const plainText = cleanedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     return mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       const c = s?.chapters.find((c) => c.id === chapterId)
       if (c) {
         // сохраняем как HTML-строку; редактор умеет принять HTML при загрузке
-        c.content = { html }
+        c.content = { html: cleanedHtml }
         c.plainText = plainText
         c.wordCount = countWords(plainText)
         c.updatedAt = now()

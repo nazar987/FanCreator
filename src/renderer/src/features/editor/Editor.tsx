@@ -372,23 +372,17 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   }, [editor, storyId, chapterId])
 
   // S-F2: сохраняем позицию прокрутки (с дебаунсом)
-  // S-G5: текущая страница по DOM-границам пагинатора
-  const computeCurrentPage = (el: HTMLDivElement): number => {
-    const pages = editor?.view.dom.querySelectorAll('[data-rm-pagination] > *')
-    if (!pages || !pages.length) return 1
-    const top = el.getBoundingClientRect().top + 80
-    let cur = 1
-    pages.forEach((p, i) => {
-      if ((p as HTMLElement).getBoundingClientRect().top <= top) cur = i + 1
-    })
-    return cur
+  // Страницы берём из ОДНОГО контейнера пагинатора — тем же, что и pageCount,
+  // иначе текущая страница могла превышать общее число («Стр. 4 / 2»).
+  const pageElements = (): HTMLElement[] => {
+    const container = editor?.view.dom.querySelector('[data-rm-pagination]')
+    return container ? (Array.from(container.children) as HTMLElement[]) : []
   }
 
   const goToPage = (n: number): void => {
     const el = scrollRef.current
     if (!el || !editor) return
-    const pages = editor.view.dom.querySelectorAll('[data-rm-pagination] > *')
-    const target = pages[n - 1] as HTMLElement | undefined
+    const target = pageElements()[n - 1]
     if (!target) return
     el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top
   }
@@ -406,7 +400,15 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const handleScroll = React.useCallback((): void => {
     const el = scrollRef.current
     if (!el) return
-    setCurrentPage(computeCurrentPage(el))
+    const pages = pageElements()
+    const total = Math.max(1, pages.length)
+    const top = el.getBoundingClientRect().top + 80
+    let cur = 1
+    pages.forEach((p, i) => {
+      if (p.getBoundingClientRect().top <= top) cur = i + 1
+    })
+    setPageCount(total)
+    setCurrentPage(Math.min(cur, total))
     setShowPageBadge(true)
     if (pageBadgeTimer.current) clearTimeout(pageBadgeTimer.current)
     pageBadgeTimer.current = setTimeout(() => setShowPageBadge(false), 900)
