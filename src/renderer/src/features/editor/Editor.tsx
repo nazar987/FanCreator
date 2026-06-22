@@ -110,6 +110,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
   const [showFind, setShowFind] = React.useState(false)
   const [pageCount, setPageCount] = React.useState(1)
+  const [currentPage, setCurrentPage] = React.useState(1) // S-G5: текущая страница
+  const [showPageBadge, setShowPageBadge] = React.useState(false)
+  const pageBadgeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const [wordCount, setWordCount] = React.useState(chapter?.wordCount ?? 0)
   const [zoom, setZoom] = React.useState(1) // масштаб листа (S-7)
   const [saved, setSaved] = React.useState(true)
@@ -369,9 +372,44 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   }, [editor, storyId, chapterId])
 
   // S-F2: сохраняем позицию прокрутки (с дебаунсом)
+  // S-G5: текущая страница по DOM-границам пагинатора
+  const computeCurrentPage = (el: HTMLDivElement): number => {
+    const pages = editor?.view.dom.querySelectorAll('[data-rm-pagination] > *')
+    if (!pages || !pages.length) return 1
+    const top = el.getBoundingClientRect().top + 80
+    let cur = 1
+    pages.forEach((p, i) => {
+      if ((p as HTMLElement).getBoundingClientRect().top <= top) cur = i + 1
+    })
+    return cur
+  }
+
+  const goToPage = (n: number): void => {
+    const el = scrollRef.current
+    if (!el || !editor) return
+    const pages = editor.view.dom.querySelectorAll('[data-rm-pagination] > *')
+    const target = pages[n - 1] as HTMLElement | undefined
+    if (!target) return
+    el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top
+  }
+
+  const jumpToPage = async (): Promise<void> => {
+    const v = await promptText({
+      title: 'Перейти к странице',
+      placeholder: `1–${pageCount}`,
+      initial: String(currentPage)
+    })
+    const n = Number(v)
+    if (Number.isFinite(n) && n >= 1) goToPage(Math.min(Math.max(1, Math.round(n)), pageCount))
+  }
+
   const handleScroll = React.useCallback((): void => {
     const el = scrollRef.current
     if (!el) return
+    setCurrentPage(computeCurrentPage(el))
+    setShowPageBadge(true)
+    if (pageBadgeTimer.current) clearTimeout(pageBadgeTimer.current)
+    pageBadgeTimer.current = setTimeout(() => setShowPageBadge(false), 900)
     if (scrollSaveTimer.current) clearTimeout(scrollSaveTimer.current)
     scrollSaveTimer.current = setTimeout(() => {
       try {
@@ -380,7 +418,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         /* ignore */
       }
     }, 250)
-  }, [chapterId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterId, editor])
 
   // сохранить при размонтировании (переключении вкладки)
   React.useEffect(() => {
@@ -612,13 +651,16 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           }}
         >
           <EditorContent editor={editor} />
+          {showPageBadge && <div className="editor-page-badge">Стр. {currentPage} / {pageCount}</div>}
         </div>
       </div>
 
       <div className="editor-status">
         <span>{wordCount} слов</span>
         <span className="editor-status-sep">·</span>
-        <span>{pageCount} стр.</span>
+        <button className="editor-page-jump" title="Перейти к странице" onClick={jumpToPage}>
+          Стр. {currentPage} / {pageCount}
+        </button>
         <span className="spacer" />
         <span className="editor-zoom">
           <button title="Уменьшить" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(2)))}>

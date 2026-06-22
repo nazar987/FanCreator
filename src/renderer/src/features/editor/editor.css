@@ -315,6 +315,40 @@
   opacity: 1;
   background: var(--accent-2, var(--accent));
 }
+/* S-G5: переход по страницам — кнопка в статус-баре + плавающий бейдж */
+.editor-page-jump {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.editor-page-jump:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.editor-page-badge {
+  position: fixed;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: 600 13px var(--font-ui);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  animation: editor-badge-in 0.12s var(--ease);
+}
+@keyframes editor-badge-in {
+  from { opacity: 0; transform: translate(6px, -50%); }
+  to { opacity: 1; transform: translate(0, -50%); }
+}
+
 /* S-F5: ручной разрыв страницы — спейсер до конца страницы + метка */
 .fc-page-break {
   position: relative;
