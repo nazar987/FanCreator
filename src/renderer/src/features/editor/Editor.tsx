@@ -270,8 +270,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const schedulePageCount = React.useCallback(() => {
     setTimeout(() => {
       if (!editor) return
-      const el = editor.view.dom.querySelector('[data-rm-pagination]')
-      setPageCount(el ? Math.max(1, el.children.length) : 1)
+      const gaps = editor.view.dom.querySelectorAll('.rm-pagination-gap')
+      setPageCount(gaps.length + 1)
       // S-P: пересобираем оглавление из заголовков
       const items: { level: number; text: string; pos: number }[] = []
       editor.state.doc.descendants((node, pos) => {
@@ -372,17 +372,37 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   }, [editor, storyId, chapterId])
 
   // S-F2: сохраняем позицию прокрутки (с дебаунсом)
-  // Страницы берём из ОДНОГО контейнера пагинатора — тем же, что и pageCount,
-  // иначе текущая страница могла превышать общее число («Стр. 4 / 2»).
-  const pageElements = (): HTMLElement[] => {
-    const container = editor?.view.dom.querySelector('[data-rm-pagination]')
-    return container ? (Array.from(container.children) as HTMLElement[]) : []
+  // Число и позицию страниц берём из границ страниц `.rm-pagination-gap`
+  // (их же использует «разрыв страницы»). Контейнер `[data-rm-pagination]`
+  // не годится: его дети — float-блоки, их геометрия не совпадает с визуальной
+  // позицией страниц (отсюда были «59 / 59» и «4 / 2»).
+  const pageGaps = (): HTMLElement[] => {
+    const dom = editor?.view.dom
+    return dom ? (Array.from(dom.querySelectorAll('.rm-pagination-gap')) as HTMLElement[]) : []
+  }
+
+  // total = число границ + 1; current = сколько границ выше верха вьюпорта + 1
+  const computePages = (): { total: number; current: number } => {
+    const el = scrollRef.current
+    const gaps = pageGaps()
+    const total = gaps.length + 1
+    if (!el) return { total, current: 1 }
+    const top = el.getBoundingClientRect().top + 80
+    let current = 1
+    gaps.forEach((g) => {
+      if (g.getBoundingClientRect().top < top) current += 1
+    })
+    return { total, current: Math.min(current, total) }
   }
 
   const goToPage = (n: number): void => {
     const el = scrollRef.current
     if (!el || !editor) return
-    const target = pageElements()[n - 1]
+    if (n <= 1) {
+      el.scrollTop = 0
+      return
+    }
+    const target = pageGaps()[n - 2] // граница перед страницей n
     if (!target) return
     el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top
   }
@@ -400,15 +420,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const handleScroll = React.useCallback((): void => {
     const el = scrollRef.current
     if (!el) return
-    const pages = pageElements()
-    const total = Math.max(1, pages.length)
-    const top = el.getBoundingClientRect().top + 80
-    let cur = 1
-    pages.forEach((p, i) => {
-      if (p.getBoundingClientRect().top <= top) cur = i + 1
-    })
+    const { total, current } = computePages()
     setPageCount(total)
-    setCurrentPage(Math.min(cur, total))
+    setCurrentPage(current)
     setShowPageBadge(true)
     if (pageBadgeTimer.current) clearTimeout(pageBadgeTimer.current)
     pageBadgeTimer.current = setTimeout(() => setShowPageBadge(false), 900)

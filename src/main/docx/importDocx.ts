@@ -209,7 +209,8 @@ export async function importDocxToHtml(buffer: Buffer, saveImage: SaveDocxImage)
     }
     const inner = parts.join('')
     const styleAttr = pStyles.length ? ` style="${pStyles.join('; ')}"` : ''
-    out.push(`<p${styleAttr}>${inner || '<br>'}</p>`)
+    // пустой абзац — просто <p></p> (одна пустая строка). <br> внутри давал ДВЕ строки.
+    out.push(`<p${styleAttr}>${inner}</p>`)
   }
   return out.join('')
 }
