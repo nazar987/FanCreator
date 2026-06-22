@@ -24,6 +24,36 @@ import { pl, plural } from '../../shared/plural'
 
 type SortMode = 'updated' | 'title'
 
+interface ShelfMemory {
+  folderId: string | null
+  storiesOpen: boolean
+  scrollTop: number
+}
+
+const shelfMemoryKey = (projectId: string): string => `fancreator.shelf.${projectId}`
+
+function readShelfMemory(projectId?: string): ShelfMemory {
+  if (!projectId) return { folderId: null, storiesOpen: true, scrollTop: 0 }
+  try {
+    const saved = JSON.parse(localStorage.getItem(shelfMemoryKey(projectId)) ?? '{}') as Partial<ShelfMemory>
+    return {
+      folderId: typeof saved.folderId === 'string' ? saved.folderId : null,
+      storiesOpen: typeof saved.storiesOpen === 'boolean' ? saved.storiesOpen : true,
+      scrollTop: typeof saved.scrollTop === 'number' ? saved.scrollTop : 0
+    }
+  } catch {
+    return { folderId: null, storiesOpen: true, scrollTop: 0 }
+  }
+}
+
+function writeShelfMemory(projectId: string, patch: Partial<ShelfMemory>): void {
+  try {
+    localStorage.setItem(shelfMemoryKey(projectId), JSON.stringify({ ...readShelfMemory(projectId), ...patch }))
+  } catch {
+    // UI-состояние необязательно: переполненный/запрещённый localStorage не должен ломать экран.
+  }
+}
+
 function relativeTime(timestamp: number): string {
   const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000))
   if (seconds < 60) return 'только что'
@@ -45,19 +75,39 @@ function compactNumber(value: number): string {
 
 export function Shelf(): React.JSX.Element {
   const { current, applyProject, openTab, libraryFolderId, libraryFolderNonce } = useStore()
-  const [folderId, setFolderId] = React.useState<string | null>(libraryFolderId)
+  const initialMemory = React.useRef(readShelfMemory(current?.id))
+  const shelfRef = React.useRef<HTMLDivElement>(null)
+  const commandReady = React.useRef(false)
+  const [folderId, setFolderId] = React.useState<string | null>(initialMemory.current.folderId)
   const [query, setQuery] = React.useState('')
   const [sort, setSort] = React.useState<SortMode>('updated')
+  const [storiesOpen, setStoriesOpen] = React.useState(initialMemory.current.storiesOpen)
 
   // S-F11: переход в папку из сайдбара («→ перейти»)
   React.useEffect(() => {
+    if (!commandReady.current) {
+      commandReady.current = true
+      return
+    }
     setFolderId(libraryFolderId)
     setQuery('')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [libraryFolderNonce])
-  const [storiesOpen, setStoriesOpen] = React.useState(true)
+  }, [libraryFolderId, libraryFolderNonce])
 
-  React.useEffect(() => setStoriesOpen(true), [query, folderId])
+  React.useEffect(() => {
+    if (!current) return
+    writeShelfMemory(current.id, { folderId, storiesOpen })
+  }, [current, folderId, storiesOpen])
+
+  React.useEffect(() => {
+    const node = shelfRef.current
+    if (!node) return
+    const frame = requestAnimationFrame(() => { node.scrollTop = initialMemory.current.scrollTop })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  React.useEffect(() => {
+    if (folderId && current && !current.folders.some((folder) => folder.id === folderId)) setFolderId(null)
+  }, [current, folderId])
 
   if (!current) return <div />
 
@@ -218,7 +268,14 @@ export function Shelf(): React.JSX.Element {
   )
 
   return (
-    <div className="shelf library-workspace" data-tour="library">
+    <div
+      ref={shelfRef}
+      className="shelf library-workspace"
+      data-tour="library"
+      onScroll={(event) => {
+        if (current) writeShelfMemory(current.id, { scrollTop: event.currentTarget.scrollTop })
+      }}
+    >
       <div className="shelf-inner">
         <header className="library-header">
           <div>

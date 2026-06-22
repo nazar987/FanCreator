@@ -31,7 +31,7 @@ export function App(): React.JSX.Element {
           <div className="main">
             <TabBar />
             <div className="tab-content">
-              {active?.kind === 'shelf' && <Shelf />}
+              {active?.kind === 'shelf' && <Shelf key={current.id} />}
               {active?.kind === 'characters' && <Characters />}
               {active?.kind === 'character' && active.characterId && (
                 <CharacterPage key={active.characterId} characterId={active.characterId} />

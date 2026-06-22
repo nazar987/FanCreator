@@ -194,10 +194,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   }, [])
 
   const goToLibraryFolder = React.useCallback((folderId: string | null) => {
+    if (current) {
+      const key = `fancreator.shelf.${current.id}`
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) ?? '{}') as Record<string, unknown>
+        localStorage.setItem(key, JSON.stringify({ ...saved, folderId }))
+      } catch {
+        localStorage.setItem(key, JSON.stringify({ folderId }))
+      }
+    }
     setLibraryFolderId(folderId)
     setLibraryFolderNonce((n) => n + 1)
     setActiveTabId('shelf')
-  }, [])
+  }, [current])
 
   const reorderTabs = React.useCallback((from: number, to: number) => {
     setTabs((currentTabs) => {
