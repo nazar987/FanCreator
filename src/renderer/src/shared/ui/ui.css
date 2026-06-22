@@ -482,8 +482,10 @@
   backdrop-filter: blur(16px);
 }
 .image-lightbox > img {
-  max-width: 100%;
-  max-height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 92vw;
+  max-height: 92vh;
   border-radius: var(--r-md);
   box-shadow: var(--shadow-lg);
   object-fit: contain;
