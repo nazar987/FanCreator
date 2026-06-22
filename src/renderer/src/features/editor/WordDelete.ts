@@ -97,8 +97,12 @@ export const WordDelete = Extension.create({
         if ($from.parentOffset !== 0) return false
         for (let d = $from.depth; d > 0; d--) {
           if ($from.node(d).type === listItem) {
-            // первый параграф пункта и курсор в самом его начале
-            if ($from.index(d) === 0) return editor.chain().liftListItem('listItem').run()
+            // только в самом начале первого параграфа пункта
+            if ($from.index(d) !== 0) return false
+            // как Word: ПЕРВЫЙ пункт списка выводим из списка (outdent);
+            // средний/последний — обычное слияние с предыдущим (иначе список
+            // разрывается на два и нумерация сбивается) — отдаём базовому keymap
+            if ($from.index(d - 1) === 0) return editor.chain().liftListItem('listItem').run()
             return false
           }
         }
