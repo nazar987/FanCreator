@@ -139,12 +139,14 @@ export function Toolbar({
 
   const curFont =
     (editor.getAttributes('textStyle').fontFamily as string) || FONTS[0].value
-  const curSize =
+  // Заголовки крупнее по CSS — показываем их реальный размер, а не «16»
+  const HEADING_SIZE: Record<string, string> = { h1: '32px', h2: '24px', h3: '20px' }
+  const explicitSize =
     (editor.getAttributes('textStyle').fontSize as string) ||
     (editor.getAttributes('paragraph').fontSize as string) ||
     (editor.getAttributes('heading').fontSize as string) ||
-    (editor.getAttributes('listItem').fontSize as string) ||
-    '16px'
+    (editor.getAttributes('listItem').fontSize as string)
+  const curSize = explicitSize || (blockValue !== 'p' ? HEADING_SIZE[blockValue] : '16px')
   const curLineHeight =
     (editor.getAttributes('paragraph').lineHeight as string) ||
     (editor.getAttributes('heading').lineHeight as string) ||

@@ -32,7 +32,7 @@ import {
 } from '@hello-pangea/dnd'
 import { useStore } from '../store/store'
 import { Button, Input, StatusBadge, Hashtags } from '../shared/ui/components'
-import { promptText, confirmDialog } from '../shared/ui/dialogs'
+import { promptText, confirmDialog, promptStory } from '../shared/ui/dialogs'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import type { Story, Chapter, ChapterStatus, SearchResult, Folder } from '@shared/types'
 import { STATUS_LABEL } from '../shared/ui/components'
@@ -64,6 +64,20 @@ export function Sidebar(): React.JSX.Element {
     if (!title) return
     applyProject(await window.api.stories.add({ projectId: current.id, title, folderId }))
     if (folderId) setExpanded((e) => ({ ...e, [`folder:${folderId}`]: true }))
+  }
+
+  // верхняя «+»: спросить название + папку (S-G1)
+  const addStoryWithPicker = async (): Promise<void> => {
+    const res = await promptStory({
+      title: 'Новая история',
+      placeholder: 'Название истории',
+      folders: current.folders ?? []
+    })
+    if (!res || !res.title) return
+    applyProject(
+      await window.api.stories.add({ projectId: current.id, title: res.title, folderId: res.folderId })
+    )
+    if (res.folderId) setExpanded((e) => ({ ...e, [`folder:${res.folderId}`]: true }))
   }
 
   const renameStory = async (s: Story): Promise<void> => {
@@ -761,7 +775,7 @@ export function Sidebar(): React.JSX.Element {
                   variant="ghost"
                   size="sm"
                   icon
-                  onClick={() => addStory(null)}
+                  onClick={addStoryWithPicker}
                   title="Добавить историю"
                 >
                   <Plus size={16} />
