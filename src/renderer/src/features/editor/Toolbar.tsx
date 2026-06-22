@@ -67,10 +67,20 @@ const FONTS = [
   { label: 'Times New Roman', value: '"Times New Roman", serif' },
   { label: 'Courier New', value: '"Courier New", monospace' }
 ]
+// Размеры в пунктах (pt) — как в Word, чтобы «11» означало 11pt, а не 11px.
 const SIZES = [
-  '8px', '9px', '10px', '11px', '12px', '14px', '16px', '18px',
-  '20px', '24px', '28px', '32px', '36px', '48px', '60px', '72px'
+  '8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt',
+  '20pt', '24pt', '28pt', '36pt', '48pt', '72pt'
 ]
+
+// нормализуем хранимый размер ('15px' из старых глав или '11pt') к опции в pt
+const toPt = (size?: string | null): string | undefined => {
+  if (!size) return undefined
+  const n = parseFloat(size)
+  if (Number.isNaN(n)) return undefined
+  const pt = size.trim().endsWith('px') ? (n * 72) / 96 : n
+  return `${Math.round(pt)}pt`
+}
 const LINE_HEIGHTS = ['1', '1.15', '1.4', '1.7', '2', '2.5']
 function Btn({
   active,
@@ -139,14 +149,15 @@ export function Toolbar({
 
   const curFont =
     (editor.getAttributes('textStyle').fontFamily as string) || FONTS[0].value
-  // Заголовки крупнее по CSS — показываем их реальный размер, а не «16»
-  const HEADING_SIZE: Record<string, string> = { h1: '32px', h2: '24px', h3: '20px' }
-  const explicitSize =
+  // Заголовки крупнее по CSS — показываем их реальный размер в pt (24/18/15pt = 32/24/20px)
+  const HEADING_SIZE: Record<string, string> = { h1: '24pt', h2: '18pt', h3: '15pt' }
+  const explicitSize = toPt(
     (editor.getAttributes('textStyle').fontSize as string) ||
-    (editor.getAttributes('paragraph').fontSize as string) ||
-    (editor.getAttributes('heading').fontSize as string) ||
-    (editor.getAttributes('listItem').fontSize as string)
-  const curSize = explicitSize || (blockValue !== 'p' ? HEADING_SIZE[blockValue] : '16px')
+      (editor.getAttributes('paragraph').fontSize as string) ||
+      (editor.getAttributes('heading').fontSize as string) ||
+      (editor.getAttributes('listItem').fontSize as string)
+  )
+  const curSize = explicitSize || (blockValue !== 'p' ? HEADING_SIZE[blockValue] : '12pt')
   const curLineHeight =
     (editor.getAttributes('paragraph').lineHeight as string) ||
     (editor.getAttributes('heading').lineHeight as string) ||

@@ -14,7 +14,7 @@ export type SaveDocxImage = (buffer: Buffer, ext: string) => Promise<string>
 
 interface RunStyle {
   font?: string
-  sizePx?: number
+  sizePt?: number
   bold?: boolean
   italic?: boolean
   underline?: boolean
@@ -33,9 +33,9 @@ const child = (el: Element, tag: string): Element | null => {
 const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-/** half-points (w:sz) → px (pt * 96/72). */
-const szToPx = (val: string | null): number | undefined =>
-  val ? Math.round((parseInt(val, 10) / 2) * (96 / 72)) : undefined
+/** half-points (w:sz) → pt (как в Word: «11pt» рендерится 1:1 с Word). */
+const szToPt = (val: string | null): number | undefined =>
+  val ? parseInt(val, 10) / 2 : undefined
 
 /** twips (1/20 pt) → px. */
 const twipsToPx = (val: string | null): number => (val ? (parseInt(val, 10) / 20) * (96 / 72) : 0)
@@ -66,7 +66,7 @@ function parseDefaults(stylesXml?: string): DocDefaults {
     if (lineVal && (!lineRule || lineRule === 'auto')) lineHeight = (parseInt(lineVal, 10) / 240).toFixed(2)
     return {
       font: attr(rFonts, 'w:ascii') ?? undefined,
-      sizePx: szToPx(attr(sz, 'w:val')),
+      sizePt: szToPt(attr(sz, 'w:val')),
       // Word по умолчанию рисует одинарным с небольшим запасом; если в стилях не
       // задано — берём 1.15 (это и убирает «77 страниц вместо 21»)
       lineHeight: lineHeight ?? '1.15'
@@ -103,7 +103,7 @@ function runStyle(r: Element, def: RunStyle): RunStyle {
   const colorVal = attr(color, 'w:val')
   return {
     font: attr(rFonts, 'w:ascii') ?? def.font,
-    sizePx: szToPx(attr(sz, 'w:val')) ?? def.sizePx,
+    sizePt: szToPt(attr(sz, 'w:val')) ?? def.sizePt,
     bold: onOff(child(rPr, 'w:b')),
     italic: onOff(child(rPr, 'w:i')),
     underline: !!child(rPr, 'w:u') && attr(child(rPr, 'w:u'), 'w:val') !== 'none',
@@ -121,7 +121,7 @@ function wrapRun(text: string, st: RunStyle): string {
   if (st.strike) html = `<s>${html}</s>`
   const styles: string[] = []
   if (st.font) styles.push(`font-family: ${st.font}`)
-  if (st.sizePx) styles.push(`font-size: ${st.sizePx}px`)
+  if (st.sizePt) styles.push(`font-size: ${st.sizePt}pt`)
   if (st.color) styles.push(`color: ${st.color}`)
   return styles.length ? `<span style="${styles.join('; ')}">${html}</span>` : html
 }
