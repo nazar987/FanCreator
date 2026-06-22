@@ -10,6 +10,27 @@ import { AutoTextarea } from '../../shared/ui/AutoTextarea'
 import { ImageStrip } from '../../shared/ui/ImageStrip'
 import { plural } from '../../shared/plural'
 
+const characterFolderMemoryKey = (projectId: string): string => `fancreator.characters.folder.${projectId}`
+
+function readCharacterFolder(projectId?: string): string | null {
+  if (!projectId) return null
+  try {
+    const saved = localStorage.getItem(characterFolderMemoryKey(projectId))
+    return saved || null
+  } catch {
+    return null
+  }
+}
+
+function writeCharacterFolder(projectId: string, folderId: string | null): void {
+  try {
+    if (folderId) localStorage.setItem(characterFolderMemoryKey(projectId), folderId)
+    else localStorage.removeItem(characterFolderMemoryKey(projectId))
+  } catch {
+    // UI-состояние необязательно: экран продолжает работать без localStorage.
+  }
+}
+
 /** Плоский список папок с отступами по глубине — для выпадающего «переместить». */
 function flattenFolders(folders: CharacterFolder[]): { folder: CharacterFolder; depth: number }[] {
   const out: { folder: CharacterFolder; depth: number }[] = []
@@ -362,7 +383,11 @@ export function Characters(): React.JSX.Element {
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
-  const [folderId, setFolderId] = React.useState<string | null>(null)
+  const [folderId, setFolderId] = React.useState<string | null>(() => readCharacterFolder(current?.id))
+
+  React.useEffect(() => {
+    if (current) writeCharacterFolder(current.id, folderId)
+  }, [current, folderId])
 
   React.useEffect(() => {
     const templates = current?.templates ?? []
