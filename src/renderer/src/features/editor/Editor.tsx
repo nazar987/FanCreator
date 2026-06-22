@@ -153,16 +153,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       transformPastedHTML: (html) => {
         try {
           const doc = new DOMParser().parseFromString(html, 'text/html')
-          // S-F3: снимаем чужие font-size/font-family/line-height из буфера (Word/Docs) —
+          doc.querySelectorAll('o\\:p, style, meta, xml').forEach((n) => n.remove())
+          // <font size=..> → span без размера
+          doc.querySelectorAll('font').forEach((f) => {
+            const span = doc.createElement('span')
+            span.innerHTML = f.innerHTML
+            f.replaceWith(span)
+          })
+          // S-F3/S-G2: снимаем чужой шрифт/размер/интервал из буфера (Word/Docs/другой файл) —
           // иначе текст вставляется «без засечек 8pt», а пустые строки 16pt. Текст принимает
-          // стиль документа. Также убираем мусорные <o:p> из Word.
+          // стиль документа.
           doc.querySelectorAll<HTMLElement>('[style]').forEach((el) => {
-            el.style.removeProperty('font-size')
-            el.style.removeProperty('font-family')
-            el.style.removeProperty('line-height')
+            const s = el.style
+            ;['font', 'font-size', 'font-family', 'line-height', 'mso-spacerun', 'mso-fareast-font-family'].forEach(
+              (p) => s.removeProperty(p)
+            )
             if (!el.getAttribute('style')) el.removeAttribute('style')
           })
-          doc.querySelectorAll('o\\:p').forEach((o) => o.remove())
           doc.querySelectorAll('p').forEach((p) => {
             const text = (p.textContent || '').replace(/ /g, ' ').trim()
             if (!text && !p.querySelector('img')) p.remove()
