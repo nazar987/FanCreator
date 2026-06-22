@@ -6,6 +6,7 @@ import {
   BookPlus,
   FileText,
   Users,
+  UserRound,
   LayoutDashboard,
   Clock3,
   CircleHelp
@@ -131,6 +132,8 @@ export function TabBar(): React.JSX.Element {
             <Library size={14} />
           ) : t.kind === 'characters' ? (
             <Users size={14} />
+          ) : t.kind === 'character' ? (
+            <UserRound size={14} />
           ) : t.kind === 'board' ? (
             <LayoutDashboard size={14} />
           ) : t.kind === 'timeline' ? (
