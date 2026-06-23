@@ -159,6 +159,36 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       transformPastedHTML: (html) => {
         try {
           const doc = new DOMParser().parseFromString(html, 'text/html')
+          // Word держит базовый шрифт/размер в <style> как классы (MsoNormal) —
+          // сначала переносим их в инлайновый style, иначе при удалении <style>
+          // шрифт/размер теряются и текст берёт шрифт документа по умолчанию.
+          const classFont = new Map<string, { ff?: string; fs?: string }>()
+          doc.querySelectorAll('style').forEach((st) => {
+            const css = st.textContent || ''
+            const ruleRe = /([^{}]+)\{([^}]*)\}/g
+            let m: RegExpExecArray | null
+            while ((m = ruleRe.exec(css))) {
+              const ff = /font-family\s*:\s*([^;]+)/i.exec(m[2])?.[1]?.trim()
+              const fs = /font-size\s*:\s*([^;]+)/i.exec(m[2])?.[1]?.trim()
+              if (!ff && !fs) continue
+              m[1].split(',').forEach((sel) => {
+                const cm = /\.([\w-]+)/.exec(sel)
+                if (!cm) return
+                const prev = classFont.get(cm[1]) || {}
+                classFont.set(cm[1], { ff: ff || prev.ff, fs: fs || prev.fs })
+              })
+            }
+          })
+          if (classFont.size) {
+            doc.querySelectorAll<HTMLElement>('[class]').forEach((el) => {
+              el.classList.forEach((cls) => {
+                const f = classFont.get(cls)
+                if (!f) return
+                if (f.ff && !el.style.fontFamily) el.style.fontFamily = f.ff
+                if (f.fs && !el.style.fontSize) el.style.fontSize = f.fs
+              })
+            })
+          }
           doc.querySelectorAll('o\\:p, style, meta, xml').forEach((n) => n.remove())
           // <font face/color> → span со шрифтом/цветом (сохраняем оформление)
           doc.querySelectorAll('font').forEach((f) => {
