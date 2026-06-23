@@ -369,10 +369,26 @@ export function Toolbar({
       <Btn title="Ссылка" active={editor.isActive('link')} onClick={setLink}>
         <LinkIcon size={17} />
       </Btn>
-      {editor.isActive('link') && (
+      {(editor.isActive('link') || editor.isActive('internalLink')) && (
         <Btn
           title="Убрать ссылку (текст останется)"
-          onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}
+          onClick={() => {
+            if (editor.isActive('internalLink')) {
+              const { from } = editor.state.selection
+              const node = editor.state.doc.nodeAt(from)
+              if (node)
+                editor
+                  .chain()
+                  .focus()
+                  .command(({ tr }) => {
+                    tr.replaceWith(from, from + node.nodeSize, editor.schema.text(node.attrs.label || 'глава'))
+                    return true
+                  })
+                  .run()
+            } else {
+              editor.chain().focus().extendMarkRange('link').unsetLink().run()
+            }
+          }}
         >
           <Unlink size={17} />
         </Btn>

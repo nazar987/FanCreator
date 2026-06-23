@@ -616,6 +616,53 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     openContextMenu(e, [{ type: 'label', label: 'Вики-ссылка на…' }, ...items])
   }
 
+  // S-H9: правый клик по ссылке — «Открыть» / «Убрать ссылку (оставить текст)»
+  const onEditorContextMenu = (e: React.MouseEvent): void => {
+    if (!editor) return
+    const found = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })
+    if (!found) return
+    const pos = found.pos
+    const { doc, schema } = editor.state
+
+    // ссылка на главу (атом-нода)
+    const node = doc.nodeAt(pos)
+    if (node && node.type.name === 'internalLink') {
+      e.preventDefault()
+      openContextMenu(e, [
+        { label: 'Открыть главу', onClick: () => node.attrs.chapterId && openChapterById(node.attrs.chapterId) },
+        {
+          label: 'Убрать ссылку (оставить текст)',
+          onClick: () =>
+            editor
+              .chain()
+              .focus()
+              .command(({ tr }) => {
+                tr.replaceWith(pos, pos + node.nodeSize, schema.text(node.attrs.label || 'глава'))
+                return true
+              })
+              .run()
+        }
+      ])
+      return
+    }
+
+    // обычная гиперссылка (марка link)
+    const linkType = schema.marks.link
+    if (linkType) {
+      const $pos = doc.resolve(pos)
+      const onLink = (n: typeof $pos.nodeAfter): boolean => !!n && n.marks.some((m) => m.type === linkType)
+      if (onLink($pos.nodeAfter) || onLink($pos.nodeBefore)) {
+        e.preventDefault()
+        openContextMenu(e, [
+          {
+            label: 'Убрать ссылку (оставить текст)',
+            onClick: () => editor.chain().focus().setTextSelection(pos).extendMarkRange('link').unsetLink().run()
+          }
+        ])
+      }
+    }
+  }
+
   const renderWikiPreview = (kind: string, refId: string): React.JSX.Element | null => {
     if (!current) return null
     if (kind === 'character') {
@@ -717,6 +764,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           className={`editor-scroll${ready ? '' : ' editor-scroll--loading'}`}
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
+          onContextMenu={onEditorContextMenu}
           onWheel={(e) => {
             if (!e.ctrlKey) return
             e.preventDefault()
