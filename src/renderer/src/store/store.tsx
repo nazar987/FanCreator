@@ -85,6 +85,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const applyProject = React.useCallback((p: Project | null) => {
     if (!p) return
     setCurrent(p)
+    setTabs((openTabs) =>
+      openTabs.map((tab) => {
+        if (tab.kind !== 'character' || !tab.characterId) return tab
+        const character = p.characters.find((item) => item.id === tab.characterId)
+        return character ? { ...tab, title: character.name || 'Без имени' } : tab
+      })
+    )
     // обновляем сводку в списке без полной перезагрузки
     setProjects((prev) =>
       prev
