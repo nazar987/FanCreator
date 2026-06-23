@@ -18,6 +18,7 @@ const api: FanCreatorApi = {
     rename: (input) => invoke('folders:rename', input),
     setColor: (input) => invoke('folders:setColor', input),
     move: (input) => invoke('folders:move', input),
+    reorder: (input) => invoke('folders:reorder', input),
     delete: (input) => invoke('folders:delete', input)
   },
   stories: {
@@ -45,6 +46,7 @@ const api: FanCreatorApi = {
     add: (input) => invoke('characters:add', input),
     update: (input) => invoke('characters:update', input),
     setFolder: (input) => invoke('characters:setFolder', input),
+    reorder: (input) => invoke('characters:reorder', input),
     delete: (input) => invoke('characters:delete', input),
     applyTemplate: (input) => invoke('characters:applyTemplate', input)
   },
@@ -52,6 +54,7 @@ const api: FanCreatorApi = {
     add: (input) => invoke('characterFolders:add', input),
     update: (input) => invoke('characterFolders:update', input),
     move: (input) => invoke('characterFolders:move', input),
+    reorder: (input) => invoke('characterFolders:reorder', input),
     delete: (input) => invoke('characterFolders:delete', input)
   },
   templates: {

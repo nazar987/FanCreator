@@ -1,5 +1,15 @@
 import React from 'react'
-import { ChevronRight, ClipboardList, Folder as FolderIcon, FolderPlus, Plus, Trash2, UserRound } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronRight,
+  ClipboardList,
+  Folder as FolderIcon,
+  FolderPlus,
+  Plus,
+  Trash2,
+  UserRound
+} from 'lucide-react'
 import type { Character, CharacterField, CharacterFolder, CharacterTemplate, Project } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button, Card, Input } from '../../shared/ui/components'
@@ -9,6 +19,7 @@ import { ColorPalette } from '../../shared/ui/ColorPalette'
 import { AutoTextarea } from '../../shared/ui/AutoTextarea'
 import { ImageStrip } from '../../shared/ui/ImageStrip'
 import { plural } from '../../shared/plural'
+import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 
 const characterFolderMemoryKey = (projectId: string): string => `fancreator.characters.folder.${projectId}`
 
@@ -416,7 +427,9 @@ export function Characters(): React.JSX.Element {
   const childFolders = folders
     .filter((f) => (f.parentId ?? null) === folderId)
     .sort((a, b) => a.order - b.order)
-  const folderCharacters = current.characters.filter((c) => (c.folderId ?? null) === folderId)
+  const folderCharacters = current.characters
+    .filter((c) => (c.folderId ?? null) === folderId)
+    .sort((a, b) => a.order - b.order)
   const flatFolders = flattenFolders(folders)
 
   const folderPath = (): CharacterFolder[] => {
@@ -459,6 +472,50 @@ export function Characters(): React.JSX.Element {
     })
   }
 
+  const shiftedOrder = <T extends { id: string },>(items: T[], id: string, offset: -1 | 1): string[] | null => {
+    const order = items.map((item) => item.id)
+    const index = order.indexOf(id)
+    const target = index + offset
+    if (index < 0 || target < 0 || target >= order.length) return null
+    ;[order[index], order[target]] = [order[target], order[index]]
+    return order
+  }
+
+  const moveFolderAmongSiblings = async (folder: CharacterFolder, offset: -1 | 1): Promise<void> => {
+    const siblings = folders
+      .filter((item) => (item.parentId ?? null) === (folder.parentId ?? null))
+      .sort((a, b) => a.order - b.order)
+    const order = shiftedOrder(siblings, folder.id, offset)
+    if (!order) return
+    applyProject(
+      await window.api.characterFolders.reorder({
+        projectId: current.id,
+        parentId: folder.parentId ?? null,
+        order
+      })
+    )
+  }
+
+  const folderOrderMenu = (folder: CharacterFolder): MenuItem[] => {
+    const siblings = folders
+      .filter((item) => (item.parentId ?? null) === (folder.parentId ?? null))
+      .sort((a, b) => a.order - b.order)
+    return [
+      {
+        label: 'Выше',
+        icon: <ArrowUp size={15} />,
+        disabled: siblings[0]?.id === folder.id,
+        onClick: () => moveFolderAmongSiblings(folder, -1)
+      },
+      {
+        label: 'Ниже',
+        icon: <ArrowDown size={15} />,
+        disabled: siblings.at(-1)?.id === folder.id,
+        onClick: () => moveFolderAmongSiblings(folder, 1)
+      }
+    ]
+  }
+
   const renderFolderNode = (folder: CharacterFolder, depth: number): React.JSX.Element => {
     const children = folders
       .filter((item) => (item.parentId ?? null) === folder.id)
@@ -472,6 +529,7 @@ export function Characters(): React.JSX.Element {
           role="button"
           tabIndex={0}
           onClick={() => setFolderId(folder.id)}
+          onContextMenu={(event) => openContextMenu(event, folderOrderMenu(folder))}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
           }}
@@ -544,6 +602,33 @@ export function Characters(): React.JSX.Element {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
+
+  const moveCharacterAmongSiblings = async (character: Character, offset: -1 | 1): Promise<void> => {
+    const order = shiftedOrder(folderCharacters, character.id, offset)
+    if (!order) return
+    applyProject(
+      await window.api.characters.reorder({
+        projectId: current.id,
+        folderId: character.folderId ?? null,
+        order
+      })
+    )
+  }
+
+  const characterOrderMenu = (character: Character): MenuItem[] => [
+    {
+      label: 'Выше',
+      icon: <ArrowUp size={15} />,
+      disabled: folderCharacters[0]?.id === character.id,
+      onClick: () => moveCharacterAmongSiblings(character, -1)
+    },
+    {
+      label: 'Ниже',
+      icon: <ArrowDown size={15} />,
+      disabled: folderCharacters.at(-1)?.id === character.id,
+      onClick: () => moveCharacterAmongSiblings(character, 1)
+    }
+  ]
 
   const visibleIds = folderCharacters.map((c) => c.id)
   const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))
@@ -691,6 +776,7 @@ export function Characters(): React.JSX.Element {
                 role="button"
                 tabIndex={0}
                 onClick={() => openCharacter(character)}
+                onContextMenu={(event) => openContextMenu(event, characterOrderMenu(character))}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') openCharacter(character)
                 }}

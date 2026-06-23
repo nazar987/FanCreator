@@ -21,6 +21,8 @@ import {
   LayoutGrid,
   Palette,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
   UserRound
 } from 'lucide-react'
 import {
@@ -244,13 +246,10 @@ export function Sidebar(): React.JSX.Element {
     if (source.index === destination.index) return
 
     if (source.droppableId === 'stories') {
-      // Перетаскиваем только истории в корне; внутри папок порядок задаётся через меню.
       const rootOrder = folderStories(null).map((story) => story.id)
       const [moved] = rootOrder.splice(source.index, 1)
       rootOrder.splice(destination.index, 0, moved)
-      // Сохраняем хвост (истории внутри папок) в их прежнем относительном порядке.
-      const order = [...rootOrder, ...activeStories().filter((s) => (s.folderId ?? null) !== null).map((s) => s.id)]
-      applyProject(await window.api.stories.reorder({ projectId: current.id, order }))
+      applyProject(await window.api.stories.reorder({ projectId: current.id, folderId: null, order: rootOrder }))
       return
     }
 
@@ -328,6 +327,35 @@ export function Sidebar(): React.JSX.Element {
     return out
   }
 
+  const shiftedOrder = <T extends { id: string }>(items: T[], id: string, offset: -1 | 1): string[] | null => {
+    const order = items.map((item) => item.id)
+    const index = order.indexOf(id)
+    const target = index + offset
+    if (index < 0 || target < 0 || target >= order.length) return null
+    ;[order[index], order[target]] = [order[target], order[index]]
+    return order
+  }
+
+  const moveStoryInFolder = async (story: Story, offset: -1 | 1): Promise<void> => {
+    const order = shiftedOrder(folderStories(story.folderId ?? null), story.id, offset)
+    if (!order) return
+    applyProject(
+      await window.api.stories.reorder({
+        projectId: current.id,
+        folderId: story.folderId ?? null,
+        order
+      })
+    )
+  }
+
+  const moveFolderAmongSiblings = async (folder: Folder, offset: -1 | 1): Promise<void> => {
+    const order = shiftedOrder(childFolders(folder.parentId ?? null), folder.id, offset)
+    if (!order) return
+    applyProject(
+      await window.api.folders.reorder({ projectId: current.id, parentId: folder.parentId ?? null, order })
+    )
+  }
+
   const storyMenu = (s: Story): MenuItem[] => [
     { label: 'Добавить главу', icon: <Plus size={15} />, onClick: () => addChapter(s) },
     {
@@ -355,6 +383,18 @@ export function Sidebar(): React.JSX.Element {
         openColorPicker({ value: s.color ?? '#8b8cf0', title: 'Цвет книги', onChange: (c) => setStoryColor(s, c) })
     },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameStory(s) },
+    {
+      label: 'Выше',
+      icon: <ArrowUp size={15} />,
+      disabled: folderStories(s.folderId ?? null)[0]?.id === s.id,
+      onClick: () => moveStoryInFolder(s, -1)
+    },
+    {
+      label: 'Ниже',
+      icon: <ArrowDown size={15} />,
+      disabled: folderStories(s.folderId ?? null).at(-1)?.id === s.id,
+      onClick: () => moveStoryInFolder(s, 1)
+    },
     { type: 'sep' },
     { label: 'Удалить историю', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteStory(s) }
   ]
@@ -370,6 +410,18 @@ export function Sidebar(): React.JSX.Element {
         openColorPicker({ value: f.color ?? '#f0b84b', title: 'Цвет папки', onChange: (c) => setFolderColor(f, c) })
     },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameFolder(f) },
+    {
+      label: 'Выше',
+      icon: <ArrowUp size={15} />,
+      disabled: childFolders(f.parentId ?? null)[0]?.id === f.id,
+      onClick: () => moveFolderAmongSiblings(f, -1)
+    },
+    {
+      label: 'Ниже',
+      icon: <ArrowDown size={15} />,
+      disabled: childFolders(f.parentId ?? null).at(-1)?.id === f.id,
+      onClick: () => moveFolderAmongSiblings(f, 1)
+    },
     { type: 'sep' },
     { label: 'Удалить папку', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteFolder(f) }
   ]
@@ -606,7 +658,26 @@ export function Sidebar(): React.JSX.Element {
       .filter((f) => (f.parentId ?? null) === parentId)
       .sort((a, b) => a.order - b.order)
   const charsInFolder = (folderId: string | null): typeof current.characters =>
-    current.characters.filter((c) => (c.folderId ?? null) === folderId)
+    current.characters
+      .filter((c) => (c.folderId ?? null) === folderId)
+      .sort((a, b) => a.order - b.order)
+
+  const moveCharacterAmongSiblings = async (
+    character: (typeof current.characters)[number],
+    offset: -1 | 1
+  ): Promise<void> => {
+    const folderId = character.folderId ?? null
+    const order = shiftedOrder(charsInFolder(folderId), character.id, offset)
+    if (!order) return
+    applyProject(await window.api.characters.reorder({ projectId: current.id, folderId, order }))
+  }
+
+  const moveCharacterFolderAmongSiblings = async (folder: Folder, offset: -1 | 1): Promise<void> => {
+    const parentId = folder.parentId ?? null
+    const order = shiftedOrder(childCharacterFolders(parentId), folder.id, offset)
+    if (!order) return
+    applyProject(await window.api.characterFolders.reorder({ projectId: current.id, parentId, order }))
+  }
   const openCharacterPage = (c: (typeof current.characters)[number]): void =>
     openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
 
@@ -619,6 +690,22 @@ export function Sidebar(): React.JSX.Element {
       className={`tree-row tree-chapter ${activeTabId === `character:${c.id}` ? 'tree-row--active' : ''}`}
       style={{ paddingLeft: 8 + depth * 14 }}
       onClick={() => openCharacterPage(c)}
+      onContextMenu={(event) =>
+        openContextMenu(event, [
+          {
+            label: 'Выше',
+            icon: <ArrowUp size={15} />,
+            disabled: charsInFolder(c.folderId ?? null)[0]?.id === c.id,
+            onClick: () => moveCharacterAmongSiblings(c, -1)
+          },
+          {
+            label: 'Ниже',
+            icon: <ArrowDown size={15} />,
+            disabled: charsInFolder(c.folderId ?? null).at(-1)?.id === c.id,
+            onClick: () => moveCharacterAmongSiblings(c, 1)
+          }
+        ])
+      }
     >
       <span style={{ width: 15 }} />
       <UserRound size={14} style={{ color: c.color ?? '#7aa2f7' }} />
@@ -635,7 +722,27 @@ export function Sidebar(): React.JSX.Element {
     const chars = charsInFolder(f.id)
     return (
       <div className="tree-node" key={f.id}>
-        <div className="tree-row" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(key)}>
+        <div
+          className="tree-row"
+          style={{ paddingLeft: 8 + depth * 14 }}
+          onClick={() => toggle(key)}
+          onContextMenu={(event) =>
+            openContextMenu(event, [
+              {
+                label: 'Выше',
+                icon: <ArrowUp size={15} />,
+                disabled: childCharacterFolders(f.parentId ?? null)[0]?.id === f.id,
+                onClick: () => moveCharacterFolderAmongSiblings(f, -1)
+              },
+              {
+                label: 'Ниже',
+                icon: <ArrowDown size={15} />,
+                disabled: childCharacterFolders(f.parentId ?? null).at(-1)?.id === f.id,
+                onClick: () => moveCharacterFolderAmongSiblings(f, 1)
+              }
+            ])
+          }
+        >
           <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
             <ChevronRight size={15} />
           </span>

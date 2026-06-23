@@ -61,16 +61,24 @@ export async function initStore(): Promise<void> {
 /** Приводит проект к актуальной схеме (поля, появившиеся в новых версиях). */
 function normalizeProject(project: Project): Project {
   project.folders ??= []
-  for (const folder of project.folders) folder.color ??= '#f0b84b'
-  for (const story of project.stories) story.color ??= '#8b8cf0'
+  for (const [index, folder] of project.folders.entries()) {
+    folder.color ??= '#f0b84b'
+    folder.order ??= index
+  }
+  for (const [index, story] of project.stories.entries()) {
+    story.color ??= '#8b8cf0'
+    story.order ??= index
+  }
   project.characterFolders ??= []
-  for (const folder of project.characterFolders) {
+  for (const [index, folder] of project.characterFolders.entries()) {
     folder.color ??= '#7aa2f7'
     folder.images ??= []
+    folder.order ??= index
   }
-  for (const character of project.characters) {
+  for (const [index, character] of project.characters.entries()) {
     character.folderId ??= null
     character.images ??= []
+    character.order ??= index
   }
   project.boards ??= []
   project.templates ??= []
@@ -282,8 +290,9 @@ function normalizeLegacyProject(legacy: any): Project {
         updatedAt: c.updatedAt ?? now()
       }))
     })),
-    characters: (legacy.characters ?? []).map((ch: any) => ({
+    characters: (legacy.characters ?? []).map((ch: any, index: number) => ({
       id: ch.id,
+      order: ch.order ?? index,
       name: ch.name ?? 'Персонаж',
       role: ch.role ?? '',
       tags: Array.isArray(ch.tags) ? ch.tags : [],

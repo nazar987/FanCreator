@@ -94,6 +94,7 @@ export interface CharacterField {
 
 export interface Character {
   id: string
+  order: number
   name: string
   role: string
   tags: string[]

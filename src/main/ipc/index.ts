@@ -122,7 +122,13 @@ export function registerIpc(): void {
         tags: [],
         genres: [],
         status: 'idea',
-        order: p.stories.length,
+        order:
+          Math.max(
+            -1,
+            ...p.stories
+              .filter((story) => !story.deletedAt && (story.folderId ?? null) === (folderId ?? null))
+              .map((story) => story.order)
+          ) + 1,
         createdAt: now(),
         updatedAt: now(),
         chapters: []
@@ -138,20 +144,26 @@ export function registerIpc(): void {
     })
   )
 
-  ipcMain.handle('stories:reorder', (_e, { projectId, order }) =>
+  ipcMain.handle('stories:reorder', (_e, { projectId, folderId, order }) =>
     mutate(projectId, (p) => {
+      const parentKey = folderId ?? null
       const byId = new Map(p.stories.map((story) => [story.id, story]))
-      const inOrder = new Set(order)
       const reordered = order
         .map((id: string, index: number) => {
           const story = byId.get(id)
-          return story && !story.deletedAt ? { ...story, order: index } : null
+          return story && !story.deletedAt && (story.folderId ?? null) === parentKey
+            ? { ...story, order: index }
+            : null
         })
         .filter(Boolean) as Story[]
-      const rest = p.stories
-        .filter((story) => !inOrder.has(story.id))
-        .map((story, index) => ({ ...story, order: reordered.length + index }))
-      p.stories = [...reordered, ...rest]
+      const byReorderedId = new Map(reordered.map((story) => [story.id, story]))
+      let nextOrder = reordered.length
+      p.stories = p.stories.map((story) => {
+        const replacement = byReorderedId.get(story.id)
+        if (replacement) return replacement
+        if (!story.deletedAt && (story.folderId ?? null) === parentKey) return { ...story, order: nextOrder++ }
+        return story
+      })
     })
   )
 
@@ -214,7 +226,13 @@ export function registerIpc(): void {
         parentId: parentId ?? null,
         title,
         color: '#f0b84b',
-        order: p.folders.length
+        order:
+          Math.max(
+            -1,
+            ...p.folders
+              .filter((folder) => (folder.parentId ?? null) === (parentId ?? null))
+              .map((folder) => folder.order)
+          ) + 1
       })
     })
   )
@@ -241,6 +259,24 @@ export function registerIpc(): void {
         cursor = p.folders.find((x) => x.id === cursor)?.parentId ?? null
       }
       f.parentId = parentId ?? null
+      f.order =
+        Math.max(
+          -1,
+          ...p.folders
+            .filter((x) => (x.parentId ?? null) === (parentId ?? null) && x.id !== f.id)
+            .map((x) => x.order)
+        ) + 1
+    })
+  )
+  ipcMain.handle('folders:reorder', (_e, { projectId, parentId, order }) =>
+    mutate(projectId, (p) => {
+      const parentKey = parentId ?? null
+      const positions = new Map<string, number>(order.map((id: string, index: number) => [id, index]))
+      let nextOrder = positions.size
+      for (const folder of p.folders) {
+        if ((folder.parentId ?? null) !== parentKey) continue
+        folder.order = positions.get(folder.id) ?? nextOrder++
+      }
     })
   )
   ipcMain.handle('folders:delete', (_e, { projectId, folderId }) =>
@@ -266,7 +302,19 @@ export function registerIpc(): void {
   ipcMain.handle('stories:setFolder', (_e, { projectId, storyId, folderId }) =>
     mutate(projectId, (p) => {
       const s = p.stories.find((x) => x.id === storyId)
-      if (s) s.folderId = folderId ?? null
+      if (s) {
+        const targetFolder = folderId ?? null
+        s.folderId = targetFolder
+        s.order =
+          Math.max(
+            -1,
+            ...p.stories
+              .filter(
+                (story) => story.id !== s.id && !story.deletedAt && (story.folderId ?? null) === targetFolder
+              )
+              .map((story) => story.order)
+          ) + 1
+      }
     })
   )
 
@@ -395,6 +443,13 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const character: Character = {
         id: uid(),
+        order:
+          Math.max(
+            -1,
+            ...p.characters
+              .filter((item) => (item.folderId ?? null) === (folderId ?? null))
+              .map((item) => item.order)
+          ) + 1,
         name: name ?? '',
         role: '',
         tags: [],
@@ -414,8 +469,28 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const ch = p.characters.find((c) => c.id === characterId)
       if (ch) {
-        ch.folderId = folderId ?? null
+        const targetFolder = folderId ?? null
+        ch.folderId = targetFolder
+        ch.order =
+          Math.max(
+            -1,
+            ...p.characters
+              .filter((character) => character.id !== ch.id && (character.folderId ?? null) === targetFolder)
+              .map((character) => character.order)
+          ) + 1
         ch.updatedAt = now()
+      }
+    })
+  )
+
+  ipcMain.handle('characters:reorder', (_e, { projectId, folderId, order }) =>
+    mutate(projectId, (p) => {
+      const folderKey = folderId ?? null
+      const positions = new Map<string, number>(order.map((id: string, index: number) => [id, index]))
+      let nextOrder = positions.size
+      for (const character of p.characters) {
+        if ((character.folderId ?? null) !== folderKey) continue
+        character.order = positions.get(character.id) ?? nextOrder++
       }
     })
   )
@@ -467,7 +542,13 @@ export function registerIpc(): void {
         description: '',
         color: '#7aa2f7',
         images: [],
-        order: p.characterFolders.length
+        order:
+          Math.max(
+            -1,
+            ...p.characterFolders
+              .filter((folder) => (folder.parentId ?? null) === (parentId ?? null))
+              .map((folder) => folder.order)
+          ) + 1
       }
       p.characterFolders.push(folder)
     })
@@ -488,6 +569,24 @@ export function registerIpc(): void {
         cursor = p.characterFolders.find((x) => x.id === cursor)?.parentId ?? null
       }
       f.parentId = parentId ?? null
+      f.order =
+        Math.max(
+          -1,
+          ...p.characterFolders
+            .filter((folder) => folder.id !== f.id && (folder.parentId ?? null) === (parentId ?? null))
+            .map((folder) => folder.order)
+        ) + 1
+    })
+  )
+  ipcMain.handle('characterFolders:reorder', (_e, { projectId, parentId, order }) =>
+    mutate(projectId, (p) => {
+      const parentKey = parentId ?? null
+      const positions = new Map<string, number>(order.map((id: string, index: number) => [id, index]))
+      let nextOrder = positions.size
+      for (const folder of p.characterFolders) {
+        if ((folder.parentId ?? null) !== parentKey) continue
+        folder.order = positions.get(folder.id) ?? nextOrder++
+      }
     })
   )
   ipcMain.handle('characterFolders:delete', (_e, { projectId, folderId }) =>

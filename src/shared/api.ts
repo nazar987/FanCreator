@@ -41,11 +41,12 @@ export interface FanCreatorApi {
     rename(input: { projectId: string; folderId: string; title: string }): Promise<Project | null>
     setColor(input: { projectId: string; folderId: string; color: string }): Promise<Project | null>
     move(input: { projectId: string; folderId: string; parentId: string | null }): Promise<Project | null>
+    reorder(input: { projectId: string; parentId?: string | null; order: string[] }): Promise<Project | null>
     delete(input: { projectId: string; folderId: string }): Promise<Project | null>
   }
   stories: {
     add(input: { projectId: string; title: string; folderId?: string | null }): Promise<Project | null>
-    reorder(input: { projectId: string; order: string[] }): Promise<Project | null>
+    reorder(input: { projectId: string; folderId?: string | null; order: string[] }): Promise<Project | null>
     setFolder(input: {
       projectId: string
       storyId: string
@@ -117,6 +118,7 @@ export interface FanCreatorApi {
       characterId: string
       folderId: string | null
     }): Promise<Project | null>
+    reorder(input: { projectId: string; folderId?: string | null; order: string[] }): Promise<Project | null>
     delete(input: { projectId: string; characterId: string }): Promise<Project | null>
     /** Применить шаблон к группе. characterIds=null → ко всем привязанным к шаблону. */
     applyTemplate(input: {
@@ -134,6 +136,7 @@ export interface FanCreatorApi {
       patch: Partial<Pick<CharacterFolder, 'title' | 'description' | 'color' | 'images'>>
     }): Promise<Project | null>
     move(input: { projectId: string; folderId: string; parentId: string | null }): Promise<Project | null>
+    reorder(input: { projectId: string; parentId?: string | null; order: string[] }): Promise<Project | null>
     delete(input: { projectId: string; folderId: string }): Promise<Project | null>
   }
   templates: {
