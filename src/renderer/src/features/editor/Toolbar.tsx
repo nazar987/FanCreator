@@ -369,7 +369,9 @@ export function Toolbar({
       <Btn title="Ссылка" active={editor.isActive('link')} onClick={setLink}>
         <LinkIcon size={17} />
       </Btn>
-      {(editor.isActive('link') || editor.isActive('internalLink')) && (
+      {(editor.isActive('link') ||
+        editor.isActive('wikiLink') ||
+        editor.isActive('internalLink')) && (
         <Btn
           title="Убрать ссылку (текст останется)"
           onClick={() => {
@@ -385,6 +387,8 @@ export function Toolbar({
                     return true
                   })
                   .run()
+            } else if (editor.isActive('wikiLink')) {
+              editor.chain().focus().extendMarkRange('wikiLink').unsetMark('wikiLink').run()
             } else {
               editor.chain().focus().extendMarkRange('link').unsetLink().run()
             }

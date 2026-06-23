@@ -646,20 +646,34 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       return
     }
 
-    // обычная гиперссылка (марка link)
+    // ссылки-марки: вики-ссылка (на сущность) и обычная гиперссылка
     const linkType = schema.marks.link
-    if (linkType) {
-      const $pos = doc.resolve(pos)
-      const onLink = (n: typeof $pos.nodeAfter): boolean => !!n && n.marks.some((m) => m.type === linkType)
-      if (onLink($pos.nodeAfter) || onLink($pos.nodeBefore)) {
-        e.preventDefault()
-        openContextMenu(e, [
-          {
-            label: 'Убрать ссылку (оставить текст)',
-            onClick: () => editor.chain().focus().setTextSelection(pos).extendMarkRange('link').unsetLink().run()
-          }
-        ])
-      }
+    const wikiType = schema.marks.wikiLink
+    const $pos = doc.resolve(pos)
+    const marksHere = [...($pos.nodeAfter?.marks ?? []), ...($pos.nodeBefore?.marks ?? [])]
+    const wikiMark = wikiType && marksHere.find((m) => m.type === wikiType)
+    const linkMark = linkType && marksHere.find((m) => m.type === linkType)
+
+    if (wikiMark) {
+      e.preventDefault()
+      openContextMenu(e, [
+        { label: 'Открыть', onClick: () => openEntity(wikiMark.attrs.kind, wikiMark.attrs.refId) },
+        {
+          label: 'Убрать ссылку (оставить текст)',
+          onClick: () =>
+            editor.chain().focus().setTextSelection(pos).extendMarkRange('wikiLink').unsetMark('wikiLink').run()
+        }
+      ])
+      return
+    }
+    if (linkMark) {
+      e.preventDefault()
+      openContextMenu(e, [
+        {
+          label: 'Убрать ссылку (оставить текст)',
+          onClick: () => editor.chain().focus().setTextSelection(pos).extendMarkRange('link').unsetLink().run()
+        }
+      ])
     }
   }
 
