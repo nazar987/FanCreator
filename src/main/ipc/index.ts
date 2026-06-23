@@ -438,6 +438,17 @@ export function registerIpc(): void {
     })
   )
 
+  ipcMain.handle('trash:empty', (_e, { projectId }) =>
+    mutate(projectId, (p) => {
+      p.stories = p.stories
+        .filter((story) => !story.deletedAt)
+        .map((story) => ({
+          ...story,
+          chapters: story.chapters.filter((chapter) => !chapter.deletedAt)
+        }))
+    })
+  )
+
   // ---------- Characters ----------
   ipcMain.handle('characters:add', (_e, { projectId, name, folderId }) =>
     mutate(projectId, (p) => {

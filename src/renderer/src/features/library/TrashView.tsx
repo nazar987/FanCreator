@@ -26,6 +26,20 @@ export function TrashView({ onClose }: { onClose: () => void }): React.JSX.Eleme
     applyProject(await window.api.chapters.purge({ projectId: current.id, storyId, chapterId: id }))
   }
 
+  const emptyTrash = async (): Promise<void> => {
+    const count = trashedStories.length + trashedChapters.length
+    if (
+      !(await confirmDialog({
+        title: 'Очистить корзину?',
+        message: `${count} удалённых элементов будут уничтожены безвозвратно. Это действие нельзя отменить.`,
+        confirmLabel: 'Очистить всё',
+        danger: true
+      }))
+    )
+      return
+    applyProject(await window.api.trash.empty({ projectId: current.id }))
+  }
+
   return (
     <div className="modal-overlay" onMouseDown={onClose}>
       <div className="modal trash-modal" onMouseDown={(e) => e.stopPropagation()}>
@@ -103,6 +117,11 @@ export function TrashView({ onClose }: { onClose: () => void }): React.JSX.Eleme
           </div>
         )}
         <div className="modal-actions">
+          {!empty && (
+            <Button variant="danger" onClick={emptyTrash}>
+              <Trash2 size={15} /> Очистить всё
+            </Button>
+          )}
           <Button variant="ghost" onClick={onClose}>
             Закрыть
           </Button>

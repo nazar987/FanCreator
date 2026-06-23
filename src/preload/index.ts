@@ -42,6 +42,9 @@ const api: FanCreatorApi = {
     setParent: (input) => invoke('chapters:setParent', input),
     move: (input) => invoke('chapters:move', input)
   },
+  trash: {
+    empty: (input) => invoke('trash:empty', input)
+  },
   characters: {
     add: (input) => invoke('characters:add', input),
     update: (input) => invoke('characters:update', input),

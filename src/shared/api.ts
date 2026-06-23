@@ -101,6 +101,9 @@ export interface FanCreatorApi {
       chapterId: string
     }): Promise<Project | null>
   }
+  trash: {
+    empty(input: { projectId: string }): Promise<Project | null>
+  }
   characters: {
     add(input: { projectId: string; name?: string; folderId?: string | null }): Promise<Project | null>
     update(input: {
