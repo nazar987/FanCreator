@@ -384,6 +384,7 @@ export function Characters(): React.JSX.Element {
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
   const [folderId, setFolderId] = React.useState<string | null>(() => readCharacterFolder(current?.id))
+  const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     if (current) writeCharacterFolder(current.id, folderId)
@@ -448,6 +449,57 @@ export function Characters(): React.JSX.Element {
   const charCountInFolder = (id: string): number => {
     const ids = descendantIds(id)
     return current.characters.filter((c) => c.folderId && ids.has(c.folderId)).length
+  }
+
+  const toggleFolder = (id: string): void => {
+    setExpandedFolders((open) => {
+      const next = new Set(open)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const renderFolderNode = (folder: CharacterFolder, depth: number): React.JSX.Element => {
+    const children = folders
+      .filter((item) => (item.parentId ?? null) === folder.id)
+      .sort((a, b) => a.order - b.order)
+    const isOpen = expandedFolders.has(folder.id)
+    return (
+      <div className="characters-folder-node" key={folder.id}>
+        <div
+          className={`characters-folder-row ${folderId === folder.id ? 'is-active' : ''}`}
+          style={{ paddingLeft: 8 + depth * 16 }}
+          role="button"
+          tabIndex={0}
+          onClick={() => setFolderId(folder.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
+          }}
+        >
+          <button
+            className="characters-folder-toggle"
+            title={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
+            aria-label={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
+            aria-expanded={isOpen}
+            disabled={children.length === 0}
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleFolder(folder.id)
+            }}
+          >
+            {children.length > 0 && <ChevronRight size={15} />}
+          </button>
+          <FolderIcon size={19} fill="currentColor" style={{ color: folder.color ?? '#7aa2f7' }} />
+          <span className="truncate">{folder.title}</span>
+          <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
+        </div>
+        {isOpen && children.length > 0 && (
+          <div className="characters-folder-children">
+            {children.map((child) => renderFolderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const openCharacter = (c: Character): void =>
@@ -571,28 +623,8 @@ export function Characters(): React.JSX.Element {
         {childFolders.length > 0 && (
           <section className="characters-section">
             <h2>{selectedFolder ? 'Подпапки' : 'Папки'}</h2>
-            <div className="library-folder-grid">
-              {childFolders.map((folder) => (
-                <div
-                  className="library-folder-card"
-                  role="button"
-                  tabIndex={0}
-                  key={folder.id}
-                  onClick={() => setFolderId(folder.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
-                  }}
-                >
-                  <span className="library-folder-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
-                    <FolderIcon size={30} fill="currentColor" />
-                  </span>
-                  <span className="library-folder-copy">
-                    <strong>{folder.title}</strong>
-                    <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
-                  </span>
-                  <ChevronRight size={17} className="library-folder-arrow" />
-                </div>
-              ))}
+            <div className="characters-folder-tree">
+              {childFolders.map((folder) => renderFolderNode(folder, 0))}
             </div>
           </section>
         )}
