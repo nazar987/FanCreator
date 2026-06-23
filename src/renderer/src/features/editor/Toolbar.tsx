@@ -15,6 +15,7 @@ import {
   Code2,
   Minus,
   Link as LinkIcon,
+  Unlink,
   Image as ImageIcon,
   Table as TableIcon,
   Undo2,
@@ -342,6 +343,14 @@ export function Toolbar({
       <Btn title="Ссылка" active={editor.isActive('link')} onClick={setLink}>
         <LinkIcon size={17} />
       </Btn>
+      {editor.isActive('link') && (
+        <Btn
+          title="Убрать ссылку (текст останется)"
+          onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}
+        >
+          <Unlink size={17} />
+        </Btn>
+      )}
       <Btn title="Вставить изображение" onClick={onInsertImage}>
         <ImageIcon size={17} />
       </Btn>

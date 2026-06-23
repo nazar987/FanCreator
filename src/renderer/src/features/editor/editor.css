@@ -233,6 +233,8 @@
 .fc-prose a {
   color: #2563cc;
   text-decoration: underline;
+  /* без этого подчёркивание «обрывается» вокруг букв с нижним выносом (д, у, р) */
+  text-decoration-skip-ink: none;
 }
 .fc-prose blockquote {
   border-left: 3px solid rgba(0, 0, 0, 0.2);

@@ -372,6 +372,20 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
 
+  // S-H4: фокусируем редактор при открытии главы, чтобы Ctrl+A работал сразу,
+  // без предварительного клика по листу. preventScroll — чтобы не сбить позицию.
+  React.useEffect(() => {
+    if (!editor) return
+    const t = setTimeout(() => {
+      try {
+        ;(editor.view.dom as HTMLElement).focus({ preventScroll: true })
+      } catch {
+        editor.view.focus()
+      }
+    }, 80)
+    return () => clearTimeout(t)
+  }, [editor, chapterId])
+
   // S-F2: восстановить прокрутку главы + запомнить «последнюю главу» истории.
   // Несколько попыток — пагинация доразмечает лист уже после монтирования.
   React.useEffect(() => {
