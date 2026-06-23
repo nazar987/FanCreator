@@ -56,16 +56,24 @@ export const FontSize = Extension.create({
     return {
       setFontSize:
         (size: string) =>
-        ({ chain }) => {
+        ({ chain, state }) => {
           let c = chain().setMark('textStyle', { fontSize: size })
-          for (const type of BLOCK_TYPES) c = c.updateAttributes(type, { fontSize: size })
+          // Размер на сам блок (абзац/заголовок/пункт списка) меняем ТОЛЬКО когда
+          // нет выделения — тогда маркер списка и набор совпадают по размеру.
+          // Если есть выделение — красим лишь выбранный текст, иначе менялась бы
+          // вся строка/заголовок и нельзя было бы задать слову свой размер. (S-H2)
+          if (state.selection.empty) {
+            for (const type of BLOCK_TYPES) c = c.updateAttributes(type, { fontSize: size })
+          }
           return c.run()
         },
       unsetFontSize:
         () =>
-        ({ chain }) => {
+        ({ chain, state }) => {
           let c = chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle()
-          for (const type of BLOCK_TYPES) c = c.resetAttributes(type, 'fontSize')
+          if (state.selection.empty) {
+            for (const type of BLOCK_TYPES) c = c.resetAttributes(type, 'fontSize')
+          }
           return c.run()
         }
     }

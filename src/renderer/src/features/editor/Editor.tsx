@@ -61,6 +61,8 @@ interface CapturedFormat {
   highlight: string | null
   textAlign: string | null
   lineHeight: string | null
+  // тип блока-образца: обычный текст или заголовок уровня 1/2/3 (S-H1)
+  block: { type: 'paragraph' } | { type: 'heading'; level: number }
 }
 
 export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
@@ -303,6 +305,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     const ts = editor.getAttributes('textStyle')
     const para = editor.getAttributes('paragraph')
     const head = editor.getAttributes('heading')
+    const headingLevel = editor.isActive('heading') ? (head.level as number) : null
     painterRef.current = {
       bold: editor.isActive('bold'),
       italic: editor.isActive('italic'),
@@ -313,18 +316,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       color: ts.color ?? null,
       highlight: (editor.getAttributes('highlight').color as string) ?? null,
       textAlign: para.textAlign ?? head.textAlign ?? null,
-      lineHeight: para.lineHeight ?? head.lineHeight ?? null
+      lineHeight: para.lineHeight ?? head.lineHeight ?? null,
+      block: headingLevel ? { type: 'heading', level: headingLevel } : { type: 'paragraph' }
     }
     setPainterActive(true)
   }
 
   React.useEffect(() => {
     if (!editor || !painterActive) return
+    // Применяем по ОТПУСКАНИЮ мыши/клавиши — когда выделение уже целиком готово,
+    // а не на первом selectionUpdate (тогда менялось лишь первое слово). (S-H1)
     const apply = (): void => {
       if (editor.state.selection.empty) return
       const f = painterRef.current
       if (!f) return
       let c = editor.chain().focus()
+      // тип блока (обычный текст / заголовок) — ко всему выделению
+      c = f.block.type === 'heading' ? c.setHeading({ level: f.block.level as 1 | 2 | 3 }) : c.setParagraph()
       c = f.bold ? c.setBold() : c.unsetBold()
       c = f.italic ? c.setItalic() : c.unsetItalic()
       c = f.underline ? c.setUnderline() : c.unsetUnderline()
@@ -338,14 +346,24 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       c.run()
       setPainterActive(false)
     }
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setPainterActive(false)
+    // небольшая задержка, чтобы ProseMirror успел зафиксировать финальное выделение
+    const onMouseUp = (): void => {
+      window.setTimeout(apply, 0)
     }
-    editor.on('selectionUpdate', apply)
-    window.addEventListener('keydown', onKey)
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        setPainterActive(false)
+        return
+      }
+      // выделение с клавиатуры (Shift+стрелки): применяем по отпусканию Shift
+      if (e.key === 'Shift') window.setTimeout(apply, 0)
+    }
+    const dom = editor.view.dom
+    dom.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('keyup', onKey)
     return () => {
-      editor.off('selectionUpdate', apply)
-      window.removeEventListener('keydown', onKey)
+      dom.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('keyup', onKey)
     }
   }, [editor, painterActive])
 
