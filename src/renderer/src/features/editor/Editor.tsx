@@ -650,35 +650,6 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     openContextMenu(e, [{ type: 'label', label: 'Вики-ссылка на…' }, ...items])
   }
 
-  // S-H5: после выделения мышью «голова» могла улететь в начало документа, если
-  // курсор зашёл в межстраничный зазор (там координата промахивается мимо текста и
-  // резолвится к позиции 0). Если голова выделения оказалась намного ВЫШЕ курсора —
-  // пересчитываем её по ближайшей реальной строке у указателя.
-  const onEditorMouseUp = (e: React.MouseEvent): void => {
-    if (!editor) return
-    const sel = editor.state.selection
-    if (sel.empty) return
-    try {
-      const headCoords = editor.view.coordsAtPos(sel.head)
-      // голова сильно выше точки отпускания → вероятный промах в зазор
-      if (e.clientY - headCoords.top < 80) return
-      let fixed: number | null = null
-      for (let dy = 0; dy <= 140 && fixed === null; dy += 8) {
-        const probe = editor.view.posAtCoords({ left: e.clientX, top: e.clientY + dy })
-        if (!probe) continue
-        const c = editor.view.coordsAtPos(probe.pos)
-        if (Math.abs(c.top - (e.clientY + dy)) < 28) fixed = probe.pos
-      }
-      if (fixed === null) return
-      const from = Math.min(sel.anchor, fixed)
-      const to = Math.max(sel.anchor, fixed)
-      if (from === sel.from && to === sel.to) return
-      editor.chain().setTextSelection({ from, to }).run()
-    } catch {
-      /* координаты недоступны — пропускаем */
-    }
-  }
-
   // S-H9: правый клик по ссылке — «Открыть» / «Убрать ссылку (оставить текст)»
   const onEditorContextMenu = (e: React.MouseEvent): void => {
     if (!editor) return
@@ -859,7 +830,6 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           className={`editor-scroll${ready ? '' : ' editor-scroll--loading'}`}
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
-          onMouseUp={onEditorMouseUp}
           onContextMenu={onEditorContextMenu}
           onWheel={(e) => {
             if (!e.ctrlKey) return
