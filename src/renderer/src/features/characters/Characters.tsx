@@ -516,7 +516,7 @@ export function Characters(): React.JSX.Element {
     ]
   }
 
-  const renderFolderNode = (folder: CharacterFolder, depth: number): React.JSX.Element => {
+  const renderFolderNode = (folder: CharacterFolder): React.JSX.Element => {
     const children = folders
       .filter((item) => (item.parentId ?? null) === folder.id)
       .sort((a, b) => a.order - b.order)
@@ -525,7 +525,6 @@ export function Characters(): React.JSX.Element {
       <div className="characters-folder-node" key={folder.id}>
         <div
           className={`characters-folder-row ${folderId === folder.id ? 'is-active' : ''}`}
-          style={{ paddingLeft: 8 + depth * 16 }}
           role="button"
           tabIndex={0}
           onClick={() => setFolderId(folder.id)}
@@ -534,6 +533,13 @@ export function Characters(): React.JSX.Element {
             if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
           }}
         >
+          <span className="characters-folder-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
+            <FolderIcon size={28} fill="currentColor" />
+          </span>
+          <span className="characters-folder-copy">
+            <strong className="truncate">{folder.title}</strong>
+            <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
+          </span>
           <button
             className="characters-folder-toggle"
             title={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
@@ -547,13 +553,10 @@ export function Characters(): React.JSX.Element {
           >
             {children.length > 0 && <ChevronRight size={15} />}
           </button>
-          <FolderIcon size={19} fill="currentColor" style={{ color: folder.color ?? '#7aa2f7' }} />
-          <span className="truncate">{folder.title}</span>
-          <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
         </div>
         {isOpen && children.length > 0 && (
           <div className="characters-folder-children">
-            {children.map((child) => renderFolderNode(child, depth + 1))}
+            {children.map((child) => renderFolderNode(child))}
           </div>
         )}
       </div>
@@ -705,17 +708,30 @@ export function Characters(): React.JSX.Element {
           />
         )}
 
-        {childFolders.length > 0 && (
-          <section className="characters-section">
+        <section className="characters-section">
+          <div className="characters-section-head">
             <h2>{selectedFolder ? 'Подпапки' : 'Папки'}</h2>
+            <span>{childFolders.length}</span>
+          </div>
+          {childFolders.length > 0 ? (
             <div className="characters-folder-tree">
-              {childFolders.map((folder) => renderFolderNode(folder, 0))}
+              {childFolders.map((folder) => renderFolderNode(folder))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="characters-folders-empty dim">
+              {selectedFolder ? 'В этой папке пока нет подпапок.' : 'Создайте папку, чтобы организовать персонажей.'}
+            </div>
+          )}
+        </section>
 
-        {folderCharacters.length > 0 && (
-          <div className="characters-selectbar">
+        <section className="characters-section characters-list-section">
+          <div className="characters-section-head">
+            <h2>{selectedFolder ? 'Персонажи в папке' : 'Все персонажи'}</h2>
+            <span>{folderCharacters.length}</span>
+          </div>
+
+          {folderCharacters.length > 0 && (
+            <div className="characters-selectbar">
             <label className="character-select" title="Выбрать персонажей этой папки">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} />
               <span>Выбрать всех</span>
@@ -756,20 +772,20 @@ export function Characters(): React.JSX.Element {
                 Снять
               </Button>
             </div>
-          </div>
-        )}
+            </div>
+          )}
 
-        {folderCharacters.length === 0 ? (
-          <div className="dim characters-empty">
-            {selectedFolder
-              ? 'В этой папке пока нет персонажей. Добавьте первого кнопкой «Добавить персонажа».'
-              : childFolders.length > 0
-                ? 'Персонажи без папки появятся здесь. Откройте папку слева, чтобы увидеть её героев.'
-                : 'В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.'}
-          </div>
-        ) : (
-          <div className="characters-tiles">
-            {folderCharacters.map((character) => (
+          {folderCharacters.length === 0 ? (
+            <div className="dim characters-empty">
+              {selectedFolder
+                ? 'В этой папке пока нет персонажей. Добавьте первого кнопкой «Добавить персонажа».'
+                : childFolders.length > 0
+                  ? 'Персонажи без папки появятся здесь. Откройте папку, чтобы увидеть её героев.'
+                  : 'В этом проекте ещё нет персонажей. Добавьте первого, чтобы начать анкету.'}
+            </div>
+          ) : (
+            <div className="characters-tiles">
+              {folderCharacters.map((character) => (
               <div
                 className="character-tile"
                 key={character.id}
@@ -802,9 +818,10 @@ export function Characters(): React.JSX.Element {
                 <div className="character-tile-name truncate">{character.name || 'Без имени'}</div>
                 {character.role && <div className="character-tile-role truncate">{character.role}</div>}
               </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </section>
       </div>
       {templatesOpen && (
         <TemplateManager
