@@ -619,32 +619,50 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   // S-H9: правый клик по ссылке — «Открыть» / «Убрать ссылку (оставить текст)»
   const onEditorContextMenu = (e: React.MouseEvent): void => {
     if (!editor) return
-    const found = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })
-    if (!found) return
-    const pos = found.pos
-    const { doc, schema } = editor.state
 
-    // ссылка на главу (атом-нода)
-    const node = doc.nodeAt(pos)
-    if (node && node.type.name === 'internalLink') {
+    // Ссылка на главу (📄) — атом с contentEditable=false, posAtCoords на него не
+    // попадает, поэтому ищем по самому DOM-элементу под курсором.
+    const internalEl = (e.target as HTMLElement).closest?.('.fc-internal-link') as HTMLElement | null
+    if (internalEl) {
       e.preventDefault()
+      const approx = editor.view.posAtDOM(internalEl, 0)
+      let nodePos = -1
+      let nodeSize = 0
+      let label = 'глава'
+      editor.state.doc.nodesBetween(Math.max(0, approx - 2), approx + 2, (n, p) => {
+        if (n.type.name === 'internalLink') {
+          nodePos = p
+          nodeSize = n.nodeSize
+          label = (n.attrs.label as string) || 'глава'
+          return false
+        }
+        return true
+      })
+      const chapterId = internalEl.getAttribute('data-chapter-id') || ''
       openContextMenu(e, [
-        { label: 'Открыть главу', onClick: () => node.attrs.chapterId && openChapterById(node.attrs.chapterId) },
+        { label: 'Открыть главу', onClick: () => chapterId && openChapterById(chapterId) },
         {
           label: 'Убрать ссылку (оставить текст)',
-          onClick: () =>
+          onClick: () => {
+            if (nodePos < 0) return
             editor
               .chain()
               .focus()
               .command(({ tr }) => {
-                tr.replaceWith(pos, pos + node.nodeSize, schema.text(node.attrs.label || 'глава'))
+                tr.replaceWith(nodePos, nodePos + nodeSize, editor.schema.text(label))
                 return true
               })
               .run()
+          }
         }
       ])
       return
     }
+
+    const found = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })
+    if (!found) return
+    const pos = found.pos
+    const { doc, schema } = editor.state
 
     // ссылки-марки: вики-ссылка (на сущность) и обычная гиперссылка
     const linkType = schema.marks.link

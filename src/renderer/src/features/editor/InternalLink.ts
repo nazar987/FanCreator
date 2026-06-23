@@ -61,6 +61,7 @@ export const InternalLink = Node.create<InternalLinkOptions>({
       dom.textContent = `📄 ${node.attrs.label}`
       dom.title = 'Открыть подстраницу'
       dom.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) return // ПКМ — отдаём контекстному меню (убрать ссылку)
         event.preventDefault()
         if (node.attrs.chapterId) this.options.onOpen(node.attrs.chapterId)
       })
