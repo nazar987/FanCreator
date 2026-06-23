@@ -248,6 +248,26 @@
   padding-left: 1.5em;
   margin: 0 0 0.7em;
 }
+/* Нумерованный список — через CSS-счётчик, чтобы «пустой пункт без номера»
+   (data-unnumbered) не увеличивал нумерацию и список оставался одним <ol>,
+   а нумерация продолжалась/обновлялась сама (S-H3). */
+.fc-prose ol {
+  list-style: none;
+  counter-reset: fc-ol;
+}
+.fc-prose ol > li {
+  counter-increment: fc-ol;
+}
+.fc-prose ol > li::marker {
+  content: counter(fc-ol) '. ';
+}
+.fc-prose ol > li[data-unnumbered='true'] {
+  counter-increment: none;
+}
+.fc-prose ol > li[data-unnumbered='true']::marker,
+.fc-prose ul > li[data-unnumbered='true']::marker {
+  content: '';
+}
 .fc-prose img {
   max-width: 100%;
   /* картинка не должна быть выше страницы A4, иначе пагинатор зависает (не может

@@ -21,6 +21,7 @@ import { InternalLink } from './InternalLink'
 import { WikiLink } from './WikiLink'
 import { SearchHighlight } from './SearchHighlight'
 import { WordDelete } from './WordDelete'
+import { BlankListItem } from './BlankListItem'
 import { PageBreak } from './PageBreak'
 
 /** Размеры страницы A4 при 96 dpi. */
@@ -36,6 +37,7 @@ export function buildExtensions(opts: {
 }): Extensions {
   return [
     WordDelete,
+    BlankListItem,
     PageBreak,
     SearchHighlight,
     InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
