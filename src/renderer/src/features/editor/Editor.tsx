@@ -160,20 +160,24 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         try {
           const doc = new DOMParser().parseFromString(html, 'text/html')
           doc.querySelectorAll('o\\:p, style, meta, xml').forEach((n) => n.remove())
-          // <font size=..> → span без размера
+          // <font face/color> → span со шрифтом/цветом (сохраняем оформление)
           doc.querySelectorAll('font').forEach((f) => {
             const span = doc.createElement('span')
+            const face = f.getAttribute('face')
+            const color = f.getAttribute('color')
+            if (face) span.style.fontFamily = face
+            if (color) span.style.color = color
             span.innerHTML = f.innerHTML
             f.replaceWith(span)
           })
-          // S-F3/S-G2: снимаем чужой шрифт/размер/интервал из буфера (Word/Docs/другой файл) —
-          // иначе текст вставляется «без засечек 8pt», а пустые строки 16pt. Текст принимает
-          // стиль документа.
+          // S-H: при вставке из Word/Docs СОХРАНЯЕМ шрифт/размер/интервал/цвет —
+          // убираем только мусорные mso-* свойства (раньше резали всё и формат терялся).
           doc.querySelectorAll<HTMLElement>('[style]').forEach((el) => {
             const s = el.style
-            ;['font', 'font-size', 'font-family', 'line-height', 'mso-spacerun', 'mso-fareast-font-family'].forEach(
-              (p) => s.removeProperty(p)
-            )
+            for (let i = s.length - 1; i >= 0; i--) {
+              const prop = s[i]
+              if (prop.startsWith('mso-') || prop === 'font') s.removeProperty(prop)
+            }
             if (!el.getAttribute('style')) el.removeAttribute('style')
           })
           doc.querySelectorAll('p').forEach((p) => {
