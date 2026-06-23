@@ -17,8 +17,8 @@ import {
   Folder as FolderIcon,
   FolderPlus,
   Users,
-  Clock3,
-  LayoutDashboard,
+  Waypoints,
+  LayoutGrid,
   Palette,
   ArrowRight,
   UserRound
@@ -691,7 +691,7 @@ export function Sidebar(): React.JSX.Element {
                 }`}
                 onClick={() => open(it)}
               >
-                <FileText size={14} />
+                {icon}
                 <span className="truncate" style={{ flex: 1 }}>
                   {it.title}
                 </span>
@@ -855,7 +855,7 @@ export function Sidebar(): React.JSX.Element {
               renderNavSection(
                 'sec:timelines',
                 'Таймлайны',
-                <Clock3 size={15} />,
+                <Waypoints size={15} />,
                 current.timelines.map((t) => ({ id: t.id, title: t.title })),
                 (t) => openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id }),
                 'timeline:'
@@ -864,7 +864,7 @@ export function Sidebar(): React.JSX.Element {
               renderNavSection(
                 'sec:boards',
                 'Доски',
-                <LayoutDashboard size={15} />,
+                <LayoutGrid size={15} />,
                 current.boards.map((b) => ({ id: b.id, title: b.title })),
                 (b) => openTab({ id: `board:${b.id}`, kind: 'board', title: b.title, boardId: b.id }),
                 'board:'

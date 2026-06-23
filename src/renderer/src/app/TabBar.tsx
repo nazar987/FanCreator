@@ -7,8 +7,8 @@ import {
   FileText,
   Users,
   UserRound,
-  LayoutDashboard,
-  Clock3,
+  LayoutGrid,
+  Waypoints,
   CircleHelp
 } from 'lucide-react'
 import { useStore } from '../store/store'
@@ -61,7 +61,7 @@ export function TabBar(): React.JSX.Element {
       },
       {
         label: 'Новый таймлайн',
-        icon: <Clock3 size={15} />,
+        icon: <Waypoints size={15} />,
         onClick: async () => {
           if (!current) return
           const title = await promptText({
@@ -84,7 +84,7 @@ export function TabBar(): React.JSX.Element {
       },
       {
         label: 'Новая доска',
-        icon: <LayoutDashboard size={15} />,
+        icon: <LayoutGrid size={15} />,
         onClick: async () => {
           if (!current) return
           const title = await promptText({
@@ -135,9 +135,9 @@ export function TabBar(): React.JSX.Element {
           ) : t.kind === 'character' ? (
             <UserRound size={14} />
           ) : t.kind === 'board' ? (
-            <LayoutDashboard size={14} />
+            <LayoutGrid size={14} />
           ) : t.kind === 'timeline' ? (
-            <Clock3 size={14} />
+            <Waypoints size={14} />
           ) : (
             <FileText size={14} />
           )}
