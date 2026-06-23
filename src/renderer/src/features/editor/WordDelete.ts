@@ -1,4 +1,5 @@
 import { Extension } from '@tiptap/core'
+import type { Editor } from '@tiptap/core'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
 
 /**
@@ -78,6 +79,60 @@ function deleteWordBackward(state: EditorState, dispatch: Dispatch): boolean {
   return true
 }
 
+/**
+ * S-H3 — пустой пункт списка по Backspace/Enter превращаем в пустую строку,
+ * выводя его из списка, а нумерацию ниже ПРОДОЛЖАЕМ (как в Word «continue
+ * previous list»): если убрать пункт 3, то бывший 4 становится 3.
+ *
+ * Возвращает true, если обработали (курсор в пустом пункте списка); иначе false —
+ * тогда отрабатывает стандартное поведение (Enter — новый пункт, Backspace — слияние).
+ */
+function exitEmptyListItem(editor: Editor): boolean {
+  const { state } = editor
+  const { selection, schema } = state
+  if (!selection.empty) return false
+  const listItem = schema.nodes.listItem
+  const orderedList = schema.nodes.orderedList
+  if (!listItem) return false
+  const { $from } = selection
+
+  // глубина пункта списка
+  let liDepth = -1
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type === listItem) {
+      liDepth = d
+      break
+    }
+  }
+  if (liDepth < 0) return false
+  // пункт должен быть пустым (без текста)
+  if ($from.node(liDepth).textContent.length !== 0) return false
+
+  const listDepth = liDepth - 1
+  const list = $from.node(listDepth)
+  const itemIndex = $from.index(listDepth) // 0-based индекс пункта в списке
+  const isOrdered = !!orderedList && list.type === orderedList
+  const listStart = (list.attrs.start as number) || 1
+  const ordinal = listStart + itemIndex // номер удаляемого пункта = старт списка ниже
+
+  return editor
+    .chain()
+    .liftListItem('listItem')
+    .command(({ tr }) => {
+      if (!isOrdered || ordinal <= 1) return true
+      // после вывода пункта — список ниже начинается сразу за пустым абзацем;
+      // выставляем ему start, чтобы нумерация продолжилась (4 → 3).
+      const $cur = tr.selection.$from
+      const afterPara = $cur.after($cur.depth)
+      const lower = tr.doc.resolve(afterPara).nodeAfter
+      if (lower && orderedList && lower.type === orderedList) {
+        tr.setNodeMarkup(afterPara, undefined, { ...lower.attrs, start: ordinal })
+      }
+      return true
+    })
+    .run()
+}
+
 export const WordDelete = Extension.create({
   name: 'wordDelete',
   // выше StarterKit/базового keymap, чтобы перехватить Ctrl+Delete до посимвольного
@@ -86,8 +141,9 @@ export const WordDelete = Extension.create({
     return {
       'Mod-Delete': () => deleteWordForward(this.editor.state, this.editor.view.dispatch),
       'Mod-Backspace': () => deleteWordBackward(this.editor.state, this.editor.view.dispatch),
-      // Backspace в начале пункта списка — как в Word: выводим пункт из списка
-      // (убираем маркер/номер), а не приклеиваем к предыдущему пункту.
+      // Enter в ПУСТОМ пункте списка — вывести из списка пустой строкой, нумерацию
+      // ниже продолжить. В непустом пункте отдаём стандартному splitListItem.
+      Enter: () => exitEmptyListItem(this.editor),
       Backspace: () => {
         const { editor } = this
         const { selection, schema } = editor.state
@@ -97,12 +153,13 @@ export const WordDelete = Extension.create({
         if ($from.parentOffset !== 0) return false
         for (let d = $from.depth; d > 0; d--) {
           if ($from.node(d).type === listItem) {
-            // только в самом начале первого параграфа пункта
             if ($from.index(d) !== 0) return false
-            // как Word: ПЕРВЫЙ пункт списка выводим из списка (outdent);
-            // средний/последний — обычное слияние с предыдущим (иначе список
-            // разрывается на два и нумерация сбивается) — отдаём базовому keymap
+            // пустой пункт — убираем номер, оставляем пустую строку, нумерацию
+            // ниже продолжаем (S-H3, как в Word)
+            if ($from.node(d).textContent.length === 0) return exitEmptyListItem(editor)
+            // первый непустой пункт — выводим из списка (текст сохраняется)
             if ($from.index(d - 1) === 0) return editor.chain().liftListItem('listItem').run()
+            // средний/последний непустой — обычное слияние с предыдущим пунктом
             return false
           }
         }
