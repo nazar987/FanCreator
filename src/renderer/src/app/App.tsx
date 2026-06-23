@@ -15,6 +15,7 @@ import { Board } from '../features/board/Board'
 import { Timeline } from '../features/timeline/Timeline'
 import { HelpTour } from '../features/help/HelpTour'
 import { UpdateBanner } from '../features/updates/UpdateBanner'
+import { WhatsNew } from '../features/updates/WhatsNew'
 
 export function App(): React.JSX.Element {
   const { current, tabs, activeTabId } = useStore()
@@ -60,6 +61,7 @@ export function App(): React.JSX.Element {
       <ContextMenuHost />
       <HelpTour />
       <UpdateBanner />
+      <WhatsNew />
     </div>
   )
 }

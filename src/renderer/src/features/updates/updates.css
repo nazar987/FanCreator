@@ -60,3 +60,84 @@
   background: var(--panel-2);
   color: var(--text);
 }
+
+/* ---------- Окошко «Что нового» ---------- */
+.whatsnew {
+  position: relative;
+  width: min(520px, calc(100vw - 40px));
+}
+.whatsnew-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.whatsnew-close:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.whatsnew-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.whatsnew-head h3 {
+  margin: 0;
+}
+.whatsnew-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-contrast);
+  flex: 0 0 auto;
+}
+.whatsnew-version {
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+.whatsnew-section {
+  margin-top: 6px;
+}
+.whatsnew-subver {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 14px 0 4px;
+}
+.whatsnew-list {
+  margin: 6px 0 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.whatsnew-list li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.whatsnew-list li::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
