@@ -3,14 +3,16 @@ import { Sparkles, X } from 'lucide-react'
 import { Button } from '../../shared/ui/components'
 import { CHANGELOG, compareVersions, type ReleaseNote } from './changelog'
 
-const SEEN_KEY = 'fancreator.lastSeenVersion'
+// Версия, заметки которой пользователь уже видел и закрыл в окне «Что нового».
+const SEEN_KEY = 'fancreator.whatsNewSeen'
 
 /**
  * Окошко «Что нового» — показывается один раз после обновления приложения.
- * Сравниваем текущую версию (__APP_VERSION__) с последней, которую видел
- * пользователь (localStorage). Если приложение обновилось — показываем
- * заметки по всем версиям новее виденной. На самом первом запуске (когда
- * ничего не сохранено) окно не показываем — просто запоминаем версию.
+ *
+ * Логика: если текущую версию (__APP_VERSION__) пользователь ещё НЕ подтвердил
+ * в этом окне (ключ SEEN_KEY), показываем заметки. Если он не видел окно никогда
+ * (ключа нет) — показываем всю историю изменений, чтобы он сразу узнал, что нового;
+ * иначе только версии новее уже виденной. После закрытия запоминаем текущую версию.
  */
 export function WhatsNew(): React.JSX.Element | null {
   const [notes, setNotes] = React.useState<ReleaseNote[]>([])
@@ -25,25 +27,17 @@ export function WhatsNew(): React.JSX.Element | null {
       /* localStorage недоступен — не критично */
     }
 
-    // Первый запуск (ничего не видели) — не надоедаем, просто запоминаем версию.
-    if (!seen) {
-      try {
-        localStorage.setItem(SEEN_KEY, current)
-      } catch {
-        /* ignore */
-      }
-      return
-    }
-
-    // Версия не менялась — ничего не показываем.
-    if (compareVersions(current, seen) <= 0) return
+    // Эту версию уже показывали и закрыли — больше не беспокоим.
+    if (seen && compareVersions(current, seen) <= 0) return
 
     const fresh = CHANGELOG.filter(
-      (n) => compareVersions(n.version, seen as string) > 0 && compareVersions(n.version, current) <= 0
+      (n) =>
+        compareVersions(n.version, current) <= 0 &&
+        (!seen || compareVersions(n.version, seen) > 0)
     )
     if (fresh.length) setNotes(fresh)
     else {
-      // Заметок нет, но версия выросла — всё равно отметим как просмотренную.
+      // Заметок нет (версия выросла без записи в changelog) — просто отметим.
       try {
         localStorage.setItem(SEEN_KEY, current)
       } catch {

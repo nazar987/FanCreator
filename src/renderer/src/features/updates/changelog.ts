@@ -13,6 +13,13 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    version: '2.0.7',
+    date: '23.06.2026',
+    items: [
+      'Починили само это окошко «Что нового» — теперь оно появляется после обновления, как и задумано.'
+    ]
+  },
+  {
     version: '2.0.6',
     date: '23.06.2026',
     items: [
