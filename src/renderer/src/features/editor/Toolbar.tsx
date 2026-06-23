@@ -68,6 +68,14 @@ const FONTS = [
   { label: 'Times New Roman', value: '"Times New Roman", serif' },
   { label: 'Courier New', value: '"Courier New", monospace' }
 ]
+
+// первое семейство из стека ("Arial, sans-serif" → "arial"), без кавычек, в нижнем регистре
+const primaryFamily = (v?: string | null): string =>
+  (v || '')
+    .split(',')[0]
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .toLowerCase()
 // Размеры в пунктах (pt) — как в Word, чтобы «11» означало 11pt, а не 11px.
 const SIZES = [
   '8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt',
@@ -148,8 +156,18 @@ export function Toolbar({
         ? 'h3'
         : 'p'
 
-  const curFont =
-    (editor.getAttributes('textStyle').fontFamily as string) || FONTS[0].value
+  // S-H7: шрифт берём и с марки, и с блока (после импорта Word он на абзаце),
+  // и сопоставляем по первому семейству — иначе "Arial" не совпадал с "Arial, sans-serif"
+  const rawFont =
+    (editor.getAttributes('textStyle').fontFamily as string) ||
+    (editor.getAttributes('paragraph').fontFamily as string) ||
+    (editor.getAttributes('heading').fontFamily as string) ||
+    (editor.getAttributes('listItem').fontFamily as string) ||
+    null
+  const matchedFont = FONTS.find((f) => primaryFamily(f.value) === primaryFamily(rawFont))
+  const curFont = matchedFont ? matchedFont.value : rawFont || FONTS[0].value
+  // если шрифта нет в списке (редкий шрифт из Word) — покажем его отдельной опцией
+  const extraFont = !matchedFont && rawFont ? rawFont : null
   // Заголовки крупнее по CSS — показываем их реальный размер в pt (24/18/15pt = 32/24/20px)
   const HEADING_SIZE: Record<string, string> = { h1: '24pt', h2: '18pt', h3: '15pt' }
   const explicitSize = toPt(
@@ -165,8 +183,13 @@ export function Toolbar({
     '1.7'
 
   const setBlock = (v: string): void => {
-    if (v === 'p') editor.chain().focus().setParagraph().run()
-    else editor.chain().focus().toggleHeading({ level: Number(v[1]) as 1 | 2 | 3 }).run()
+    const isHeading = v !== 'p'
+    let c = editor.chain().focus()
+    c = isHeading ? c.toggleHeading({ level: Number(v[1]) as 1 | 2 | 3 }) : c.setParagraph()
+    // S-H6: сбрасываем ручной размер блока, чтобы применился размер уровня
+    // (иначе при смене Заголовок 1→2→3 размер не менялся).
+    c = c.updateAttributes(isHeading ? 'heading' : 'paragraph', { fontSize: null })
+    c.run()
   }
 
   const setLink = async (): Promise<void> => {
@@ -205,6 +228,9 @@ export function Toolbar({
         onChange={(e) => editor.chain().focus().setFontFamily(e.target.value).run()}
         title="Шрифт"
       >
+        {extraFont && (
+          <option value={extraFont}>{primaryFamily(extraFont).replace(/^\w/, (c) => c.toUpperCase())}</option>
+        )}
         {FONTS.map((f) => (
           <option key={f.value} value={f.value}>
             {f.label}

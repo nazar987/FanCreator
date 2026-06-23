@@ -37,15 +37,38 @@ export function FindReplace({
   const [matches, setMatches] = React.useState<Match[]>([])
   const [index, setIndex] = React.useState(0)
 
+  // S-H10: прокрутка к совпадению вручную — ProseMirror scrollIntoView не всегда
+  // докручивает наш контейнер пагинации (он зумлен), поэтому страница «не
+  // следовала» за словом, если искать не с начала главы.
+  const scrollToMatch = React.useCallback(
+    (m: Match) => {
+      editor.chain().setTextSelection(m).run()
+      try {
+        const scroller = editor.view.dom.closest('.editor-scroll') as HTMLElement | null
+        const coords = editor.view.coordsAtPos(m.from)
+        if (scroller) {
+          const top =
+            scroller.scrollTop + (coords.top - scroller.getBoundingClientRect().top) - scroller.clientHeight / 3
+          scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+        } else {
+          editor.commands.scrollIntoView()
+        }
+      } catch {
+        editor.commands.scrollIntoView()
+      }
+    },
+    [editor]
+  )
+
   const recompute = React.useCallback(
     (q: string) => {
       const m = collectMatches(editor, q)
       setMatches(m)
       setIndex(0)
       editor.commands.setSearch(q) // подсветка всех совпадений (#1)
-      if (m[0]) editor.chain().setTextSelection(m[0]).scrollIntoView().run()
+      if (m[0]) scrollToMatch(m[0])
     },
-    [editor]
+    [editor, scrollToMatch]
   )
 
   React.useEffect(() => {
@@ -65,7 +88,7 @@ export function FindReplace({
     const next = (index + dir + matches.length) % matches.length
     setIndex(next)
     editor.commands.setSearchCurrent(next)
-    editor.chain().setTextSelection(matches[next]).scrollIntoView().run()
+    scrollToMatch(matches[next])
   }
 
   const replaceCurrent = (): void => {

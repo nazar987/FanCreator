@@ -215,20 +215,24 @@
 .fc-prose p {
   margin: 0;
 }
+/* единый межстрочный для всех заголовков — у h1 он отличался от h2/h3 (S-H6) */
 .fc-prose h1 {
   font-size: 2em;
   margin: 0.4em 0 0.4em;
   font-weight: 700;
+  line-height: 1.25;
 }
 .fc-prose h2 {
   font-size: 1.5em;
   margin: 0.4em 0 0.3em;
   font-weight: 700;
+  line-height: 1.25;
 }
 .fc-prose h3 {
   font-size: 1.25em;
   margin: 0.4em 0 0.3em;
   font-weight: 600;
+  line-height: 1.25;
 }
 .fc-prose a {
   color: #2563cc;
