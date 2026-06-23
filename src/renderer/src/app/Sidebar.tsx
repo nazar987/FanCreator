@@ -234,6 +234,23 @@ export function Sidebar(): React.JSX.Element {
   const chapterDropId = (storyId: string, parentId: string | null): string =>
     `chapters:${storyId}:${parentId ?? 'root'}`
 
+  const folderDropId = (parentId: string | null): string => `folders:${parentId ?? 'root'}`
+  const characterFolderDropId = (parentId: string | null): string => `character-folders:${parentId ?? 'root'}`
+
+  const parseFolderDropId = (
+    droppableId: string
+  ): { kind: 'story' | 'character'; parentId: string | null } | null => {
+    if (droppableId.startsWith('character-folders:')) {
+      const parentId = droppableId.slice('character-folders:'.length)
+      return { kind: 'character', parentId: parentId === 'root' ? null : parentId }
+    }
+    if (droppableId.startsWith('folders:')) {
+      const parentId = droppableId.slice('folders:'.length)
+      return { kind: 'story', parentId: parentId === 'root' ? null : parentId }
+    }
+    return null
+  }
+
   const parseChapterDropId = (droppableId: string): { storyId: string; parentId: string | null } | null => {
     const [, storyId, parentId] = droppableId.split(':')
     if (!droppableId.startsWith('chapters:') || !storyId) return null
@@ -250,6 +267,27 @@ export function Sidebar(): React.JSX.Element {
       const [moved] = rootOrder.splice(source.index, 1)
       rootOrder.splice(destination.index, 0, moved)
       applyProject(await window.api.stories.reorder({ projectId: current.id, folderId: null, order: rootOrder }))
+      return
+    }
+
+    const folderDrop = parseFolderDropId(source.droppableId)
+    if (folderDrop) {
+      const siblings =
+        folderDrop.kind === 'story'
+          ? childFolders(folderDrop.parentId)
+          : childCharacterFolders(folderDrop.parentId)
+      const order = siblings.map((folder) => folder.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      applyProject(
+        folderDrop.kind === 'story'
+          ? await window.api.folders.reorder({ projectId: current.id, parentId: folderDrop.parentId, order })
+          : await window.api.characterFolders.reorder({
+              projectId: current.id,
+              parentId: folderDrop.parentId,
+              order
+            })
+      )
       return
     }
 
@@ -599,7 +637,11 @@ export function Sidebar(): React.JSX.Element {
     </>
   )
 
-  const renderFolder = (f: Folder, depth: number): React.JSX.Element => {
+  const renderFolder = (
+    f: Folder,
+    depth: number,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined
+  ): React.JSX.Element => {
     const key = `folder:${f.id}`
     const isOpen = expanded[key] ?? false
     const subfolders = childFolders(f.id)
@@ -612,6 +654,14 @@ export function Sidebar(): React.JSX.Element {
           onClick={() => toggle(key)}
           onContextMenu={(e) => openContextMenu(e, folderMenu(f))}
         >
+          <span
+            className="tree-drag-handle"
+            title="Изменить порядок папки"
+            {...dragHandleProps}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </span>
           <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
             <ChevronRight size={15} />
           </span>
@@ -635,7 +685,7 @@ export function Sidebar(): React.JSX.Element {
         </div>
         {isOpen && (
           <div className="tree-children">
-            {subfolders.map((sf) => renderFolder(sf, depth + 1))}
+            {renderFolderGroup(f.id, depth + 1)}
             {stories.map((s) => (
               <div className="tree-node" key={s.id}>
                 {renderStoryBody(s, null)}
@@ -651,6 +701,29 @@ export function Sidebar(): React.JSX.Element {
       </div>
     )
   }
+
+  const renderFolderGroup = (parentId: string | null, depth: number): React.JSX.Element => (
+    <Droppable droppableId={folderDropId(parentId)} type="folder">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps}>
+          {childFolders(parentId).map((folder, index) => (
+            <Draggable draggableId={`folder:${folder.id}`} index={index} key={folder.id}>
+              {(dragProvided, snapshot) => (
+                <div
+                  ref={dragProvided.innerRef}
+                  {...dragProvided.draggableProps}
+                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                >
+                  {renderFolder(folder, depth, dragProvided.dragHandleProps)}
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  )
 
   // S-F8: дерево персонажей по папкам в сайдбаре
   const childCharacterFolders = (parentId: string | null): Folder[] =>
@@ -715,7 +788,11 @@ export function Sidebar(): React.JSX.Element {
     </div>
   )
 
-  const renderCharacterFolder = (f: Folder, depth: number): React.JSX.Element => {
+  const renderCharacterFolder = (
+    f: Folder,
+    depth: number,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined
+  ): React.JSX.Element => {
     const key = `cfolder:${f.id}`
     const isOpen = expanded[key] ?? false
     const subs = childCharacterFolders(f.id)
@@ -743,6 +820,14 @@ export function Sidebar(): React.JSX.Element {
             ])
           }
         >
+          <span
+            className="tree-drag-handle"
+            title="Изменить порядок папки персонажей"
+            {...dragHandleProps}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </span>
           <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
             <ChevronRight size={15} />
           </span>
@@ -756,13 +841,36 @@ export function Sidebar(): React.JSX.Element {
         </div>
         {isOpen && (
           <div className="tree-children">
-            {subs.map((sf) => renderCharacterFolder(sf, depth + 1))}
+            {renderCharacterFolderGroup(f.id, depth + 1)}
             {chars.map((c) => renderCharacterRow(c, depth + 1))}
           </div>
         )}
       </div>
     )
   }
+
+  const renderCharacterFolderGroup = (parentId: string | null, depth: number): React.JSX.Element => (
+    <Droppable droppableId={characterFolderDropId(parentId)} type="character-folder">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps}>
+          {childCharacterFolders(parentId).map((folder, index) => (
+            <Draggable draggableId={`character-folder:${folder.id}`} index={index} key={folder.id}>
+              {(dragProvided, snapshot) => (
+                <div
+                  ref={dragProvided.innerRef}
+                  {...dragProvided.draggableProps}
+                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                >
+                  {renderCharacterFolder(folder, depth, dragProvided.dragHandleProps)}
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  )
 
   // S-D4: аддитивная сворачиваемая навигация по разделам проекта (под деревом историй)
   const renderNavSection = (
@@ -897,7 +1005,7 @@ export function Sidebar(): React.JSX.Element {
             )}
 
             <DragDropContext onDragEnd={reorderSidebarItems}>
-              {childFolders(null).map((f) => renderFolder(f, 0))}
+              {renderFolderGroup(null, 0)}
               <Droppable droppableId="stories" type="story">
                 {(storyDrop) => (
                   <div ref={storyDrop.innerRef} {...storyDrop.droppableProps}>
@@ -948,13 +1056,15 @@ export function Sidebar(): React.JSX.Element {
               </div>
               {expanded['sec:characters'] && (
                 <div className="tree-children">
-                  {childCharacterFolders(null).map((f) => renderCharacterFolder(f, 0))}
-                  {charsInFolder(null).map((c) => renderCharacterRow(c, 0))}
-                  {current.characters.length === 0 && (
-                    <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
-                      Пока нет персонажей.
-                    </div>
-                  )}
+                  <DragDropContext onDragEnd={reorderSidebarItems}>
+                    {renderCharacterFolderGroup(null, 0)}
+                    {charsInFolder(null).map((c) => renderCharacterRow(c, 0))}
+                    {current.characters.length === 0 && (
+                      <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
+                        Пока нет персонажей.
+                      </div>
+                    )}
+                  </DragDropContext>
                 </div>
               )}
             </div>
