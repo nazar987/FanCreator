@@ -178,6 +178,12 @@
   overflow-y: auto;
   padding: 32px 0 80px;
   background: var(--editor-desk);
+  transition: opacity 0.16s ease;
+}
+/* S-H8: пока пагинация раскладывает страницы — лист скрыт, потом плавно проявляется,
+   чтобы не было видно «прыжка» текста при переключении вкладок */
+.editor-scroll--loading {
+  opacity: 0;
 }
 
 /* лист A4: ProseMirror получает класс .fc-prose (+ rm-with-pagination) */

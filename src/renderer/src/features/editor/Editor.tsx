@@ -111,6 +111,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   }).current
 
   const [showFind, setShowFind] = React.useState(false)
+  const [ready, setReady] = React.useState(false) // S-H8: плавное появление без «прыжка» пагинации
   const [pageCount, setPageCount] = React.useState(1)
   const [currentPage, setCurrentPage] = React.useState(1) // S-G5: текущая страница
   const [showPageBadge, setShowPageBadge] = React.useState(false)
@@ -371,6 +372,14 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   React.useEffect(() => {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
+
+  // S-H8: прячем лист, пока пагинация раскладывает страницы, и плавно показываем —
+  // иначе при переключении вкладок текст заметно «прыгает» при реверстке.
+  React.useEffect(() => {
+    setReady(false)
+    const t = setTimeout(() => setReady(true), 260)
+    return () => clearTimeout(t)
+  }, [editor, chapterId])
 
   // S-H4: фокусируем редактор при открытии главы, чтобы Ctrl+A работал сразу,
   // без предварительного клика по листу. preventScroll — чтобы не сбить позицию.
@@ -705,7 +714,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         )}
         <div
           ref={scrollRef}
-          className="editor-scroll"
+          className={`editor-scroll${ready ? '' : ' editor-scroll--loading'}`}
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
           onWheel={(e) => {
