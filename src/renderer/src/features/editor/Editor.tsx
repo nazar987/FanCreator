@@ -383,23 +383,26 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     return dom ? (Array.from(dom.querySelectorAll('.rm-pagination-gap')) as HTMLElement[]) : []
   }
 
-  // Позиции границ страниц в координатах СОДЕРЖИМОГО (инвариантно к scrollTop),
-  // отфильтровав возможную «нулевую» границу у самого верха.
+  // Позиции границ страниц (низ каждой страницы) в координатах СОДЕРЖИМОГО,
+  // инвариантно к scrollTop. Граница последней страницы скрыта через
+  // `display:none` (rect = 0) — её исключаем по нулевой высоте, иначе она даёт
+  // фиктивный сдвиг, растущий со scrollTop (отсюда были «+1» на странице).
   const gapOffsets = (el: HTMLDivElement): number[] => {
     const base = el.getBoundingClientRect().top - el.scrollTop
     return pageGaps()
+      .filter((g) => g.getBoundingClientRect().height > 0)
       .map((g) => g.getBoundingClientRect().top - base)
-      .filter((y) => y > 50)
       .sort((a, b) => a - b)
   }
 
-  // total = число границ + 1; current = сколько границ выше ~трети вьюпорта + 1
+  // total = число границ + 1; current = сколько границ (низов страниц) выше
+  // верхней четверти вьюпорта + 1.
   const computePages = (): { total: number; current: number } => {
     const el = scrollRef.current
     if (!el) return { total: 1, current: 1 }
     const offsets = gapOffsets(el)
     const total = offsets.length + 1
-    const marker = el.scrollTop + el.clientHeight * 0.35
+    const marker = el.scrollTop + el.clientHeight * 0.25
     let current = 1
     offsets.forEach((y) => {
       if (y < marker) current += 1
