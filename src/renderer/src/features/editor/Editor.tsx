@@ -270,8 +270,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const schedulePageCount = React.useCallback(() => {
     setTimeout(() => {
       if (!editor) return
-      const gaps = editor.view.dom.querySelectorAll('.rm-pagination-gap')
-      setPageCount(gaps.length + 1)
+      // тем же способом, что и при скролле (с фильтром «нулевой» границы)
+      const el = scrollRef.current
+      setPageCount(el ? computePages().total : pageGaps().length + 1)
       // S-P: пересобираем оглавление из заголовков
       const items: { level: number; text: string; pos: number }[] = []
       editor.state.doc.descendants((node, pos) => {
@@ -281,6 +282,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       })
       setToc(items)
     }, 60)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor])
 
   const goToHeading = (pos: number): void => {
@@ -381,16 +383,26 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     return dom ? (Array.from(dom.querySelectorAll('.rm-pagination-gap')) as HTMLElement[]) : []
   }
 
-  // total = число границ + 1; current = сколько границ выше верха вьюпорта + 1
+  // Позиции границ страниц в координатах СОДЕРЖИМОГО (инвариантно к scrollTop),
+  // отфильтровав возможную «нулевую» границу у самого верха.
+  const gapOffsets = (el: HTMLDivElement): number[] => {
+    const base = el.getBoundingClientRect().top - el.scrollTop
+    return pageGaps()
+      .map((g) => g.getBoundingClientRect().top - base)
+      .filter((y) => y > 50)
+      .sort((a, b) => a - b)
+  }
+
+  // total = число границ + 1; current = сколько границ выше ~трети вьюпорта + 1
   const computePages = (): { total: number; current: number } => {
     const el = scrollRef.current
-    const gaps = pageGaps()
-    const total = gaps.length + 1
-    if (!el) return { total, current: 1 }
-    const top = el.getBoundingClientRect().top + 80
+    if (!el) return { total: 1, current: 1 }
+    const offsets = gapOffsets(el)
+    const total = offsets.length + 1
+    const marker = el.scrollTop + el.clientHeight * 0.35
     let current = 1
-    gaps.forEach((g) => {
-      if (g.getBoundingClientRect().top < top) current += 1
+    offsets.forEach((y) => {
+      if (y < marker) current += 1
     })
     return { total, current: Math.min(current, total) }
   }
@@ -402,9 +414,10 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       el.scrollTop = 0
       return
     }
-    const target = pageGaps()[n - 2] // граница перед страницей n
-    if (!target) return
-    el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top
+    const offsets = gapOffsets(el)
+    const target = offsets[n - 2] // граница перед страницей n
+    if (target == null) return
+    el.scrollTop = Math.max(0, target - 16)
   }
 
   const jumpToPage = async (): Promise<void> => {
