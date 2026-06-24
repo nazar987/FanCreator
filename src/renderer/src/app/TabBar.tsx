@@ -142,7 +142,9 @@ export function TabBar(): React.JSX.Element {
             <FileText size={14} />
           )}
           <span className="truncate" style={{ flex: 1 }}>
-            {t.title}
+            {t.kind === 'character' && t.characterId
+              ? current?.characters.find((character) => character.id === t.characterId)?.name || 'Без имени'
+              : t.title}
           </span>
           {t.kind !== 'shelf' && (
             <button
