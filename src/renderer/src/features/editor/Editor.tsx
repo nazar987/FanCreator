@@ -118,6 +118,10 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const pageBadgeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const [wordCount, setWordCount] = React.useState(chapter?.wordCount ?? 0)
   const [zoom, setZoom] = React.useState(1) // масштаб листа (S-7)
+  // лист масштабируем через transform: scale (как доска) — вёрстка/пагинация
+  // остаются 1×, поэтому при наборе нет лагов даже на большом масштабе.
+  const zoomInnerRef = React.useRef<HTMLDivElement>(null)
+  const [zoomLayerHeight, setZoomLayerHeight] = React.useState<number>()
   const [saved, setSaved] = React.useState(true)
   // S-P: оглавление главы (заголовки H1–H3)
   const [tocOpen, setTocOpen] = React.useState(false)
@@ -410,6 +414,18 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   React.useEffect(() => {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
+
+  // высота «стола» под масштабированным листом: transform не меняет layout-высоту,
+  // поэтому считаем её сами (реальная высота × масштаб), чтобы прокрутка была верной.
+  React.useEffect(() => {
+    const inner = zoomInnerRef.current
+    if (!inner) return
+    const update = (): void => setZoomLayerHeight(inner.offsetHeight * zoom)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(inner)
+    return () => ro.disconnect()
+  }, [zoom, editor, chapterId])
 
   // S-H8: прячем лист, пока пагинация раскладывает страницы, и плавно показываем —
   // иначе при переключении вкладок текст заметно «прыгает» при реверстке.
@@ -849,7 +865,18 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
             setZoom((z) => Math.min(2, Math.max(0.5, +(z + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2))))
           }}
         >
-          <EditorContent editor={editor} />
+          <div
+            className="editor-zoom-outer"
+            style={zoomLayerHeight ? { height: `${zoomLayerHeight}px` } : undefined}
+          >
+            <div
+              ref={zoomInnerRef}
+              className="editor-zoom-inner"
+              style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+            >
+              <EditorContent editor={editor} />
+            </div>
+          </div>
           {showPageBadge && <div className="editor-page-badge">Стр. {currentPage} / {pageCount}</div>}
         </div>
       </div>

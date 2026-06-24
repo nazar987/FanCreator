@@ -60,7 +60,8 @@ export const PageBreak = Node.create({
           if (dom.style.height) dom.style.height = ''
           return
         }
-        const zoom = parseFloat((getComputedStyle(prose) as unknown as { zoom: string }).zoom) || 1
+        // масштаб берём из CSS-переменной (лист масштабируется через transform: scale)
+        const zoom = parseFloat(getComputedStyle(prose).getPropertyValue('--page-zoom')) || 1
         const domTop = dom.getBoundingClientRect().top
         let targetTop: number | null = null
         gaps.forEach((g) => {
