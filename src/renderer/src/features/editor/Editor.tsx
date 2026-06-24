@@ -50,6 +50,11 @@ function initialContent(chapter: Chapter | undefined): Content {
 }
 
 /** Снимок оформления для «формата по образцу» (S-F5). */
+// Пределы масштаба листа. Верх ограничен: на больших документах (30+ страниц)
+// очень высокий зум растеризует огромную площадь и приложение зависает.
+const MIN_ZOOM = 0.5
+const MAX_ZOOM = 1.6
+
 interface CapturedFormat {
   bold: boolean
   italic: boolean
@@ -903,7 +908,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onWheel={(e) => {
             if (!e.ctrlKey) return
             e.preventDefault()
-            setZoom((z) => Math.min(2, Math.max(0.5, +(z + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2))))
+            setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +(z + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2))))
           }}
         >
           <div
@@ -930,13 +935,13 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         </button>
         <span className="spacer" />
         <span className="editor-zoom">
-          <button title="Уменьшить" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(2)))}>
+          <button title="Уменьшить" onClick={() => setZoom((z) => Math.max(MIN_ZOOM, +(z - 0.1).toFixed(2)))}>
             −
           </button>
           <button title="Сбросить масштаб" onClick={() => setZoom(1)}>
             {Math.round(zoom * 100)}%
           </button>
-          <button title="Увеличить" onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}>
+          <button title="Увеличить" onClick={() => setZoom((z) => Math.min(MAX_ZOOM, +(z + 0.1).toFixed(2)))}>
             +
           </button>
         </span>
