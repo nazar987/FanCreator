@@ -579,6 +579,31 @@
   .characters-select-state { flex: 1; }
   .characters-select-actions { width: 100%; margin-left: 0; flex-wrap: wrap; }
 }
+.character-tile-order {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.character-tile:hover .character-tile-order,
+.character-tile:focus-within .character-tile-order { opacity: 1; }
+.character-tile-order button {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: 7px;
+  background: var(--panel-solid);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.character-tile-order button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.character-tile-order button:disabled { opacity: 0.35; cursor: default; }
 
 @media (max-width: 720px) {
   .characters-inner { padding: 20px 16px 56px; }

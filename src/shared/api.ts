@@ -155,6 +155,7 @@ export interface FanCreatorApi {
     add(input: { projectId: string; title: string }): Promise<Project | null>
     rename(input: { projectId: string; boardId: string; title: string }): Promise<Project | null>
     delete(input: { projectId: string; boardId: string }): Promise<Project | null>
+    reorder(input: { projectId: string; order: string[] }): Promise<Project | null>
     save(input: {
       projectId: string
       boardId: string
@@ -166,6 +167,7 @@ export interface FanCreatorApi {
     add(input: { projectId: string; title: string }): Promise<Project | null>
     rename(input: { projectId: string; timelineId: string; title: string }): Promise<Project | null>
     delete(input: { projectId: string; timelineId: string }): Promise<Project | null>
+    reorder(input: { projectId: string; order: string[] }): Promise<Project | null>
   }
   hierarchies: {
     add(input: { projectId: string; title: string }): Promise<Project | null>

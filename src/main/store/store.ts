@@ -81,8 +81,10 @@ function normalizeProject(project: Project): Project {
     character.order ??= index
   }
   project.boards ??= []
+  for (const [index, board] of project.boards.entries()) board.order ??= index
   project.templates ??= []
   project.timelines ??= []
+  for (const [index, timeline] of project.timelines.entries()) timeline.order ??= index
   project.hierarchies ??= []
   normalizeBoardStickers(project)
   return project
@@ -312,10 +314,14 @@ function normalizeLegacyProject(legacy: any): Project {
       ...folder,
       color: folder.color ?? '#f0b84b'
     })),
-    boards: legacy.boards ?? [],
+    boards: (legacy.boards ?? []).map((board: any, index: number) => ({
+      ...board,
+      order: board.order ?? index
+    })),
     templates: legacy.templates ?? [],
-    timelines: (legacy.timelines ?? []).map((timeline: any) => ({
+    timelines: (legacy.timelines ?? []).map((timeline: any, timelineIndex: number) => ({
       ...timeline,
+      order: timeline.order ?? timelineIndex,
       events: (timeline.events ?? []).map((event: any, index: number) => ({
         ...event,
         parentId: event.parentId ?? null,

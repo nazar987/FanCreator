@@ -69,12 +69,14 @@ const api: FanCreatorApi = {
     add: (input) => invoke('boards:add', input),
     rename: (input) => invoke('boards:rename', input),
     delete: (input) => invoke('boards:delete', input),
+    reorder: (input) => invoke('boards:reorder', input),
     save: (input) => invoke('boards:save', input)
   },
   timelines: {
     add: (input) => invoke('timelines:add', input),
     rename: (input) => invoke('timelines:rename', input),
-    delete: (input) => invoke('timelines:delete', input)
+    delete: (input) => invoke('timelines:delete', input),
+    reorder: (input) => invoke('timelines:reorder', input)
   },
   hierarchies: {
     add: (input) => invoke('hierarchies:add', input),

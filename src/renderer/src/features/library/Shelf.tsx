@@ -424,7 +424,9 @@ export function Shelf(): React.JSX.Element {
               label="Доски"
               tone="board"
               icon={<LayoutDashboard size={15} />}
-              items={current.boards.map((b) => ({ id: b.id, title: b.title }))}
+              items={[...current.boards]
+                .sort((a, b) => a.order - b.order)
+                .map((b) => ({ id: b.id, title: b.title }))}
               onCreate={addBoard}
               onOpen={(it) => openTab({ id: `board:${it.id}`, kind: 'board', title: it.title, boardId: it.id })}
               onDelete={(it) => removeBoard(it.id, it.title)}
@@ -433,7 +435,9 @@ export function Shelf(): React.JSX.Element {
               label="Таймлайны"
               tone="timeline"
               icon={<Clock3 size={15} />}
-              items={current.timelines.map((t) => ({ id: t.id, title: t.title }))}
+              items={[...current.timelines]
+                .sort((a, b) => a.order - b.order)
+                .map((t) => ({ id: t.id, title: t.title }))}
               onCreate={addTimeline}
               onOpen={(it) => openTab({ id: `timeline:${it.id}`, kind: 'timeline', title: it.title, timelineId: it.id })}
               onDelete={(it) => removeTimeline(it.id, it.title)}

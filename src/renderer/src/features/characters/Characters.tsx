@@ -797,6 +797,24 @@ export function Characters(): React.JSX.Element {
                   if (e.key === 'Enter' || e.key === ' ') openCharacter(character)
                 }}
               >
+                <div className="character-tile-order" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    title="Переместить выше"
+                    disabled={folderCharacters[0]?.id === character.id}
+                    onClick={() => moveCharacterAmongSiblings(character, -1)}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Переместить ниже"
+                    disabled={folderCharacters.at(-1)?.id === character.id}
+                    onClick={() => moveCharacterAmongSiblings(character, 1)}
+                  >
+                    <ArrowDown size={14} />
+                  </button>
+                </div>
                 <label
                   className="character-tile-select"
                   title="Выбрать персонажа"

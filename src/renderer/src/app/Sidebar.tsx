@@ -881,7 +881,8 @@ export function Sidebar(): React.JSX.Element {
     icon: React.JSX.Element,
     items: { id: string; title: string }[],
     open: (item: { id: string; title: string }) => void,
-    activePrefix: string
+    activePrefix: string,
+    move: (item: { id: string; title: string }, offset: -1 | 1) => void
   ): React.JSX.Element => {
     const isOpen = expanded[key] ?? false
     return (
@@ -907,6 +908,22 @@ export function Sidebar(): React.JSX.Element {
                   activeTabId === `${activePrefix}${it.id}` ? 'tree-row--active' : ''
                 }`}
                 onClick={() => open(it)}
+                onContextMenu={(event) =>
+                  openContextMenu(event, [
+                    {
+                      label: 'Выше',
+                      icon: <ArrowUp size={15} />,
+                      disabled: items[0]?.id === it.id,
+                      onClick: () => move(it, -1)
+                    },
+                    {
+                      label: 'Ниже',
+                      icon: <ArrowDown size={15} />,
+                      disabled: items.at(-1)?.id === it.id,
+                      onClick: () => move(it, 1)
+                    }
+                  ])
+                }
               >
                 {icon}
                 <span className="truncate" style={{ flex: 1 }}>
@@ -918,6 +935,21 @@ export function Sidebar(): React.JSX.Element {
         )}
       </div>
     )
+  }
+
+  const orderedTimelines = [...current.timelines].sort((a, b) => a.order - b.order)
+  const orderedBoards = [...current.boards].sort((a, b) => a.order - b.order)
+
+  const moveTimeline = async (item: { id: string }, offset: -1 | 1): Promise<void> => {
+    const order = shiftedOrder(orderedTimelines, item.id, offset)
+    if (!order) return
+    applyProject(await window.api.timelines.reorder({ projectId: current.id, order }))
+  }
+
+  const moveBoard = async (item: { id: string }, offset: -1 | 1): Promise<void> => {
+    const order = shiftedOrder(orderedBoards, item.id, offset)
+    if (!order) return
+    applyProject(await window.api.boards.reorder({ projectId: current.id, order }))
   }
 
   return (
@@ -1075,18 +1107,20 @@ export function Sidebar(): React.JSX.Element {
                 'sec:timelines',
                 'Таймлайны',
                 <Waypoints size={15} />,
-                current.timelines.map((t) => ({ id: t.id, title: t.title })),
+                orderedTimelines.map((t) => ({ id: t.id, title: t.title })),
                 (t) => openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id }),
-                'timeline:'
+                'timeline:',
+                moveTimeline
               )}
             {current.boards.length > 0 &&
               renderNavSection(
                 'sec:boards',
                 'Доски',
                 <LayoutGrid size={15} />,
-                current.boards.map((b) => ({ id: b.id, title: b.title })),
+                orderedBoards.map((b) => ({ id: b.id, title: b.title })),
                 (b) => openTab({ id: `board:${b.id}`, kind: 'board', title: b.title, boardId: b.id }),
-                'board:'
+                'board:',
+                moveBoard
               )}
           </>
         )}

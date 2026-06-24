@@ -651,6 +651,7 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const board: Board = {
         id: uid(),
+        order: p.boards.length,
         title,
         stickers: [],
         arrows: [],
@@ -674,6 +675,15 @@ export function registerIpc(): void {
     })
   )
 
+  ipcMain.handle('boards:reorder', (_e, { projectId, order }) =>
+    mutate(projectId, (p) => {
+      const positions = new Map<string, number>(order.map((id: string, index: number) => [id, index]))
+      p.boards.forEach((board, index) => {
+        board.order = positions.get(board.id) ?? order.length + index
+      })
+    })
+  )
+
   ipcMain.handle('boards:save', (_e, { projectId, boardId, stickers, arrows }) =>
     mutate(projectId, (p) => {
       const board = p.boards.find((item) => item.id === boardId)
@@ -686,6 +696,7 @@ export function registerIpc(): void {
     mutate(projectId, (p) => {
       const timeline: Timeline = {
         id: uid(),
+        order: p.timelines.length,
         title,
         events: []
       }
@@ -703,6 +714,15 @@ export function registerIpc(): void {
   ipcMain.handle('timelines:delete', (_e, { projectId, timelineId }) =>
     mutate(projectId, (p) => {
       p.timelines = p.timelines.filter((item) => item.id !== timelineId)
+    })
+  )
+
+  ipcMain.handle('timelines:reorder', (_e, { projectId, order }) =>
+    mutate(projectId, (p) => {
+      const positions = new Map<string, number>(order.map((id: string, index: number) => [id, index]))
+      p.timelines.forEach((timeline, index) => {
+        timeline.order = positions.get(timeline.id) ?? order.length + index
+      })
     })
   )
 

@@ -36,6 +36,7 @@ export interface TimelineEvent {
 
 export interface Timeline {
   id: string
+  order: number
   title: string
   events: TimelineEvent[]
 }
@@ -172,6 +173,7 @@ export interface BoardArrow {
 
 export interface Board {
   id: string
+  order: number
   title: string
   stickers: BoardSticker[]
   arrows: BoardArrow[]
