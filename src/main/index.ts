@@ -18,6 +18,10 @@ protocol.registerSchemesAsPrivileged([
 
 /** Сохранение/восстановление позиции и размера окна. */
 function createMainWindow(): BrowserWindow {
+  // Полностью убираем меню Electron (иначе по Alt всплывает верхняя менюшка) —
+  // autoHideMenuBar только прятал его, но Alt всё равно показывал.
+  Menu.setApplicationMenu(null)
+
   const store = new Store<{ bounds?: Electron.Rectangle }>({ name: 'window-state' })
   const defaults = { width: 1280, height: 840 }
   let bounds = store.get('bounds')
