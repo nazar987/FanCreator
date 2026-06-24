@@ -898,9 +898,10 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onScroll={handleScroll}
           onContextMenu={onEditorContextMenu}
           onMouseDown={(e) => {
-            // Клик по серому «столу» вне листа не должен снимать фокус с редактора —
-            // иначе после него Ctrl+A/Delete не работали (фидбэк v2.0.8).
-            if (e.target === scrollRef.current) {
+            // Клик по «столу»/обёртке вне самого текста не должен снимать фокус с
+            // редактора — иначе Ctrl+A уходил в нативное выделение всего интерфейса,
+            // а Delete не работал. Срабатывает для editor-scroll и зум-обёрток.
+            if (!(e.target as HTMLElement).closest('.ProseMirror')) {
               e.preventDefault()
               editor.view.focus()
             }
