@@ -158,11 +158,16 @@ export function Toolbar({
 
   // S-H7: шрифт берём и с марки, и с блока (после импорта Word он на абзаце),
   // и сопоставляем по первому семейству — иначе "Arial" не совпадал с "Arial, sans-serif"
+  // на пустой строке/без явного шрифта берём БАЗОВЫЙ шрифт редактора (computed),
+  // который мы выставляем по преобладающему шрифту документа (#6) — чтобы тулбар
+  // показывал реальный шрифт, а не дефолт
+  const domStyle = getComputedStyle(editor.view.dom)
   const rawFont =
     (editor.getAttributes('textStyle').fontFamily as string) ||
     (editor.getAttributes('paragraph').fontFamily as string) ||
     (editor.getAttributes('heading').fontFamily as string) ||
     (editor.getAttributes('listItem').fontFamily as string) ||
+    domStyle.fontFamily ||
     null
   const matchedFont = FONTS.find((f) => primaryFamily(f.value) === primaryFamily(rawFont))
   const curFont = matchedFont ? matchedFont.value : rawFont || FONTS[0].value
@@ -176,7 +181,8 @@ export function Toolbar({
       (editor.getAttributes('heading').fontSize as string) ||
       (editor.getAttributes('listItem').fontSize as string)
   )
-  const curSize = explicitSize || (blockValue !== 'p' ? HEADING_SIZE[blockValue] : '12pt')
+  const curSize =
+    explicitSize || (blockValue !== 'p' ? HEADING_SIZE[blockValue] : toPt(domStyle.fontSize) || '12pt')
   const curLineHeight =
     (editor.getAttributes('paragraph').lineHeight as string) ||
     (editor.getAttributes('heading').lineHeight as string) ||

@@ -319,14 +319,34 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       // тем же способом, что и при скролле (с фильтром «нулевой» границы)
       const el = scrollRef.current
       setPageCount(el ? computePages().total : pageGaps().length + 1)
-      // S-P: пересобираем оглавление из заголовков
+      // S-P: пересобираем оглавление из заголовков + (#6) определяем преобладающий
+      // шрифт/размер абзацев и делаем его БАЗОВЫМ для редактора, чтобы пустые
+      // строки и новый текст наследовали оформление вставленного текста.
       const items: { level: number; text: string; pos: number }[] = []
+      const ffCount = new Map<string, number>()
+      const fsCount = new Map<string, number>()
+      let scanned = 0
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'heading') {
           items.push({ level: node.attrs.level as number, text: node.textContent, pos })
         }
+        // считаем шрифт только в обычных абзацах (заголовки крупнее по дизайну)
+        if (node.isText && scanned < 400 && node.marks.length) {
+          const ts = node.marks.find((m) => m.type.name === 'textStyle')
+          const ff = ts?.attrs.fontFamily as string | undefined
+          const fs = ts?.attrs.fontSize as string | undefined
+          if (ff) ffCount.set(ff, (ffCount.get(ff) ?? 0) + 1)
+          if (fs) fsCount.set(fs, (fsCount.get(fs) ?? 0) + 1)
+          scanned++
+        }
+        return true
       })
       setToc(items)
+      const top = (m: Map<string, number>): string | undefined =>
+        [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+      const dom = editor.view.dom as HTMLElement
+      dom.style.fontFamily = top(ffCount) ?? ''
+      dom.style.fontSize = top(fsCount) ?? ''
     }, 60)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor])
