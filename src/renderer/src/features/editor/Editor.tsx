@@ -740,7 +740,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     }
     if (linkMark) {
       e.preventDefault()
+      const href = (linkMark.attrs.href as string) || ''
+      const isPlain = !!linkMark.attrs.plain
       openContextMenu(e, [
+        ...(href
+          ? [{ label: 'Открыть ссылку', onClick: () => void window.api.shell.openExternal(href) }]
+          : []),
+        {
+          label: isPlain ? 'Вернуть вид ссылки' : 'Сделать как обычный текст',
+          onClick: () =>
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(pos)
+              .extendMarkRange('link')
+              .updateAttributes('link', { plain: !isPlain })
+              .run()
+        },
         {
           label: 'Убрать ссылку (оставить текст)',
           onClick: () => editor.chain().focus().setTextSelection(pos).extendMarkRange('link').unsetLink().run()

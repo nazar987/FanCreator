@@ -265,7 +265,24 @@ export function Toolbar({
       </select>
       <Sep />
 
-      <Btn title="Жирный" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+      <Btn
+        title="Жирный"
+        active={
+          editor.isActive('heading')
+            ? editor.getAttributes('heading').fontWeight !== 'normal'
+            : editor.isActive('bold')
+        }
+        onClick={() => {
+          // В заголовке «Ж» переключает вес самого заголовка (он жирный по
+          // умолчанию) — иначе снять жирный было нельзя.
+          if (editor.isActive('heading')) {
+            const isBold = editor.getAttributes('heading').fontWeight !== 'normal'
+            editor.chain().focus().updateAttributes('heading', { fontWeight: isBold ? 'normal' : null }).run()
+          } else {
+            editor.chain().focus().toggleBold().run()
+          }
+        }}
+      >
         <Bold size={17} />
       </Btn>
       <Btn title="Курсив" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>

@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, shell } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
@@ -50,6 +50,13 @@ function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; ext: string } {
 }
 
 export function registerIpc(): void {
+  // ---------- System ----------
+  // открыть внешнюю ссылку в браузере по умолчанию (только http/https — безопасно)
+  ipcMain.handle('shell:openExternal', (_e, url: string) => {
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) return shell.openExternal(url)
+    return Promise.resolve()
+  })
+
   // ---------- Projects ----------
   ipcMain.handle('projects:list', () => listProjects())
   ipcMain.handle('projects:get', (_e, projectId: string) => readProject(projectId))

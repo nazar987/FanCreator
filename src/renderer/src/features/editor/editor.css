@@ -262,6 +262,11 @@
   /* без этого подчёркивание «обрывается» вокруг букв с нижним выносом (д, у, р) */
   text-decoration-skip-ink: none;
 }
+/* ссылка «как обычный текст»: без цвета и подчёркивания (#8) */
+.fc-prose a.fc-link-plain {
+  color: inherit;
+  text-decoration: none;
+}
 .fc-prose blockquote {
   border-left: 3px solid rgba(0, 0, 0, 0.2);
   margin: 0.6em 0;

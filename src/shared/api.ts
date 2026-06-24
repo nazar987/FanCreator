@@ -225,6 +225,10 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
     exportChapter(input: { title: string; html: string }): Promise<boolean>
   }
+  shell: {
+    /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
+    openExternal(url: string): Promise<void>
+  }
   updates: {
     /** Проверить обновления вручную (в проде). */
     check(): void

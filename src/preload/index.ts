@@ -106,6 +106,9 @@ const api: FanCreatorApi = {
     importToChapter: (input) => invoke('docx:importToChapter', input),
     exportChapter: (input) => invoke('docx:exportChapter', input)
   },
+  shell: {
+    openExternal: (url) => invoke('shell:openExternal', url)
+  },
   updates: {
     check: () => ipcRenderer.send('updates:check'),
     install: () => ipcRenderer.send('updates:install'),
