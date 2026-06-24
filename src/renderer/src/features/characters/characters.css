@@ -184,7 +184,7 @@
 .characters-folder-node { min-width: 0; }
 .characters-folder-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  grid-template-columns: 28px 44px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   min-height: 72px;
@@ -227,11 +227,12 @@
   padding: 0;
   border: 0;
   border-radius: 6px;
-  background: transparent;
+  border: 1px solid transparent;
+  background: var(--surface-1);
   color: var(--text-faint);
   cursor: pointer;
 }
-.characters-folder-toggle:hover:not(:disabled) { background: var(--stroke); color: var(--text); }
+.characters-folder-toggle:hover:not(:disabled) { border-color: var(--stroke-strong); background: var(--panel-2); color: var(--text); }
 .characters-folder-toggle:disabled { cursor: default; }
 .characters-folder-toggle svg { transition: transform var(--t-fast); }
 .characters-folder-toggle[aria-expanded='true'] svg { transform: rotate(90deg); }

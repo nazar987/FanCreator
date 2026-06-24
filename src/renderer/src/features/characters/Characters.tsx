@@ -533,6 +533,21 @@ export function Characters(): React.JSX.Element {
             if (event.key === 'Enter' || event.key === ' ') setFolderId(folder.id)
           }}
         >
+          <button
+            type="button"
+            className="characters-folder-toggle"
+            title={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
+            aria-label={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
+            aria-expanded={isOpen}
+            aria-controls={`character-folder-children-${folder.id}`}
+            disabled={children.length === 0}
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleFolder(folder.id)
+            }}
+          >
+            {children.length > 0 && <ChevronRight size={16} />}
+          </button>
           <span className="characters-folder-icon" style={{ color: folder.color ?? '#7aa2f7' }}>
             <FolderIcon size={28} fill="currentColor" />
           </span>
@@ -540,22 +555,9 @@ export function Characters(): React.JSX.Element {
             <strong className="truncate">{folder.title}</strong>
             <small>{plural(charCountInFolder(folder.id), 'персонаж', 'персонажа', 'персонажей')}</small>
           </span>
-          <button
-            className="characters-folder-toggle"
-            title={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
-            aria-label={isOpen ? 'Свернуть подпапки' : 'Развернуть подпапки'}
-            aria-expanded={isOpen}
-            disabled={children.length === 0}
-            onClick={(event) => {
-              event.stopPropagation()
-              toggleFolder(folder.id)
-            }}
-          >
-            {children.length > 0 && <ChevronRight size={15} />}
-          </button>
         </div>
         {isOpen && children.length > 0 && (
-          <div className="characters-folder-children">
+          <div className="characters-folder-children" id={`character-folder-children-${folder.id}`}>
             {children.map((child) => renderFolderNode(child))}
           </div>
         )}
