@@ -683,18 +683,31 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       let nodePos = -1
       let nodeSize = 0
       let label = 'глава'
+      let attrs: Record<string, unknown> = {}
       editor.state.doc.nodesBetween(Math.max(0, approx - 2), approx + 2, (n, p) => {
         if (n.type.name === 'internalLink') {
           nodePos = p
           nodeSize = n.nodeSize
           label = (n.attrs.label as string) || 'глава'
+          attrs = n.attrs
           return false
         }
         return true
       })
       const chapterId = internalEl.getAttribute('data-chapter-id') || ''
+      const isPlain = !!attrs.plain
       openContextMenu(e, [
         { label: 'Открыть главу', onClick: () => chapterId && openChapterById(chapterId) },
+        {
+          label: isPlain ? 'Вернуть вид ссылки' : 'Сделать как обычный текст',
+          onClick: () => {
+            if (nodePos < 0) return
+            editor.chain().focus().command(({ tr }) => {
+              tr.setNodeMarkup(nodePos, undefined, { ...attrs, plain: !isPlain })
+              return true
+            }).run()
+          }
+        },
         {
           label: 'Убрать ссылку (оставить текст)',
           onClick: () => {
@@ -728,8 +741,20 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
     if (wikiMark) {
       e.preventDefault()
+      const wikiPlain = !!wikiMark.attrs.plain
       openContextMenu(e, [
         { label: 'Открыть', onClick: () => openEntity(wikiMark.attrs.kind, wikiMark.attrs.refId) },
+        {
+          label: wikiPlain ? 'Вернуть вид ссылки' : 'Сделать как обычный текст',
+          onClick: () =>
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(pos)
+              .extendMarkRange('wikiLink')
+              .updateAttributes('wikiLink', { plain: !wikiPlain })
+              .run()
+        },
         {
           label: 'Убрать ссылку (оставить текст)',
           onClick: () =>

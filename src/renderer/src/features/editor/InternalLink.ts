@@ -32,7 +32,13 @@ export const InternalLink = Node.create<InternalLinkOptions>({
   addAttributes() {
     return {
       chapterId: { default: null },
-      label: { default: 'Подстраница' }
+      label: { default: 'Подстраница' },
+      // «как обычный текст»: без иконки 📄 и без цвета/подчёркивания (#8)
+      plain: {
+        default: false,
+        parseHTML: (el) => (el as HTMLElement).classList.contains('fc-link-plain'),
+        renderHTML: (attrs) => (attrs.plain ? { class: 'fc-link-plain' } : {})
+      }
     }
   },
 
@@ -46,19 +52,19 @@ export const InternalLink = Node.create<InternalLinkOptions>({
       mergeAttributes(HTMLAttributes, {
         'data-internal-link': '',
         'data-chapter-id': node.attrs.chapterId ?? '',
-        class: 'fc-internal-link'
+        class: node.attrs.plain ? 'fc-internal-link fc-link-plain' : 'fc-internal-link'
       }),
-      `📄 ${node.attrs.label}`
+      node.attrs.plain ? `${node.attrs.label}` : `📄 ${node.attrs.label}`
     ]
   },
 
   addNodeView() {
     return ({ node }) => {
       const dom = document.createElement('span')
-      dom.className = 'fc-internal-link'
+      dom.className = node.attrs.plain ? 'fc-internal-link fc-link-plain' : 'fc-internal-link'
       dom.setAttribute('data-internal-link', '')
       dom.contentEditable = 'false'
-      dom.textContent = `📄 ${node.attrs.label}`
+      dom.textContent = node.attrs.plain ? `${node.attrs.label}` : `📄 ${node.attrs.label}`
       dom.title = 'Открыть подстраницу'
       dom.addEventListener('mousedown', (event) => {
         if (event.button !== 0) return // ПКМ — отдаём контекстному меню (убрать ссылку)

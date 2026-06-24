@@ -25,15 +25,16 @@ export const HeadingWeight = Extension.create({
 })
 
 /**
- * LinkPlain — атрибут «как обычный текст» на гиперссылке: убирает подчёркивание и
- * цвет, чтобы ссылка выглядела как остальной текст (но остаётся ссылкой). (#8)
+ * LinkPlain — атрибут «как обычный текст» на гиперссылке и вики-ссылке: убирает
+ * подчёркивание и цвет, чтобы ссылка выглядела как остальной текст (но остаётся
+ * ссылкой). (#8)
  */
 export const LinkPlain = Extension.create({
   name: 'linkPlain',
   addGlobalAttributes() {
     return [
       {
-        types: ['link'],
+        types: ['link', 'wikiLink'],
         attributes: {
           plain: {
             default: false,
