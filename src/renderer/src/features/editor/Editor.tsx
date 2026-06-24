@@ -366,8 +366,12 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       const f = painterRef.current
       if (!f) return
       let c = editor.chain().focus()
-      // тип блока (обычный текст / заголовок) — ко всему выделению
-      c = f.block.type === 'heading' ? c.setHeading({ level: f.block.level as 1 | 2 | 3 }) : c.setParagraph()
+      // тип блока: заголовок применяем всегда; «обычный текст» — только если цель
+      // сейчас заголовок (heading→p). Если образец обычный, а цель уже обычный
+      // текст/ПУНКТ СПИСКА — тип не трогаем, иначе ФПО выкидывал пункт из списка и
+      // сбивал нумерацию (фидбэк v2.0.8).
+      if (f.block.type === 'heading') c = c.setHeading({ level: f.block.level as 1 | 2 | 3 })
+      else if (editor.isActive('heading')) c = c.setParagraph()
       c = f.bold ? c.setBold() : c.unsetBold()
       c = f.italic ? c.setItalic() : c.unsetItalic()
       c = f.underline ? c.setUnderline() : c.unsetUnderline()
