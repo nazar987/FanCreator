@@ -43,7 +43,15 @@ import { TrashView } from '../features/library/TrashView'
 import { openColorPicker } from '../shared/ui/ColorPalette'
 
 export function Sidebar(): React.JSX.Element {
-  const { current, closeProject, applyProject, openTab, activeTabId, goToLibraryFolder } = useStore()
+  const {
+    current,
+    closeProject,
+    applyProject,
+    openTab,
+    activeTabId,
+    goToLibraryFolder,
+    goToCharacterFolder
+  } = useStore()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const [search, setSearch] = React.useState('')
   const [results, setResults] = React.useState<SearchResult[]>([])
@@ -837,6 +845,16 @@ export function Sidebar(): React.JSX.Element {
           <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
             {f.title}
           </span>
+          <button
+            className="tree-goto"
+            title="Открыть папку персонажей"
+            onClick={(event) => {
+              event.stopPropagation()
+              goToCharacterFolder(f.id)
+            }}
+          >
+            <ArrowRight size={14} />
+          </button>
           <span className="faint" style={{ fontSize: 12 }}>
             {chars.length}
           </span>

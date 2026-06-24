@@ -45,6 +45,9 @@ interface StoreValue {
   /** Счётчик «команд перехода» — Shelf реагирует на его изменение. */
   libraryFolderNonce: number
   goToLibraryFolder: (folderId: string | null) => void
+  characterFolderId: string | null
+  characterFolderNonce: number
+  goToCharacterFolder: (folderId: string | null) => void
 }
 
 const Ctx = React.createContext<StoreValue | null>(null)
@@ -62,6 +65,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const [activeTabId, setActiveTabId] = React.useState<string | null>('shelf')
   const [libraryFolderId, setLibraryFolderId] = React.useState<string | null>(null)
   const [libraryFolderNonce, setLibraryFolderNonce] = React.useState(0)
+  const [characterFolderId, setCharacterFolderId] = React.useState<string | null>(null)
+  const [characterFolderNonce, setCharacterFolderNonce] = React.useState(0)
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -164,6 +169,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       const p = await window.api.projects.get(projectId)
       if (!p) return
       setCurrent(p)
+      setCharacterFolderId(null)
+      setCharacterFolderNonce(0)
       if (p.theme) applyThemeLocal(p.theme)
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
@@ -173,6 +180,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
 
   const closeProject = React.useCallback(() => {
     setCurrent(null)
+    setCharacterFolderId(null)
+    setCharacterFolderNonce(0)
     setTabs([SHELF_TAB])
     setActiveTabId('shelf')
     refreshProjects()
@@ -215,6 +224,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     setActiveTabId('shelf')
   }, [current])
 
+  const goToCharacterFolder = React.useCallback((folderId: string | null) => {
+    if (current) {
+      const key = `fancreator.characters.folder.${current.id}`
+      try {
+        if (folderId) localStorage.setItem(key, folderId)
+        else localStorage.removeItem(key)
+      } catch {
+        // Команда навигации остаётся рабочей и без сохранения UI-состояния.
+      }
+    }
+    setCharacterFolderId(folderId)
+    setCharacterFolderNonce((nonce) => nonce + 1)
+    setTabs((openTabs) =>
+      openTabs.some((tab) => tab.id === 'characters')
+        ? openTabs
+        : [...openTabs, { id: 'characters', kind: 'characters', title: 'Персонажи' }]
+    )
+    setActiveTabId('characters')
+  }, [current])
+
   const reorderTabs = React.useCallback((from: number, to: number) => {
     setTabs((currentTabs) => {
       const moving = currentTabs[from]
@@ -245,7 +274,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     setActiveTab: setActiveTabId,
     libraryFolderId,
     libraryFolderNonce,
-    goToLibraryFolder
+    goToLibraryFolder,
+    characterFolderId,
+    characterFolderNonce,
+    goToCharacterFolder
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

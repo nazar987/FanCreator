@@ -390,7 +390,7 @@ function FolderPanel({ folder, projectId, onProjectChange, onDelete }: FolderPan
 }
 
 export function Characters(): React.JSX.Element {
-  const { current, applyProject, openTab } = useStore()
+  const { current, applyProject, openTab, characterFolderId, characterFolderNonce } = useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
@@ -400,6 +400,11 @@ export function Characters(): React.JSX.Element {
   React.useEffect(() => {
     if (current) writeCharacterFolder(current.id, folderId)
   }, [current, folderId])
+
+  React.useEffect(() => {
+    if (!current || characterFolderNonce === 0) return
+    setFolderId(characterFolderId)
+  }, [current?.id, characterFolderId, characterFolderNonce])
 
   React.useEffect(() => {
     const templates = current?.templates ?? []
