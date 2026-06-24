@@ -41,18 +41,27 @@ export const LineHeight = Extension.create({
 
   addCommands() {
     return {
+      // Применяем ко ВСЕМ типам через chain, а не .every — иначе на заголовке
+      // updateAttributes('paragraph') возвращал false, .every обрывался, и
+      // межстрочный у заголовков не менялся (фидбэк v2.0.8).
       setLineHeight:
         (value: string) =>
-        ({ commands }) =>
-          this.options.types.every((type: string) =>
-            commands.updateAttributes(type, { lineHeight: value })
-          ),
+        ({ chain }) => {
+          let c = chain()
+          for (const type of this.options.types as string[]) {
+            c = c.updateAttributes(type, { lineHeight: value })
+          }
+          return c.run()
+        },
       unsetLineHeight:
         () =>
-        ({ commands }) =>
-          this.options.types.every((type: string) =>
-            commands.resetAttributes(type, 'lineHeight')
-          )
+        ({ chain }) => {
+          let c = chain()
+          for (const type of this.options.types as string[]) {
+            c = c.resetAttributes(type, 'lineHeight')
+          }
+          return c.run()
+        }
     }
   }
 })

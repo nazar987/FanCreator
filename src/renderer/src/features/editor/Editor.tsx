@@ -831,6 +831,14 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
           onContextMenu={onEditorContextMenu}
+          onMouseDown={(e) => {
+            // Клик по серому «столу» вне листа не должен снимать фокус с редактора —
+            // иначе после него Ctrl+A/Delete не работали (фидбэк v2.0.8).
+            if (e.target === scrollRef.current) {
+              e.preventDefault()
+              editor.view.focus()
+            }
+          }}
           onWheel={(e) => {
             if (!e.ctrlKey) return
             e.preventDefault()
