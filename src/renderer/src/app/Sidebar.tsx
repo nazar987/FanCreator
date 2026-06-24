@@ -640,7 +640,8 @@ export function Sidebar(): React.JSX.Element {
   const renderFolder = (
     f: Folder,
     depth: number,
-    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
+    isDragging: boolean
   ): React.JSX.Element => {
     const key = `folder:${f.id}`
     const isOpen = expanded[key] ?? false
@@ -683,7 +684,7 @@ export function Sidebar(): React.JSX.Element {
             {stories.length}
           </span>
         </div>
-        {isOpen && (
+        {isOpen && !isDragging && (
           <div className="tree-children">
             {renderFolderGroup(f.id, depth + 1)}
             {stories.map((s) => (
@@ -714,7 +715,7 @@ export function Sidebar(): React.JSX.Element {
                   {...dragProvided.draggableProps}
                   className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
                 >
-                  {renderFolder(folder, depth, dragProvided.dragHandleProps)}
+                  {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
                 </div>
               )}
             </Draggable>
@@ -791,7 +792,8 @@ export function Sidebar(): React.JSX.Element {
   const renderCharacterFolder = (
     f: Folder,
     depth: number,
-    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
+    isDragging: boolean
   ): React.JSX.Element => {
     const key = `cfolder:${f.id}`
     const isOpen = expanded[key] ?? false
@@ -839,7 +841,7 @@ export function Sidebar(): React.JSX.Element {
             {chars.length}
           </span>
         </div>
-        {isOpen && (
+        {isOpen && !isDragging && (
           <div className="tree-children">
             {renderCharacterFolderGroup(f.id, depth + 1)}
             {chars.map((c) => renderCharacterRow(c, depth + 1))}
@@ -861,7 +863,7 @@ export function Sidebar(): React.JSX.Element {
                   {...dragProvided.draggableProps}
                   className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
                 >
-                  {renderCharacterFolder(folder, depth, dragProvided.dragHandleProps)}
+                  {renderCharacterFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
                 </div>
               )}
             </Draggable>
