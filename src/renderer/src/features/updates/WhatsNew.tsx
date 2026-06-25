@@ -89,22 +89,25 @@ export function WhatsNew(): React.JSX.Element | null {
           </div>
         </div>
 
-        {notes.map((note) => (
-          <div key={note.version} className="whatsnew-section">
-            {notes.length > 1 && (
-              <div className="whatsnew-subver">
-                Версия {note.version} · {note.date}
-              </div>
-            )}
-            <ul className="whatsnew-list">
-              {note.items.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div className="whatsnew-body">
+          {notes.map((note) => (
+            <div key={note.version} className="whatsnew-section">
+              {notes.length > 1 && (
+                <div className="whatsnew-subver">
+                  <span className="whatsnew-badge">v{note.version}</span>
+                  <span className="whatsnew-date">{note.date}</span>
+                </div>
+              )}
+              <ul className="whatsnew-list">
+                {note.items.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
 
-        <div className="modal-actions">
+        <div className="modal-actions whatsnew-actions">
           <Button variant="primary" onClick={close}>
             Понятно
           </Button>
