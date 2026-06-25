@@ -287,8 +287,10 @@
 /* Нумерованный список — через CSS-счётчик:
    • «пустой пункт без номера» (data-unnumbered) не увеличивает счётчик (S-H3);
    • counters() даёт вложенную нумерацию 2.1, 2.1.1 для подпунктов;
-   • маркер — через ::before с position:absolute (висячий отступ), а не ::marker:
-     ::marker сбивался на разрыве страницы (номер уезжал в правый край). */
+   • маркер — ИНЛАЙНОВЫЙ ::before (течёт с первой строкой пункта). Ни ::marker,
+     ни absolute не годятся: на разрыве страницы номер уезжал вправо / пропадал
+     у пунктов, начинающихся на новой странице. Висячий отступ — через
+     padding-left пункта + отрицательный margin маркера. */
 .fc-prose ol {
   list-style: none;
   counter-reset: fc-ol;
@@ -296,14 +298,13 @@
 }
 .fc-prose ol > li {
   counter-increment: fc-ol;
-  position: relative;
-  padding-left: 2em;
+  padding-left: 2.4em;
 }
 .fc-prose ol > li::before {
   content: counters(fc-ol, '.') '. ';
-  position: absolute;
-  left: 0;
-  top: 0;
+  display: inline-block;
+  width: 2em;
+  margin-left: -2em;
   white-space: nowrap;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
@@ -312,6 +313,7 @@
 }
 .fc-prose ol > li[data-unnumbered='true']::before {
   content: '';
+  display: none;
 }
 .fc-prose ul > li[data-unnumbered='true']::marker {
   content: '';
