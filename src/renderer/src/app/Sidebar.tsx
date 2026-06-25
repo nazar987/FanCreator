@@ -763,6 +763,49 @@ export function Sidebar(): React.JSX.Element {
   const openCharacterPage = (c: (typeof current.characters)[number]): void =>
     openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
 
+  const renameCharacter = async (c: (typeof current.characters)[number]): Promise<void> => {
+    if (!current) return
+    const name = await promptText({ title: 'Переименовать персонажа', initial: c.name })
+    if (name == null || !name.trim()) return
+    applyProject(
+      await window.api.characters.update({
+        projectId: current.id,
+        characterId: c.id,
+        patch: { name: name.trim() }
+      })
+    )
+  }
+  const deleteCharacter = async (c: (typeof current.characters)[number]): Promise<void> => {
+    if (!current) return
+    if (!(await confirmDialog({ title: `Удалить персонажа «${c.name || 'Без имени'}»?`, danger: true }))) return
+    applyProject(await window.api.characters.delete({ projectId: current.id, characterId: c.id }))
+  }
+  const renameCharacterFolder = async (f: Folder): Promise<void> => {
+    if (!current) return
+    const title = await promptText({ title: 'Переименовать папку', initial: f.title })
+    if (!title || !title.trim()) return
+    applyProject(
+      await window.api.characterFolders.update({
+        projectId: current.id,
+        folderId: f.id,
+        patch: { title: title.trim() }
+      })
+    )
+  }
+  const deleteCharacterFolder = async (f: Folder): Promise<void> => {
+    if (!current) return
+    if (
+      !(await confirmDialog({
+        title: `Удалить папку «${f.title}»?`,
+        message: 'Персонажи из папки не удаляются — они останутся без папки.',
+        confirmLabel: 'Удалить',
+        danger: true
+      }))
+    )
+      return
+    applyProject(await window.api.characterFolders.delete({ projectId: current.id, folderId: f.id }))
+  }
+
   const renderCharacterRow = (
     c: (typeof current.characters)[number],
     depth: number
@@ -785,7 +828,9 @@ export function Sidebar(): React.JSX.Element {
             icon: <ArrowDown size={15} />,
             disabled: charsInFolder(c.folderId ?? null).at(-1)?.id === c.id,
             onClick: () => moveCharacterAmongSiblings(c, 1)
-          }
+          },
+          { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameCharacter(c) },
+          { label: 'Удалить', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteCharacter(c) }
         ])
       }
     >
@@ -826,6 +871,13 @@ export function Sidebar(): React.JSX.Element {
                 icon: <ArrowDown size={15} />,
                 disabled: childCharacterFolders(f.parentId ?? null).at(-1)?.id === f.id,
                 onClick: () => moveCharacterFolderAmongSiblings(f, 1)
+              },
+              { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameCharacterFolder(f) },
+              {
+                label: 'Удалить папку',
+                icon: <Trash2 size={15} />,
+                danger: true,
+                onClick: () => deleteCharacterFolder(f)
               }
             ])
           }

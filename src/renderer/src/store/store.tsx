@@ -63,6 +63,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const [current, setCurrent] = React.useState<Project | null>(null)
   const [tabs, setTabs] = React.useState<OpenTab[]>([SHELF_TAB])
   const [activeTabId, setActiveTabId] = React.useState<string | null>('shelf')
+  const activeTabIdRef = React.useRef(activeTabId)
+  activeTabIdRef.current = activeTabId
   const [libraryFolderId, setLibraryFolderId] = React.useState<string | null>(null)
   const [libraryFolderNonce, setLibraryFolderNonce] = React.useState(0)
   const [characterFolderId, setCharacterFolderId] = React.useState<string | null>(null)
@@ -90,13 +92,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const applyProject = React.useCallback((p: Project | null) => {
     if (!p) return
     setCurrent(p)
-    setTabs((openTabs) =>
-      openTabs.map((tab) => {
+    // закрываем вкладки сущностей, которых больше нет (удалены/в корзине), и
+    // подтягиваем актуальные заголовки (имя персонажа). Иначе при удалении главы
+    // из левого меню её вкладка оставалась открытой.
+    setTabs((openTabs) => {
+      const alive = (tab: OpenTab): boolean => {
+        if (tab.kind === 'chapter' && tab.chapterId) {
+          const story = p.stories.find((s) => s.id === tab.storyId)
+          if (!story || story.deletedAt) return false
+          const ch = story.chapters.find((c) => c.id === tab.chapterId)
+          return !!ch && !ch.deletedAt
+        }
+        if (tab.kind === 'character' && tab.characterId)
+          return p.characters.some((c) => c.id === tab.characterId)
+        if (tab.kind === 'board' && tab.boardId) return p.boards.some((b) => b.id === tab.boardId)
+        if (tab.kind === 'timeline' && tab.timelineId)
+          return p.timelines.some((t) => t.id === tab.timelineId)
+        return true
+      }
+      const pruned = openTabs.filter(alive).map((tab) => {
         if (tab.kind !== 'character' || !tab.characterId) return tab
         const character = p.characters.find((item) => item.id === tab.characterId)
         return character ? { ...tab, title: character.name || 'Без имени' } : tab
       })
-    )
+      // если активная вкладка закрылась — переключаемся на последнюю/полку
+      if (!pruned.some((t) => t.id === activeTabIdRef.current)) {
+        setActiveTabId(pruned[pruned.length - 1]?.id ?? 'shelf')
+      }
+      return pruned
+    })
     // обновляем сводку в списке без полной перезагрузки
     setProjects((prev) =>
       prev
