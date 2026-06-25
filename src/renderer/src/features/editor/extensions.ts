@@ -22,7 +22,7 @@ import { WikiLink } from './WikiLink'
 import { SearchHighlight } from './SearchHighlight'
 import { WordDelete } from './WordDelete'
 import { BlankListItem } from './BlankListItem'
-import { HeadingWeight, LinkPlain } from './EditorExtras'
+import { HeadingWeight, LinkPlain, OrderedListStart } from './EditorExtras'
 import { PageBreak } from './PageBreak'
 
 /** Размеры страницы A4 при 96 dpi. */

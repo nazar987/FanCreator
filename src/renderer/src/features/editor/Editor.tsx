@@ -812,6 +812,41 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onClick: () => editor.chain().focus().setTextSelection(pos).extendMarkRange('link').unsetLink().run()
         }
       ])
+      return
+    }
+
+    // нумерованный список — «начать нумерацию с числа N» (восстановить/продолжить)
+    const $p = doc.resolve(pos)
+    let olPos = -1
+    let olAttrs: Record<string, unknown> | null = null
+    for (let d = $p.depth; d > 0; d--) {
+      if ($p.node(d).type.name === 'orderedList') {
+        olAttrs = $p.node(d).attrs
+        olPos = $p.before(d)
+        break
+      }
+    }
+    if (olAttrs) {
+      e.preventDefault()
+      const cur = (olAttrs.listStart as number) || 1
+      openContextMenu(e, [
+        {
+          label: 'Нумеровать с числа…',
+          onClick: async () => {
+            const v = await promptText({ title: 'Начать нумерацию с числа', initial: String(cur) })
+            const n = Number(v)
+            if (!Number.isFinite(n) || n < 1) return
+            editor
+              .chain()
+              .focus()
+              .command(({ tr }) => {
+                tr.setNodeMarkup(olPos, undefined, { ...olAttrs, listStart: n > 1 ? n : null })
+                return true
+              })
+              .run()
+          }
+        }
+      ])
     }
   }
 
