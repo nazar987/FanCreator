@@ -127,6 +127,17 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   // остаются 1×, поэтому при наборе нет лагов даже на большом масштабе.
   const zoomInnerRef = React.useRef<HTMLDivElement>(null)
   const [zoomLayerHeight, setZoomLayerHeight] = React.useState<number>()
+  const zoomRef = React.useRef(zoom)
+  zoomRef.current = zoom
+  // высоту «стола» под масштабированным листом считаем ПО СОБЫТИЯМ (а не через
+  // постоянный ResizeObserver) — иначе он зацикливался с пагинатором (тот менял
+  // высоту листа → observer → реверстка → ...), и приложение зависало на зуме.
+  const recomputeZoomHeight = React.useCallback(() => {
+    const inner = zoomInnerRef.current
+    if (!inner) return
+    const h = inner.offsetHeight * zoomRef.current
+    setZoomLayerHeight((prev) => (prev != null && Math.abs(prev - h) < 1 ? prev : h))
+  }, [])
   const [saved, setSaved] = React.useState(true)
   // S-P: оглавление главы (заголовки H1–H3)
   const [tocOpen, setTocOpen] = React.useState(false)
@@ -347,6 +358,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       const dom = editor.view.dom as HTMLElement
       dom.style.fontFamily = top(ffCount) ?? ''
       dom.style.fontSize = top(fsCount) ?? ''
+      recomputeZoomHeight() // высота «стола» могла измениться вместе с числом страниц
     }, 60)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor])
@@ -440,17 +452,13 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
 
-  // высота «стола» под масштабированным листом: transform не меняет layout-высоту,
-  // поэтому считаем её сами (реальная высота × масштаб), чтобы прокрутка была верной.
+  // пересчёт высоты «стола» при смене зума/главы и после реверстки пагинации
+  // (несколько отложенных попыток), без постоянного observer.
   React.useEffect(() => {
-    const inner = zoomInnerRef.current
-    if (!inner) return
-    const update = (): void => setZoomLayerHeight(inner.offsetHeight * zoom)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(inner)
-    return () => ro.disconnect()
-  }, [zoom, editor, chapterId])
+    recomputeZoomHeight()
+    const timers = [60, 250, 600].map((d) => setTimeout(recomputeZoomHeight, d))
+    return () => timers.forEach(clearTimeout)
+  }, [zoom, editor, chapterId, recomputeZoomHeight])
 
   // S-H8: прячем лист, пока пагинация раскладывает страницы, и плавно показываем —
   // иначе при переключении вкладок текст заметно «прыгает» при реверстке.
