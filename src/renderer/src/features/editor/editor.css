@@ -305,8 +305,9 @@
 .fc-prose ol > li > p:first-of-type::before {
   content: counters(fc-ol, '.') '. ';
   display: inline-block;
-  width: 2em;
+  min-width: 2em; /* было width:2em → широкие номера (6.1.2) налезали на текст */
   margin-left: -2em;
+  margin-right: 0.3em;
   white-space: nowrap;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
