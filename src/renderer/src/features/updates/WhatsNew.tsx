@@ -6,6 +6,12 @@ import { CHANGELOG, compareVersions, type ReleaseNote } from './changelog'
 // Версия, заметки которой пользователь уже видел и закрыл в окне «Что нового».
 const SEEN_KEY = 'fancreator.whatsNewSeen'
 
+// Императивное открытие окна «Что нового» (по клику на версию на стартовом экране).
+let openExternal: (() => void) | null = null
+export function openWhatsNew(): void {
+  openExternal?.()
+}
+
 /**
  * Окошко «Что нового» — показывается один раз после обновления приложения.
  *
@@ -43,6 +49,14 @@ export function WhatsNew(): React.JSX.Element | null {
       } catch {
         /* ignore */
       }
+    }
+  }, [])
+
+  // открытие по клику на версию — показываем всю историю изменений
+  React.useEffect(() => {
+    openExternal = () => setNotes(CHANGELOG)
+    return () => {
+      openExternal = null
     }
   }, [])
 

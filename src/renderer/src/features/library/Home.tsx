@@ -7,8 +7,11 @@ import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { ThemeSwitcher } from '../../app/ThemeSwitcher'
 import { CoverArt } from './CoverArt'
 import { startHelpTour } from '../help/HelpTour'
+import { openWhatsNew } from '../updates/WhatsNew'
 import { plural } from '../../shared/plural'
 import type { ProjectSummary } from '@shared/types'
+
+const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''
 
 export function Home(): React.JSX.Element {
   const { projects, refreshProjects, openProject } = useStore()
@@ -68,6 +71,7 @@ export function Home(): React.JSX.Element {
 
   return (
     <div className="home" data-tour="library">
+      <div className="home-glow" aria-hidden />
       <div className="home-inner">
         <div className="home-top">
           <div>
@@ -77,7 +81,18 @@ export function Home(): React.JSX.Element {
               </span>
               FanCreator
             </div>
-            <div className="home-sub">Ваша библиотека историй и миров</div>
+            <div className="home-sub">
+              Ваша библиотека историй и миров
+              {APP_VERSION && (
+                <button
+                  className="home-version"
+                  onClick={openWhatsNew}
+                  title="Что нового в этой версии"
+                >
+                  v{APP_VERSION}
+                </button>
+              )}
+            </div>
           </div>
           <div className="row">
             <ThemeSwitcher />
