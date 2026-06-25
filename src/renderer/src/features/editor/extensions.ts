@@ -41,6 +41,7 @@ export function buildExtensions(opts: {
     BlankListItem,
     HeadingWeight,
     LinkPlain,
+    OrderedListStart,
     PageBreak,
     SearchHighlight,
     InternalLink.configure({ onOpen: opts.onOpenInternalLink }),
