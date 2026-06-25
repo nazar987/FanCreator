@@ -300,6 +300,13 @@
   counter-increment: fc-ol;
   padding-left: 2.4em;
 }
+/* пункт списка не рвём между страницами — иначе номер (::before) на граничной
+   строке уезжает вправо. Пусть пункт целиком переходит на новую страницу. */
+.fc-prose ol > li,
+.fc-prose ul > li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 /* номер ставим на сам параграф пункта (он инлайновый с текстом), а не на <li>,
    иначе номер уходил на отдельную строку над текстом */
 .fc-prose ol > li > p:first-of-type::before {
