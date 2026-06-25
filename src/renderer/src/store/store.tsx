@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Project, ProjectSummary, ThemeName, Chapter } from '@shared/types'
+import { confirmDialog } from '../shared/ui/dialogs'
 
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
 export interface OpenTab {
@@ -55,6 +56,30 @@ const Ctx = React.createContext<StoreValue | null>(null)
 const THEME_KEY = 'fancreator.theme'
 const SHELF_TAB: OpenTab = { id: 'shelf', kind: 'shelf', title: 'Библиотека' }
 
+/** Существует ли сущность, на которую ссылается вкладка (не удалена/не в корзине). */
+function isTabAlive(p: Project, tab: OpenTab): boolean {
+  if (tab.kind === 'chapter' && tab.chapterId) {
+    const story = p.stories.find((s) => s.id === tab.storyId)
+    if (!story || story.deletedAt) return false
+    const ch = story.chapters.find((c) => c.id === tab.chapterId)
+    return !!ch && !ch.deletedAt
+  }
+  if (tab.kind === 'character' && tab.characterId) return p.characters.some((c) => c.id === tab.characterId)
+  if (tab.kind === 'board' && tab.boardId) return p.boards.some((b) => b.id === tab.boardId)
+  if (tab.kind === 'timeline' && tab.timelineId) return p.timelines.some((t) => t.id === tab.timelineId)
+  return true
+}
+
+const sessionKey = (projectId: string): string => `fancreator.session.${projectId}`
+function loadSession(projectId: string): { tabs: OpenTab[]; activeTabId: string | null } | null {
+  try {
+    const raw = localStorage.getItem(sessionKey(projectId))
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [theme, setThemeState] = React.useState<ThemeName>(
     () => (localStorage.getItem(THEME_KEY) as ThemeName) || 'dark'
@@ -73,6 +98,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  // запоминаем открытые вкладки текущего проекта — для восстановления сессии
+  React.useEffect(() => {
+    if (!current) return
+    try {
+      localStorage.setItem(sessionKey(current.id), JSON.stringify({ tabs, activeTabId }))
+    } catch {
+      /* localStorage недоступен — не критично */
+    }
+  }, [current, tabs, activeTabId])
 
   const applyThemeLocal = React.useCallback((t: ThemeName) => {
     setThemeState(t)
@@ -96,21 +131,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     // подтягиваем актуальные заголовки (имя персонажа). Иначе при удалении главы
     // из левого меню её вкладка оставалась открытой.
     setTabs((openTabs) => {
-      const alive = (tab: OpenTab): boolean => {
-        if (tab.kind === 'chapter' && tab.chapterId) {
-          const story = p.stories.find((s) => s.id === tab.storyId)
-          if (!story || story.deletedAt) return false
-          const ch = story.chapters.find((c) => c.id === tab.chapterId)
-          return !!ch && !ch.deletedAt
-        }
-        if (tab.kind === 'character' && tab.characterId)
-          return p.characters.some((c) => c.id === tab.characterId)
-        if (tab.kind === 'board' && tab.boardId) return p.boards.some((b) => b.id === tab.boardId)
-        if (tab.kind === 'timeline' && tab.timelineId)
-          return p.timelines.some((t) => t.id === tab.timelineId)
-        return true
-      }
-      const pruned = openTabs.filter(alive).map((tab) => {
+      const pruned = openTabs.filter((tab) => isTabAlive(p, tab)).map((tab) => {
         if (tab.kind !== 'character' || !tab.characterId) return tab
         const character = p.characters.find((item) => item.id === tab.characterId)
         return character ? { ...tab, title: character.name || 'Без имени' } : tab
@@ -198,6 +219,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       if (p.theme) applyThemeLocal(p.theme)
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
+      // восстановление вкладок прошлой сессии (как в браузере)
+      const saved = loadSession(projectId)
+      const restorable = (saved?.tabs ?? []).filter((t) => t.kind !== 'shelf' && isTabAlive(p, t))
+      if (restorable.length) {
+        const ok = await confirmDialog({
+          title: 'Восстановить вкладки?',
+          message: `Открыть ${restorable.length} вкладок из прошлой сессии?`,
+          confirmLabel: 'Восстановить'
+        })
+        if (ok) {
+          const next = [SHELF_TAB, ...restorable]
+          setTabs(next)
+          setActiveTabId(
+            saved?.activeTabId && next.some((t) => t.id === saved.activeTabId)
+              ? saved.activeTabId
+              : next[next.length - 1].id
+          )
+        }
+      }
     },
     [applyThemeLocal]
   )

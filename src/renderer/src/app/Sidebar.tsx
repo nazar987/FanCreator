@@ -23,7 +23,8 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowDown,
-  UserRound
+  UserRound,
+  UserPlus
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -780,6 +781,19 @@ export function Sidebar(): React.JSX.Element {
     if (!(await confirmDialog({ title: `Удалить персонажа «${c.name || 'Без имени'}»?`, danger: true }))) return
     applyProject(await window.api.characters.delete({ projectId: current.id, characterId: c.id }))
   }
+  const addCharacterToFolder = async (folderId: string | null): Promise<void> => {
+    if (!current) return
+    const name = await promptText({ title: 'Новый персонаж', placeholder: 'Имя' })
+    if (name == null) return
+    const p = await window.api.characters.add({
+      projectId: current.id,
+      name: name.trim() || 'Новый персонаж',
+      folderId
+    })
+    applyProject(p)
+    const created = p?.characters[p.characters.length - 1]
+    if (created) openCharacterPage(created)
+  }
   const renameCharacterFolder = async (f: Folder): Promise<void> => {
     if (!current) return
     const title = await promptText({ title: 'Переименовать папку', initial: f.title })
@@ -860,6 +874,11 @@ export function Sidebar(): React.JSX.Element {
           onClick={() => toggle(key)}
           onContextMenu={(event) =>
             openContextMenu(event, [
+              {
+                label: 'Добавить персонажа',
+                icon: <UserPlus size={15} />,
+                onClick: () => addCharacterToFolder(f.id)
+              },
               {
                 label: 'Выше',
                 icon: <ArrowUp size={15} />,
