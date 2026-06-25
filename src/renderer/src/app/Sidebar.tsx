@@ -245,6 +245,7 @@ export function Sidebar(): React.JSX.Element {
 
   const folderDropId = (parentId: string | null): string => `folders:${parentId ?? 'root'}`
   const characterFolderDropId = (parentId: string | null): string => `character-folders:${parentId ?? 'root'}`
+  const characterDropId = (folderId: string | null): string => `characters:${folderId ?? 'root'}`
 
   const parseFolderDropId = (
     droppableId: string
@@ -264,6 +265,12 @@ export function Sidebar(): React.JSX.Element {
     const [, storyId, parentId] = droppableId.split(':')
     if (!droppableId.startsWith('chapters:') || !storyId) return null
     return { storyId, parentId: parentId === 'root' ? null : parentId }
+  }
+
+  const parseCharacterDropId = (droppableId: string): { folderId: string | null } | null => {
+    if (!droppableId.startsWith('characters:')) return null
+    const folderId = droppableId.slice('characters:'.length)
+    return { folderId: folderId === 'root' ? null : folderId }
   }
 
   const reorderSidebarItems = async (result: DropResult): Promise<void> => {
@@ -296,6 +303,21 @@ export function Sidebar(): React.JSX.Element {
               parentId: folderDrop.parentId,
               order
             })
+      )
+      return
+    }
+
+    const characterDrop = parseCharacterDropId(source.droppableId)
+    if (characterDrop) {
+      const order = charsInFolder(characterDrop.folderId).map((character) => character.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      applyProject(
+        await window.api.characters.reorder({
+          projectId: current.id,
+          folderId: characterDrop.folderId,
+          order
+        })
       )
       return
     }
@@ -822,7 +844,8 @@ export function Sidebar(): React.JSX.Element {
 
   const renderCharacterRow = (
     c: (typeof current.characters)[number],
-    depth: number
+    depth: number,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined
   ): React.JSX.Element => (
     <div
       key={c.id}
@@ -848,12 +871,42 @@ export function Sidebar(): React.JSX.Element {
         ])
       }
     >
-      <span style={{ width: 15 }} />
+      <span
+        className="tree-drag-handle"
+        title="Изменить порядок персонажа"
+        {...dragHandleProps}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <GripVertical size={14} />
+      </span>
       <UserRound size={14} style={{ color: c.color ?? '#7aa2f7' }} />
       <span className="truncate" style={{ flex: 1 }}>
         {c.name || 'Без имени'}
       </span>
     </div>
+  )
+
+  const renderCharacterGroup = (folderId: string | null, depth: number): React.JSX.Element => (
+    <Droppable droppableId={characterDropId(folderId)} type="character">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps}>
+          {charsInFolder(folderId).map((character, index) => (
+            <Draggable draggableId={`character:${character.id}`} index={index} key={character.id}>
+              {(dragProvided, snapshot) => (
+                <div
+                  ref={dragProvided.innerRef}
+                  {...dragProvided.draggableProps}
+                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                >
+                  {renderCharacterRow(character, depth, dragProvided.dragHandleProps)}
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
   )
 
   const renderCharacterFolder = (
@@ -933,7 +986,7 @@ export function Sidebar(): React.JSX.Element {
         {isOpen && !isDragging && (
           <div className="tree-children">
             {renderCharacterFolderGroup(f.id, depth + 1)}
-            {chars.map((c) => renderCharacterRow(c, depth + 1))}
+            {renderCharacterGroup(f.id, depth + 1)}
           </div>
         )}
       </div>
@@ -1181,7 +1234,7 @@ export function Sidebar(): React.JSX.Element {
                 <div className="tree-children">
                   <DragDropContext onDragEnd={reorderSidebarItems}>
                     {renderCharacterFolderGroup(null, 0)}
-                    {charsInFolder(null).map((c) => renderCharacterRow(c, 0))}
+                    {renderCharacterGroup(null, 0)}
                     {current.characters.length === 0 && (
                       <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
                         Пока нет персонажей.
