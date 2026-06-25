@@ -1227,3 +1227,16 @@ Toolbar.tsx, *Delete.ts, FontSize.ts, PageBreak.ts) — там идут прав
 - ✅ Подпункты 2.1.1 не налезают на текст (min-width).
 - ✅ Вкладка закрывается при удалении главы (applyProject прунит мёртвые вкладки).
 - ✅ Контекст-меню «Переименовать/Удалить» для персонажей и папок персонажей.
+
+## ФАЗА 14 — добор (Codex)
+- **T-K2** Перетаскивание (DnD) ПЕРСОНАЖЕЙ в левом дереве. Сейчас персонажи
+  (renderCharacterRow, Sidebar.tsx ~809) рендерятся просто `chars.map(...)` без
+  Draggable — есть только «Выше/Ниже» в ПКМ. Нужно как у глав/папок: обернуть
+  персонажей в Droppable(type="character") + Draggable с drag-handle (GripVertical),
+  и обработать дроп в `reorderSidebarItems` (по образцу chapter/folder; API уже
+  есть — `window.api.characters.reorder({projectId, folderId, order})`, из T-H4).
+  Персонажи рендерятся в ДВУХ местах: внутри папки (renderCharacterFolder ~917) и
+  в корне (charsInFolder(null).map, ~1130) — обернуть оба. Сделать
+  `renderCharacterGroup(parentId, depth)` по аналогии с renderDraggableChapterGroup.
+  **Приёмка:** персонажа можно перетащить выше/ниже среди соседей (в папке и в
+  корне), порядок сохраняется после перезапуска.
