@@ -284,23 +284,35 @@
   padding-left: 1.5em;
   margin: 0 0 0.7em;
 }
-/* Нумерованный список — через CSS-счётчик, чтобы «пустой пункт без номера»
-   (data-unnumbered) не увеличивал нумерацию и список оставался одним <ol>,
-   а нумерация продолжалась/обновлялась сама (S-H3). */
+/* Нумерованный список — через CSS-счётчик:
+   • «пустой пункт без номера» (data-unnumbered) не увеличивает счётчик (S-H3);
+   • counters() даёт вложенную нумерацию 2.1, 2.1.1 для подпунктов;
+   • маркер — через ::before с position:absolute (висячий отступ), а не ::marker:
+     ::marker сбивался на разрыве страницы (номер уезжал в правый край). */
 .fc-prose ol {
   list-style: none;
   counter-reset: fc-ol;
+  padding-left: 0;
 }
 .fc-prose ol > li {
   counter-increment: fc-ol;
+  position: relative;
+  padding-left: 2em;
 }
-.fc-prose ol > li::marker {
-  content: counter(fc-ol) '. ';
+.fc-prose ol > li::before {
+  content: counters(fc-ol, '.') '. ';
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
   counter-increment: none;
+  padding-left: 0;
 }
-.fc-prose ol > li[data-unnumbered='true']::marker,
+.fc-prose ol > li[data-unnumbered='true']::before {
+  content: '';
+}
 .fc-prose ul > li[data-unnumbered='true']::marker {
   content: '';
 }
