@@ -14,6 +14,7 @@ import { confirmDialog, promptText } from '../../shared/ui/dialogs'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
 import { buildFishboneImage } from './fishboneImage'
 import { Dendrogram } from './Dendrogram'
+import { ZoomPan } from '../../shared/ui/ZoomPan'
 
 interface TimelineEventCardProps {
   event: TimelineEvent
@@ -488,27 +489,31 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
             <div className="timeline-list">{renderEventGroup(null, 0)}</div>
           </DragDropContext>
         ) : view === 'fishbone' ? (
-          <Fishbone
-            title={timeline.title}
-            events={topEvents}
-            childrenOf={(parentId) => childEvents(parentId)}
-            onEdit={async (event) => {
-              const title = await promptText({ title: 'Событие', initial: event.title })
-              if (title && title !== event.title) await updateEvent(event.id, { title })
-            }}
-            onDelete={deleteEvent}
-          />
+          <ZoomPan>
+            <Fishbone
+              title={timeline.title}
+              events={topEvents}
+              childrenOf={(parentId) => childEvents(parentId)}
+              onEdit={async (event) => {
+                const title = await promptText({ title: 'Событие', initial: event.title })
+                if (title && title !== event.title) await updateEvent(event.id, { title })
+              }}
+              onDelete={deleteEvent}
+            />
+          </ZoomPan>
         ) : (
-          <Dendrogram
-            events={topEvents}
-            childrenOf={(parentId) => childEvents(parentId)}
-            onEdit={async (event) => {
-              const title = await promptText({ title: 'Событие', initial: event.title })
-              if (title && title !== event.title) await updateEvent(event.id, { title })
-            }}
-            onAddChild={(event) => void addEvent(event.id)}
-            onDelete={(event) => void deleteEvent(event)}
-          />
+          <ZoomPan>
+            <Dendrogram
+              events={topEvents}
+              childrenOf={(parentId) => childEvents(parentId)}
+              onEdit={async (event) => {
+                const title = await promptText({ title: 'Событие', initial: event.title })
+                if (title && title !== event.title) await updateEvent(event.id, { title })
+              }}
+              onAddChild={(event) => void addEvent(event.id)}
+              onDelete={(event) => void deleteEvent(event)}
+            />
+          </ZoomPan>
         )}
       </div>
     </div>

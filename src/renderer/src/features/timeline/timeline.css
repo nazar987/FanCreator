@@ -347,3 +347,53 @@
 .fishbone-node-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
 .timeline-event-note,
 .fishbone-node-note { font-size: var(--fs-meta); }
+
+/* ---------- ZoomPan (зум+панорама дерева/рыбьей кости и родословной) ---------- */
+.zoompan {
+  position: relative;
+  height: min(72vh, 760px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 1px 1px, var(--stroke) 1px, transparent 0) 0 0 / 22px 22px;
+  cursor: grab;
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke);
+}
+.zoompan:active {
+  cursor: grabbing;
+}
+.zoompan-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.zoompan-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--glass-surface-strong, var(--panel-solid));
+  border: 1px solid var(--stroke-strong);
+  box-shadow: var(--shadow-md);
+}
+.zoompan-controls button {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.zoompan-controls button:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
