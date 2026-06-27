@@ -392,9 +392,14 @@ function FolderPanel({ folder, projectId, onProjectChange, onDelete }: FolderPan
 }
 
 export function Characters(): React.JSX.Element {
-  const { current, applyProject, openTab, characterFolderId, characterFolderNonce } = useStore()
+  const { current, applyProject, openTab, characterFolderId, characterFolderNonce, genealogyNonce } =
+    useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
   const [section, setSection] = React.useState<'characters' | 'genealogy'>('characters')
+  // переход к родословной из дерева слева — переключаемся в раздел «Родословные»
+  React.useEffect(() => {
+    if (genealogyNonce > 0) setSection('genealogy')
+  }, [genealogyNonce])
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
   const [folderId, setFolderId] = React.useState<string | null>(() => readCharacterFolder(current?.id))

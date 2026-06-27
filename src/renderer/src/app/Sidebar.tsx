@@ -24,7 +24,8 @@ import {
   ArrowUp,
   ArrowDown,
   UserRound,
-  UserPlus
+  UserPlus,
+  Trees
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -51,7 +52,8 @@ export function Sidebar(): React.JSX.Element {
     openTab,
     activeTabId,
     goToLibraryFolder,
-    goToCharacterFolder
+    goToCharacterFolder,
+    goToGenealogy
   } = useStore()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const [search, setSearch] = React.useState('')
@@ -786,6 +788,57 @@ export function Sidebar(): React.JSX.Element {
   const openCharacterPage = (c: (typeof current.characters)[number]): void =>
     openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
 
+  // ----- Родословные (в дереве персонажей, внутри папок) -----
+  const genealogiesIn = (folderId: string | null): typeof current.genealogies =>
+    (current.genealogies ?? []).filter((g) => (g.folderId ?? null) === folderId)
+  const addGenealogyToFolder = async (folderId: string | null): Promise<void> => {
+    const title = await promptText({ title: 'Новая родословная', placeholder: 'Например: род Морейн' })
+    if (!title) return
+    const p = await window.api.genealogies.add({ projectId: current.id, title, folderId })
+    applyProject(p)
+    const created = p?.genealogies[p.genealogies.length - 1]
+    if (created) goToGenealogy(created.id)
+  }
+  const renderGenealogyRows = (folderId: string | null, depth: number): React.JSX.Element[] =>
+    genealogiesIn(folderId).map((g) => (
+      <div
+        key={g.id}
+        className="tree-row tree-chapter"
+        style={{ paddingLeft: 8 + depth * 14 }}
+        onClick={() => goToGenealogy(g.id)}
+        onContextMenu={(event) =>
+          openContextMenu(event, [
+            {
+              label: 'Переименовать',
+              icon: <Pencil size={15} />,
+              onClick: async () => {
+                const title = await promptText({ title: 'Переименовать родословную', initial: g.title })
+                if (title && title !== g.title)
+                  applyProject(
+                    await window.api.genealogies.rename({ projectId: current.id, genealogyId: g.id, title })
+                  )
+              }
+            },
+            {
+              label: 'Удалить',
+              icon: <Trash2 size={15} />,
+              danger: true,
+              onClick: async () => {
+                if (!(await confirmDialog({ title: `Удалить родословную «${g.title}»?`, danger: true }))) return
+                applyProject(await window.api.genealogies.delete({ projectId: current.id, genealogyId: g.id }))
+              }
+            }
+          ])
+        }
+      >
+        <span style={{ width: 15 }} />
+        <Trees size={14} style={{ color: '#5ec8a0' }} />
+        <span className="truncate" style={{ flex: 1 }}>
+          {g.title}
+        </span>
+      </div>
+    ))
+
   const renameCharacter = async (c: (typeof current.characters)[number]): Promise<void> => {
     if (!current) return
     const name = await promptText({ title: 'Переименовать персонажа', initial: c.name })
@@ -933,6 +986,11 @@ export function Sidebar(): React.JSX.Element {
                 onClick: () => addCharacterToFolder(f.id)
               },
               {
+                label: 'Добавить родословную',
+                icon: <Trees size={15} />,
+                onClick: () => addGenealogyToFolder(f.id)
+              },
+              {
                 label: 'Выше',
                 icon: <ArrowUp size={15} />,
                 disabled: childCharacterFolders(f.parentId ?? null)[0]?.id === f.id,
@@ -987,6 +1045,7 @@ export function Sidebar(): React.JSX.Element {
           <div className="tree-children">
             {renderCharacterFolderGroup(f.id, depth + 1)}
             {renderCharacterGroup(f.id, depth + 1)}
+            {renderGenealogyRows(f.id, depth + 1)}
           </div>
         )}
       </div>
@@ -1235,6 +1294,7 @@ export function Sidebar(): React.JSX.Element {
                   <DragDropContext onDragEnd={reorderSidebarItems}>
                     {renderCharacterFolderGroup(null, 0)}
                     {renderCharacterGroup(null, 0)}
+                    {renderGenealogyRows(null, 0)}
                     {current.characters.length === 0 && (
                       <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
                         Пока нет персонажей.

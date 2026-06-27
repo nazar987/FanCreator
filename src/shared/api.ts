@@ -192,7 +192,7 @@ export interface FanCreatorApi {
     }): Promise<Project | null>
   }
   genealogies: {
-    add(input: { projectId: string; title: string }): Promise<Project | null>
+    add(input: { projectId: string; title: string; folderId?: string | null }): Promise<Project | null>
     rename(input: { projectId: string; genealogyId: string; title: string }): Promise<Project | null>
     delete(input: { projectId: string; genealogyId: string }): Promise<Project | null>
   }

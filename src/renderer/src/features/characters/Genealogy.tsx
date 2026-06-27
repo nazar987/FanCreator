@@ -134,9 +134,14 @@ function GenealogyTree({
 
 /** Менеджер родословных внутри раздела «Персонажи». */
 export function Genealogy(): React.JSX.Element {
-  const { current, applyProject, openTab } = useStore()
+  const { current, applyProject, openTab, genealogyTargetId, genealogyNonce } = useStore()
   const project = current
   const [activeId, setActiveId] = React.useState<string | null>(null)
+
+  // открытие конкретной родословной из дерева слева
+  React.useEffect(() => {
+    if (genealogyNonce > 0 && genealogyTargetId) setActiveId(genealogyTargetId)
+  }, [genealogyNonce, genealogyTargetId])
 
   const list = React.useMemo(
     () => [...(project?.genealogies ?? [])].sort((a, b) => a.order - b.order),

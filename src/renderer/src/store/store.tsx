@@ -49,6 +49,9 @@ interface StoreValue {
   characterFolderId: string | null
   characterFolderNonce: number
   goToCharacterFolder: (folderId: string | null) => void
+  genealogyTargetId: string | null
+  genealogyNonce: number
+  goToGenealogy: (genealogyId: string) => void
 }
 
 const Ctx = React.createContext<StoreValue | null>(null)
@@ -94,6 +97,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const [libraryFolderNonce, setLibraryFolderNonce] = React.useState(0)
   const [characterFolderId, setCharacterFolderId] = React.useState<string | null>(null)
   const [characterFolderNonce, setCharacterFolderNonce] = React.useState(0)
+  const [genealogyTargetId, setGenealogyTargetId] = React.useState<string | null>(null)
+  const [genealogyNonce, setGenealogyNonce] = React.useState(0)
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -308,6 +313,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     setActiveTabId('characters')
   }, [current])
 
+  // открыть конкретную родословную: открываем вкладку «Персонажи» и сигналим
+  // менеджеру родословных (через nonce) переключиться на раздел и выбрать её
+  const goToGenealogy = React.useCallback((genealogyId: string) => {
+    setGenealogyTargetId(genealogyId)
+    setGenealogyNonce((nonce) => nonce + 1)
+    setTabs((openTabs) =>
+      openTabs.some((tab) => tab.id === 'characters')
+        ? openTabs
+        : [...openTabs, { id: 'characters', kind: 'characters', title: 'Персонажи' }]
+    )
+    setActiveTabId('characters')
+  }, [])
+
   const reorderTabs = React.useCallback((from: number, to: number) => {
     setTabs((currentTabs) => {
       const moving = currentTabs[from]
@@ -341,7 +359,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     goToLibraryFolder,
     characterFolderId,
     characterFolderNonce,
-    goToCharacterFolder
+    goToCharacterFolder,
+    genealogyTargetId,
+    genealogyNonce,
+    goToGenealogy
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

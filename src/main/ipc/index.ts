@@ -826,9 +826,15 @@ export function registerIpc(): void {
   )
 
   // ---------- Genealogies (родословные, в разделе «Персонажи») ----------
-  ipcMain.handle('genealogies:add', (_e, { projectId, title }) =>
+  ipcMain.handle('genealogies:add', (_e, { projectId, title, folderId }) =>
     mutate(projectId, (p) => {
-      const g: Genealogy = { id: uid(), order: p.genealogies.length, title, nodes: [] }
+      const g: Genealogy = {
+        id: uid(),
+        order: p.genealogies.length,
+        title,
+        folderId: folderId ?? null,
+        nodes: []
+      }
       p.genealogies.push(g)
     })
   )

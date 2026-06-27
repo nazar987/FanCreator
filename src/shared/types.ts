@@ -56,11 +56,13 @@ export interface GenealogyNode {
   order: number
 }
 
-/** Родословная (дерево) — живёт в разделе «Персонажи». */
+/** Родословная (дерево) — живёт в разделе «Персонажи», опц. внутри папки. */
 export interface Genealogy {
   id: string
   order: number
   title: string
+  /** Папка персонажей, к которой привязана родословная (null — без папки). */
+  folderId?: string | null
   nodes: GenealogyNode[]
 }
 

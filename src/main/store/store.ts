@@ -89,6 +89,7 @@ function normalizeProject(project: Project): Project {
   project.genealogies ??= []
   for (const [index, g] of project.genealogies.entries()) {
     g.order ??= index
+    g.folderId ??= null
     g.nodes ??= []
     for (const [i, n] of g.nodes.entries()) n.order ??= i
   }
@@ -348,6 +349,7 @@ function normalizeLegacyProject(legacy: any): Project {
       id: g.id,
       order: g.order ?? gi,
       title: g.title ?? 'Родословная',
+      folderId: g.folderId ?? null,
       nodes: (g.nodes ?? []).map((n: any, ni: number) => ({
         id: n.id,
         parentId: n.parentId ?? null,
