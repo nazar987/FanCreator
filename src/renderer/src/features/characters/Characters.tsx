@@ -8,7 +8,8 @@ import {
   FolderPlus,
   Plus,
   Trash2,
-  UserRound
+  UserRound,
+  Trees
 } from 'lucide-react'
 import type { Character, CharacterField, CharacterFolder, CharacterTemplate, Project } from '@shared/types'
 import { useStore } from '../../store/store'
@@ -20,6 +21,7 @@ import { AutoTextarea } from '../../shared/ui/AutoTextarea'
 import { ImageStrip } from '../../shared/ui/ImageStrip'
 import { plural } from '../../shared/plural'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
+import { Genealogy } from './Genealogy'
 
 const characterFolderMemoryKey = (projectId: string): string => `fancreator.characters.folder.${projectId}`
 
@@ -392,6 +394,7 @@ function FolderPanel({ folder, projectId, onProjectChange, onDelete }: FolderPan
 export function Characters(): React.JSX.Element {
   const { current, applyProject, openTab, characterFolderId, characterFolderNonce } = useStore()
   const [templatesOpen, setTemplatesOpen] = React.useState(false)
+  const [section, setSection] = React.useState<'characters' | 'genealogy'>('characters')
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [groupTemplateId, setGroupTemplateId] = React.useState('')
   const [folderId, setFolderId] = React.useState<string | null>(() => readCharacterFolder(current?.id))
@@ -676,18 +679,40 @@ export function Characters(): React.JSX.Element {
             </div>
           </div>
           <div className="row">
-            <Button variant="soft" onClick={() => setTemplatesOpen(true)}>
-              <ClipboardList size={17} /> Шаблоны
-            </Button>
-            <Button variant="soft" onClick={addFolder}>
-              <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
-            </Button>
-            <Button variant="primary" onClick={addCharacter}>
-              <Plus size={17} /> Добавить персонажа
-            </Button>
+            <div className="characters-section-switch">
+              <button
+                className={section === 'characters' ? 'is-active' : ''}
+                onClick={() => setSection('characters')}
+              >
+                <UserRound size={15} /> Персонажи
+              </button>
+              <button
+                className={section === 'genealogy' ? 'is-active' : ''}
+                onClick={() => setSection('genealogy')}
+              >
+                <Trees size={15} /> Родословные
+              </button>
+            </div>
+            {section === 'characters' && (
+              <>
+                <Button variant="soft" onClick={() => setTemplatesOpen(true)}>
+                  <ClipboardList size={17} /> Шаблоны
+                </Button>
+                <Button variant="soft" onClick={addFolder}>
+                  <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
+                </Button>
+                <Button variant="primary" onClick={addCharacter}>
+                  <Plus size={17} /> Добавить персонажа
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
+        {section === 'genealogy' && <Genealogy />}
+
+        {section === 'characters' && (
+          <>
         <div className="library-breadcrumbs characters-breadcrumbs" aria-label="Путь к папке">
           <button className={!selectedFolder ? 'is-current' : ''} onClick={() => setFolderId(null)}>
             Все персонажи
@@ -847,6 +872,8 @@ export function Characters(): React.JSX.Element {
             </div>
           )}
         </section>
+          </>
+        )}
       </div>
       {templatesOpen && (
         <TemplateManager
