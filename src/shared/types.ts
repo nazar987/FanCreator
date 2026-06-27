@@ -47,6 +47,23 @@ export interface HierarchyNode {
   title: string
 }
 
+/** Узел родословной: привязан к персонажу проекта или свободный текст. */
+export interface GenealogyNode {
+  id: string
+  parentId: string | null
+  characterId?: string | null
+  title?: string
+  order: number
+}
+
+/** Родословная (дерево) — живёт в разделе «Персонажи». */
+export interface Genealogy {
+  id: string
+  order: number
+  title: string
+  nodes: GenealogyNode[]
+}
+
 export interface Hierarchy {
   id: string
   title: string
@@ -216,6 +233,7 @@ export interface Project {
   templates: CharacterTemplate[]
   timelines: Timeline[]
   hierarchies: Hierarchy[]
+  genealogies: Genealogy[]
 }
 
 /** Лёгкое представление проекта для списка (без тяжёлого контента глав). */

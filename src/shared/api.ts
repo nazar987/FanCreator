@@ -12,7 +12,8 @@ import type {
   BoardSticker,
   BoardArrow,
   TimelineEvent,
-  Hierarchy
+  Hierarchy,
+  GenealogyNode
 } from './types'
 
 /**
@@ -189,6 +190,27 @@ export interface FanCreatorApi {
       parentId: string | null
       order: string[]
     }): Promise<Project | null>
+  }
+  genealogies: {
+    add(input: { projectId: string; title: string }): Promise<Project | null>
+    rename(input: { projectId: string; genealogyId: string; title: string }): Promise<Project | null>
+    delete(input: { projectId: string; genealogyId: string }): Promise<Project | null>
+  }
+  genealogyNodes: {
+    add(input: {
+      projectId: string
+      genealogyId: string
+      parentId?: string | null
+      characterId?: string | null
+      title?: string
+    }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      genealogyId: string
+      nodeId: string
+      patch: Partial<Pick<GenealogyNode, 'characterId' | 'title' | 'parentId' | 'order'>>
+    }): Promise<Project | null>
+    delete(input: { projectId: string; genealogyId: string; nodeId: string }): Promise<Project | null>
   }
   timelineEvents: {
     add(input: { projectId: string; timelineId: string; title: string; parentId?: string | null }): Promise<Project | null>

@@ -90,6 +90,16 @@ const api: FanCreatorApi = {
     delete: (input) => invoke('hierarchyNodes:delete', input),
     reorder: (input) => invoke('hierarchyNodes:reorder', input)
   },
+  genealogies: {
+    add: (input) => invoke('genealogies:add', input),
+    rename: (input) => invoke('genealogies:rename', input),
+    delete: (input) => invoke('genealogies:delete', input)
+  },
+  genealogyNodes: {
+    add: (input) => invoke('genealogyNodes:add', input),
+    update: (input) => invoke('genealogyNodes:update', input),
+    delete: (input) => invoke('genealogyNodes:delete', input)
+  },
   timelineEvents: {
     add: (input) => invoke('timelineEvents:add', input),
     update: (input) => invoke('timelineEvents:update', input),

@@ -15,7 +15,8 @@ import type {
   CharacterTemplate,
   Timeline,
   TimelineEvent,
-  Hierarchy
+  Hierarchy,
+  Genealogy
 } from '@shared/types'
 import {
   listProjects,
@@ -78,7 +79,8 @@ export function registerIpc(): void {
       boards: [],
       templates: [],
       timelines: [],
-      hierarchies: []
+      hierarchies: [],
+      genealogies: []
     }
     return writeProject(project)
   })
@@ -820,6 +822,63 @@ export function registerIpc(): void {
         ...reordered,
         ...hierarchy.nodes.filter((node) => node.parentId === parentKey && !inOrder.has(node.id))
       ]
+    })
+  )
+
+  // ---------- Genealogies (родословные, в разделе «Персонажи») ----------
+  ipcMain.handle('genealogies:add', (_e, { projectId, title }) =>
+    mutate(projectId, (p) => {
+      const g: Genealogy = { id: uid(), order: p.genealogies.length, title, nodes: [] }
+      p.genealogies.push(g)
+    })
+  )
+  ipcMain.handle('genealogies:rename', (_e, { projectId, genealogyId, title }) =>
+    mutate(projectId, (p) => {
+      const g = p.genealogies.find((x) => x.id === genealogyId)
+      if (g) g.title = title
+    })
+  )
+  ipcMain.handle('genealogies:delete', (_e, { projectId, genealogyId }) =>
+    mutate(projectId, (p) => {
+      p.genealogies = p.genealogies.filter((x) => x.id !== genealogyId)
+    })
+  )
+  ipcMain.handle('genealogyNodes:add', (_e, { projectId, genealogyId, parentId, characterId, title }) =>
+    mutate(projectId, (p) => {
+      const g = p.genealogies.find((x) => x.id === genealogyId)
+      if (!g) return
+      const siblings = g.nodes.filter((n) => (n.parentId ?? null) === (parentId ?? null))
+      g.nodes.push({
+        id: uid(),
+        parentId: parentId ?? null,
+        characterId: characterId ?? null,
+        title: title ?? '',
+        order: siblings.length
+      })
+    })
+  )
+  ipcMain.handle('genealogyNodes:update', (_e, { projectId, genealogyId, nodeId, patch }) =>
+    mutate(projectId, (p) => {
+      const node = p.genealogies.find((x) => x.id === genealogyId)?.nodes.find((n) => n.id === nodeId)
+      if (node) Object.assign(node, patch)
+    })
+  )
+  ipcMain.handle('genealogyNodes:delete', (_e, { projectId, genealogyId, nodeId }) =>
+    mutate(projectId, (p) => {
+      const g = p.genealogies.find((x) => x.id === genealogyId)
+      if (!g) return
+      const remove = new Set<string>([nodeId])
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const n of g.nodes) {
+          if (n.parentId && remove.has(n.parentId) && !remove.has(n.id)) {
+            remove.add(n.id)
+            changed = true
+          }
+        }
+      }
+      g.nodes = g.nodes.filter((n) => !remove.has(n.id))
     })
   )
 

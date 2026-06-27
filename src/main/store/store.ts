@@ -86,6 +86,12 @@ function normalizeProject(project: Project): Project {
   project.timelines ??= []
   for (const [index, timeline] of project.timelines.entries()) timeline.order ??= index
   project.hierarchies ??= []
+  project.genealogies ??= []
+  for (const [index, g] of project.genealogies.entries()) {
+    g.order ??= index
+    g.nodes ??= []
+    for (const [i, n] of g.nodes.entries()) n.order ??= i
+  }
   normalizeBoardStickers(project)
   return project
 }
@@ -336,6 +342,18 @@ function normalizeLegacyProject(legacy: any): Project {
         id: node.id,
         parentId: node.parentId ?? null,
         title: node.title ?? 'Узел'
+      }))
+    })),
+    genealogies: (legacy.genealogies ?? []).map((g: any, gi: number) => ({
+      id: g.id,
+      order: g.order ?? gi,
+      title: g.title ?? 'Родословная',
+      nodes: (g.nodes ?? []).map((n: any, ni: number) => ({
+        id: n.id,
+        parentId: n.parentId ?? null,
+        characterId: n.characterId ?? null,
+        title: n.title ?? '',
+        order: n.order ?? ni
       }))
     }))
   }
