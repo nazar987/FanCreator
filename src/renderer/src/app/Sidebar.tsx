@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import {
   ChevronRight,
   Plus,
@@ -62,6 +63,10 @@ export function Sidebar(): React.JSX.Element {
   const [trashOpen, setTrashOpen] = React.useState(false)
 
   if (!current) return <aside className="sidebar" />
+
+  const dragPortal = typeof document === 'undefined' ? null : document.body
+  const renderDragPortal = (node: React.JSX.Element, isDragging: boolean): React.ReactNode =>
+    isDragging && dragPortal ? createPortal(node, dragPortal) : node
 
   const toggle = (id: string): void => setExpanded((e) => ({ ...e, [id]: !e[id] }))
 
@@ -245,6 +250,7 @@ export function Sidebar(): React.JSX.Element {
   const chapterDropId = (storyId: string, parentId: string | null): string =>
     `chapters:${storyId}:${parentId ?? 'root'}`
 
+  const storyDropId = (folderId: string | null): string => `stories:${folderId ?? 'root'}`
   const folderDropId = (parentId: string | null): string => `folders:${parentId ?? 'root'}`
   const characterFolderDropId = (parentId: string | null): string => `character-folders:${parentId ?? 'root'}`
   const characterDropId = (folderId: string | null): string => `characters:${folderId ?? 'root'}`
@@ -269,6 +275,12 @@ export function Sidebar(): React.JSX.Element {
     return { storyId, parentId: parentId === 'root' ? null : parentId }
   }
 
+  const parseStoryDropId = (droppableId: string): { folderId: string | null } | null => {
+    if (!droppableId.startsWith('stories:')) return null
+    const folderId = droppableId.slice('stories:'.length)
+    return { folderId: folderId === 'root' ? null : folderId }
+  }
+
   const parseCharacterDropId = (droppableId: string): { folderId: string | null } | null => {
     if (!droppableId.startsWith('characters:')) return null
     const folderId = droppableId.slice('characters:'.length)
@@ -280,11 +292,18 @@ export function Sidebar(): React.JSX.Element {
     if (!destination || source.droppableId !== destination.droppableId) return
     if (source.index === destination.index) return
 
-    if (source.droppableId === 'stories') {
-      const rootOrder = folderStories(null).map((story) => story.id)
-      const [moved] = rootOrder.splice(source.index, 1)
-      rootOrder.splice(destination.index, 0, moved)
-      applyProject(await window.api.stories.reorder({ projectId: current.id, folderId: null, order: rootOrder }))
+    const storyDrop = parseStoryDropId(source.droppableId)
+    if (storyDrop) {
+      const order = folderStories(storyDrop.folderId).map((story) => story.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      applyProject(
+        await window.api.stories.reorder({
+          projectId: current.id,
+          folderId: storyDrop.folderId,
+          order
+        })
+      )
       return
     }
 
@@ -577,10 +596,11 @@ export function Sidebar(): React.JSX.Element {
     )
   }
 
-  // Тело истории (строка + главы) — переиспользуется в корне (draggable) и внутри папок (статично).
+  // Тело истории (строка + главы) переиспользуется в корне и внутри папок.
   const renderStoryBody = (
     s: Story,
-    storyDragHandle: DraggableProvidedDragHandleProps | null | undefined
+    storyDragHandle: DraggableProvidedDragHandleProps | null | undefined,
+    isDragging = false
   ): React.JSX.Element => (
     <>
       <div
@@ -614,7 +634,7 @@ export function Sidebar(): React.JSX.Element {
           <Hashtags tags={[...s.tags, ...s.genres]} />
         </div>
       )}
-      {expanded[s.id] && (
+      {expanded[s.id] && !isDragging && (
         <div className="tree-children">
           <Droppable droppableId={chapterDropId(s.id, null)} type="chapter">
             {(provided) => (
@@ -670,6 +690,32 @@ export function Sidebar(): React.JSX.Element {
     </>
   )
 
+  const renderStoryGroup = (folderId: string | null): React.JSX.Element => (
+    <Droppable droppableId={storyDropId(folderId)} type="story">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps}>
+          {folderStories(folderId).map((story, index) => (
+            <Draggable draggableId={`story:${story.id}`} index={index} key={story.id}>
+              {(storyDrag, storySnapshot) => {
+                const node = (
+                  <div
+                    ref={storyDrag.innerRef}
+                    {...storyDrag.draggableProps}
+                    className={`tree-node ${storySnapshot.isDragging ? 'tree-node--dragging' : ''}`}
+                  >
+                    {renderStoryBody(story, storyDrag.dragHandleProps, storySnapshot.isDragging)}
+                  </div>
+                )
+                return renderDragPortal(node, storySnapshot.isDragging)
+              }}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  )
+
   const renderFolder = (
     f: Folder,
     depth: number,
@@ -720,11 +766,7 @@ export function Sidebar(): React.JSX.Element {
         {isOpen && !isDragging && (
           <div className="tree-children">
             {renderFolderGroup(f.id, depth + 1)}
-            {stories.map((s) => (
-              <div className="tree-node" key={s.id}>
-                {renderStoryBody(s, null)}
-              </div>
-            ))}
+            {renderStoryGroup(f.id)}
             {subfolders.length === 0 && stories.length === 0 && (
               <div className="dim" style={{ padding: '4px 10px', fontSize: 12 }}>
                 Папка пуста
@@ -742,15 +784,18 @@ export function Sidebar(): React.JSX.Element {
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childFolders(parentId).map((folder, index) => (
             <Draggable draggableId={`folder:${folder.id}`} index={index} key={folder.id}>
-              {(dragProvided, snapshot) => (
-                <div
-                  ref={dragProvided.innerRef}
-                  {...dragProvided.draggableProps}
-                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
-                >
-                  {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
-                </div>
-              )}
+              {(dragProvided, snapshot) => {
+                const node = (
+                  <div
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                  >
+                    {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                  </div>
+                )
+                return renderDragPortal(node, snapshot.isDragging)
+              }}
             </Draggable>
           ))}
           {provided.placeholder}
@@ -1241,26 +1286,7 @@ export function Sidebar(): React.JSX.Element {
 
             <DragDropContext onDragEnd={reorderSidebarItems}>
               {renderFolderGroup(null, 0)}
-              <Droppable droppableId="stories" type="story">
-                {(storyDrop) => (
-                  <div ref={storyDrop.innerRef} {...storyDrop.droppableProps}>
-                    {folderStories(null).map((s, storyIndex) => (
-                      <Draggable draggableId={s.id} index={storyIndex} key={s.id}>
-                        {(storyDrag, storySnapshot) => (
-                          <div
-                            ref={storyDrag.innerRef}
-                            {...storyDrag.draggableProps}
-                            className={`tree-node ${storySnapshot.isDragging ? 'tree-node--dragging' : ''}`}
-                          >
-                            {renderStoryBody(s, storyDrag.dragHandleProps)}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {storyDrop.placeholder}
-                  </div>
-                )}
-              </Droppable>
+              {renderStoryGroup(null)}
             </DragDropContext>
 
             <div className="tree-section-title" style={{ marginTop: 8 }}>
