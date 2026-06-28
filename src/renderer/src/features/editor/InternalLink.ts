@@ -65,9 +65,11 @@ export const InternalLink = Node.create<InternalLinkOptions>({
       dom.setAttribute('data-internal-link', '')
       dom.contentEditable = 'false'
       dom.textContent = node.attrs.plain ? `${node.attrs.label}` : `📄 ${node.attrs.label}`
-      dom.title = 'Открыть подстраницу'
+      dom.title = 'Ctrl+клик — открыть главу'
       dom.addEventListener('mousedown', (event) => {
         if (event.button !== 0) return // ПКМ — отдаём контекстному меню (убрать ссылку)
+        // открываем главу только по Ctrl/⌘+клик (как в Word); обычный клик — выделить
+        if (!(event.ctrlKey || event.metaKey)) return
         event.preventDefault()
         if (node.attrs.chapterId) this.options.onOpen(node.attrs.chapterId)
       })

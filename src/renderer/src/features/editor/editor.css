@@ -266,6 +266,8 @@
   text-decoration: underline;
   /* без этого подчёркивание «обрывается» вокруг букв с нижним выносом (д, у, р) */
   text-decoration-skip-ink: none;
+  /* как в Word: обычный курсор для правки; переход — по Ctrl+клик */
+  cursor: text;
 }
 /* ссылка «как обычный текст»: без цвета и подчёркивания (#8) */
 .fc-prose a.fc-link-plain {
@@ -602,7 +604,7 @@
   color: #1f6feb;
   text-decoration: none;
   border-bottom: 1px dotted #1f6feb;
-  cursor: pointer;
+  cursor: text; /* правка по клику; переход — Ctrl+клик */
 }
 .fc-wikilink:hover {
   background: rgba(31, 111, 235, 0.1);

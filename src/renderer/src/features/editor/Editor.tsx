@@ -263,11 +263,29 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           return false
         },
         click: (_view, event) => {
-          const el = (event.target as HTMLElement).closest('.fc-wikilink') as HTMLElement | null
-          if (!el) return false
-          event.preventDefault()
-          openEntity(el.dataset.kind ?? 'chapter', el.dataset.refId ?? '')
-          return true
+          const ctrl = event.ctrlKey || event.metaKey
+          const target = event.target as HTMLElement
+          // вики-ссылка: открываем источник ТОЛЬКО по Ctrl+клик (как в Word);
+          // обычный клик ставит курсор (можно редактировать текст ссылки)
+          const wiki = target.closest('.fc-wikilink') as HTMLElement | null
+          if (wiki) {
+            if (!ctrl) return false
+            event.preventDefault()
+            openEntity(wiki.dataset.kind ?? 'chapter', wiki.dataset.refId ?? '')
+            return true
+          }
+          // обычная гиперссылка: по обычному клику НЕ переходим (и не уводим окно);
+          // открываем во внешнем браузере только по Ctrl+клик
+          const anchor = target.closest('a[href]') as HTMLAnchorElement | null
+          if (anchor) {
+            event.preventDefault()
+            if (ctrl) {
+              const href = anchor.getAttribute('href') ?? ''
+              if (/^https?:\/\//i.test(href)) void window.api.shell.openExternal(href)
+            }
+            return false
+          }
+          return false
         }
       },
       // вставка картинки перетаскиванием (п.13) — без всплывающих окон
