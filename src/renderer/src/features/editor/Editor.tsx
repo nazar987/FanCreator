@@ -359,10 +359,16 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       const items: { level: number; text: string; pos: number }[] = []
       const ffCount = new Map<string, number>()
       const fsCount = new Map<string, number>()
+      const lhCount = new Map<string, number>()
       let scanned = 0
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'heading') {
           items.push({ level: node.attrs.level as number, text: node.textContent, pos })
+        }
+        // межстрочный считаем по абзацам (это атрибут блока)
+        if (node.type.name === 'paragraph' && node.attrs.lineHeight) {
+          const lh = String(node.attrs.lineHeight)
+          lhCount.set(lh, (lhCount.get(lh) ?? 0) + 1)
         }
         // считаем шрифт только в обычных абзацах (заголовки крупнее по дизайну)
         if (node.isText && scanned < 400 && node.marks.length) {
@@ -378,13 +384,16 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       setToc(items)
       const top = (m: Map<string, number>): string | undefined =>
         [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
-      // меняем базовый шрифт листа ТОЛЬКО если он реально изменился — иначе
-      // лишняя реверстка на каждое редактирование «выкидывала» прокрутку вниз.
+      // делаем преобладающий шрифт/размер/межстрочный БАЗОВЫМИ для листа, чтобы
+      // новый текст (в т.ч. список под картинкой) наследовал их, а не дефолт.
+      // Ставим ТОЛЬКО при реальном изменении — иначе лишняя реверстка дёргала прокрутку.
       const dom = editor.view.dom as HTMLElement
       const ff = top(ffCount) ?? ''
       const fs = top(fsCount) ?? ''
+      const lh = top(lhCount) ?? ''
       if (dom.style.fontFamily !== ff) dom.style.fontFamily = ff
       if (dom.style.fontSize !== fs) dom.style.fontSize = fs
+      if (dom.style.lineHeight !== lh) dom.style.lineHeight = lh
       recomputeZoomHeight() // высота «стола» могла измениться вместе с числом страниц
     }, 60)
     // eslint-disable-next-line react-hooks/exhaustive-deps
