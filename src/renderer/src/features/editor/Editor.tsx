@@ -867,22 +867,31 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     }
     if (olAttrs) {
       e.preventDefault()
-      const cur = (olAttrs.listStart as number) || 1
+      const attrs = olAttrs
+      const setOl = (patch: Record<string, unknown>): void => {
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => {
+            tr.setNodeMarkup(olPos, undefined, { ...attrs, ...patch })
+            return true
+          })
+          .run()
+      }
+      const cur = (attrs.listStartManual as number) || 1
       openContextMenu(e, [
         {
-          label: 'Нумеровать с числа…',
+          // сквозная связь: список продолжает нумерацию предыдущего и пересчитывается сам
+          label: attrs.listContinue ? '✓ Продолжать предыдущий список' : 'Продолжить нумерацию предыдущего',
+          onClick: () => setOl({ listContinue: !attrs.listContinue })
+        },
+        {
+          label: 'Начать заново с числа…',
           onClick: async () => {
             const v = await promptText({ title: 'Начать нумерацию с числа', initial: String(cur) })
             const n = Number(v)
             if (!Number.isFinite(n) || n < 1) return
-            editor
-              .chain()
-              .focus()
-              .command(({ tr }) => {
-                tr.setNodeMarkup(olPos, undefined, { ...olAttrs, listStart: n > 1 ? n : null })
-                return true
-              })
-              .run()
+            setOl({ listContinue: false, listStartManual: n > 1 ? n : null })
           }
         }
       ])
