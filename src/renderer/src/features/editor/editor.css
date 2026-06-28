@@ -618,6 +618,15 @@
 .fc-wikilink:hover {
   background: rgba(31, 111, 235, 0.1);
 }
+/* «битая» вики-ссылка (цель удалена) — гасим вид до обычного текста.
+   Декорация fc-wikilink--dead вешается плагином-гардом на текст внутри ссылки. */
+.fc-prose a.fc-wikilink:has(.fc-wikilink--dead) {
+  color: inherit;
+  border-bottom: none;
+}
+.fc-prose a.fc-wikilink:has(.fc-wikilink--dead):hover {
+  background: none;
+}
 .fc-wiki-preview {
   position: fixed;
   z-index: 1200;

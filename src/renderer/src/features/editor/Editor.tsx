@@ -2,6 +2,7 @@ import React from 'react'
 import { useEditor, EditorContent, type Content } from '@tiptap/react'
 import { useStore } from '../../store/store'
 import { buildExtensions } from './extensions'
+import { wikiLinkGuardKey } from './EditorExtras'
 import { Toolbar } from './Toolbar'
 import { FindReplace } from './FindReplace'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
@@ -100,6 +101,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     }
   }).current
 
+  // S-G: существует ли цель вики-ссылки сейчас (динамическое «гашение» битых
+  // ссылок: удалили историю/персонажа/главу — связь гаснет, текст остаётся)
+  const wikiTargetExists = React.useRef((kind: string, refId: string): boolean => {
+    const proj = currentRef.current
+    if (!proj || !refId) return false
+    if (kind === 'character') return proj.characters.some((c) => c.id === refId)
+    if (kind === 'timeline') return proj.timelines.some((t) => t.id === refId)
+    if (kind === 'story') return proj.stories.some((s) => s.id === refId && !s.deletedAt)
+    // chapter
+    for (const s of proj.stories) {
+      if (s.deletedAt) continue
+      const c = s.chapters.find((x) => x.id === refId)
+      if (c) return !c.deletedAt
+    }
+    return false
+  }).current
+
   // S-G: открыть любую сущность проекта по вики-ссылке
   const openEntity = React.useRef((kind: string, refId: string) => {
     const proj = currentRef.current
@@ -172,7 +190,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   )
 
   const editor = useEditor({
-    extensions: buildExtensions({ onOpenInternalLink: openChapterById }),
+    extensions: buildExtensions({ onOpenInternalLink: openChapterById, wikiTargetExists }),
     content: initialContent(chapter),
     // не фокусируемся в конец главы — иначе при открытии прокидывает в самый низ
     // и курсор встаёт на новую строку (фидбэк S-F2). Позицию восстанавливаем сами.
@@ -249,10 +267,14 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         mouseover: (_view, event) => {
           const el = (event.target as HTMLElement).closest('.fc-wikilink') as HTMLElement | null
           if (!el) return false
+          const kind = el.dataset.kind ?? 'chapter'
+          const refId = el.dataset.refId ?? ''
+          // битая ссылка (цель удалена) — карточку не показываем
+          if (!wikiTargetExists(kind, refId)) return false
           const r = el.getBoundingClientRect()
           setWikiPreview({
-            kind: el.dataset.kind ?? 'chapter',
-            refId: el.dataset.refId ?? '',
+            kind,
+            refId,
             x: r.left,
             y: r.bottom + 6
           })
@@ -491,6 +513,14 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   React.useEffect(() => {
     if (editor) schedulePageCount()
   }, [editor, schedulePageCount])
+
+  // S-G: при изменении проекта (удалили историю/персонажа/главу) форсируем
+  // пересчёт «битых» вики-ссылок — документ при этом не меняется, поэтому шлём
+  // мету плагину-гарду.
+  React.useEffect(() => {
+    if (!editor) return
+    editor.view.dispatch(editor.state.tr.setMeta(wikiLinkGuardKey, true))
+  }, [editor, current])
 
   // пересчёт высоты «стола» при смене зума/главы и после реверстки пагинации
   // (несколько отложенных попыток), без постоянного observer.

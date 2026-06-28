@@ -1,5 +1,7 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { Node as PMNode } from '@tiptap/pm/model'
 
 /**
  * HeadingWeight — атрибут font-weight на заголовке, чтобы можно было СНЯТЬ жирный
@@ -105,6 +107,52 @@ export const OrderedListStart = Extension.create({
     ]
   }
 })
+
+/**
+ * wikiLinkGuard — динамически «гасит» вид вики-ссылки, если её цель удалена
+ * (история/персонаж/глава/таймлайн больше не существует). Сам текст и марка
+ * остаются (чтобы при возврете цели связь ожила), но добавляется декорация
+ * `fc-wikilink--dead`, по которой CSS убирает цвет/подчёркивание — выглядит как
+ * обычный текст. Переход по такой ссылке и так ни к чему не ведёт.
+ *
+ * `exists` читает актуальный проект (через ref в Editor), а пересчёт декораций
+ * форсируется метой `wikiLinkGuardKey` при смене проекта (удалении сущности).
+ */
+export const wikiLinkGuardKey = new PluginKey('wikiLinkGuard')
+
+export function wikiLinkGuard(exists: (kind: string, refId: string) => boolean): Extension {
+  const build = (doc: PMNode): DecorationSet => {
+    const decos: Decoration[] = []
+    doc.descendants((node, pos) => {
+      if (!node.isText) return
+      const mark = node.marks.find((m) => m.type.name === 'wikiLink')
+      if (mark && !exists(mark.attrs.kind, mark.attrs.refId)) {
+        decos.push(Decoration.inline(pos, pos + node.nodeSize, { class: 'fc-wikilink--dead' }))
+      }
+    })
+    return DecorationSet.create(doc, decos)
+  }
+  return Extension.create({
+    name: 'wikiLinkGuard',
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          key: wikiLinkGuardKey,
+          state: {
+            init: (_config, state) => build(state.doc),
+            apply: (tr, old, _oldState, newState) =>
+              tr.docChanged || tr.getMeta(wikiLinkGuardKey) ? build(newState.doc) : old.map(tr.mapping, tr.doc)
+          },
+          props: {
+            decorations(state) {
+              return wikiLinkGuardKey.getState(state)
+            }
+          }
+        })
+      ]
+    }
+  })
+}
 
 /**
  * LinkPlain — атрибут «как обычный текст» на гиперссылке и вики-ссылке: убирает
