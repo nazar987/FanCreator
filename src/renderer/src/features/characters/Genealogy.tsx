@@ -234,7 +234,7 @@ export function Genealogy(): React.JSX.Element {
   }
 
   return (
-    <div className="genealogy">
+    <div className="genealogy genealogy--canvas">
       <div className="genealogy-bar">
         <div className="genealogy-tabs">
           {list.map((g) => (

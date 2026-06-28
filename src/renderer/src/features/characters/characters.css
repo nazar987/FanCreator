@@ -782,12 +782,28 @@
 .genealogy {
   margin-top: 16px;
 }
+.genealogy--canvas {
+  min-height: calc(100vh - 250px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
 .genealogy-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+}
+.genealogy--canvas .genealogy-bar {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--panel);
 }
 .genealogy-tabs {
   display: flex;
@@ -815,6 +831,13 @@
   gap: 12px;
   margin-bottom: 10px;
 }
+.genealogy--canvas .genealogy-toolbar {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--panel-2);
+}
 .genealogy-hint {
   font-size: 12.5px;
 }
@@ -822,8 +845,31 @@
   padding: 28px;
   text-align: center;
 }
+.genealogy--canvas .genealogy-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
 .genealogy-canvas {
   height: min(70vh, 720px);
+}
+.genealogy--canvas .genealogy-canvas {
+  flex: 1;
+  min-height: 560px;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background-image: radial-gradient(var(--stroke-strong) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.genealogy--canvas .genealogy-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 28%, transparent), transparent 26%);
 }
 
 /* узел родословной (поверх стилей .dendro-node) */
