@@ -375,45 +375,31 @@ export function Sidebar(): React.JSX.Element {
 
   const reorderSidebarItems = async (result: DropResult): Promise<void> => {
     const { source, destination } = result
-    if (!destination) return
+    // Каждая группа соседей — свой тип droppable, поэтому бросить можно только в
+    // СВОЮ группу: source и destination всегда совпадают (без всплытия к предку).
+    if (!destination || source.droppableId !== destination.droppableId) return
+    if (source.index === destination.index) return
 
-    // ---- Папки: устойчивая обработка (вложенные droppable одного типа «folder»
-    // мешали простому сравнению id). Поддержка и переупорядочивания, и переноса
-    // папки в другую папку. ----
-    const folderSrc = parseFolderDropId(source.droppableId)
-    const folderDst = parseFolderDropId(destination.droppableId)
-    if (folderSrc && folderDst && folderSrc.kind === folderDst.kind) {
-      const kind = folderSrc.kind
-      const id = result.draggableId.replace(/^(character-folder:|folder:)/, '')
-      const reorderApi =
-        kind === 'story' ? window.api.folders.reorder : window.api.characterFolders.reorder
-      const moveApi = kind === 'story' ? window.api.folders.move : window.api.characterFolders.move
-      const childrenOf = kind === 'story' ? childFolders : childCharacterFolders
-
-      if (folderSrc.parentId === folderDst.parentId) {
-        if (source.index === destination.index) return
-        const order = childrenOf(folderDst.parentId).map((f) => f.id)
-        order.splice(source.index, 1)
-        order.splice(destination.index, 0, id)
-        applyProject(await reorderApi({ projectId: current.id, parentId: folderDst.parentId, order }))
-      } else {
-        // перенос в другую папку (нельзя в себя/потомка — гард в IPC), потом позиция
-        const moved = await moveApi({ projectId: current.id, folderId: id, parentId: folderDst.parentId })
-        if (!moved) return
-        const all = kind === 'story' ? moved.folders : moved.characterFolders
-        const order = all
-          .filter((f) => (f.parentId ?? null) === folderDst.parentId)
-          .sort((a, b) => a.order - b.order)
-          .map((f) => f.id)
-          .filter((x) => x !== id)
-        order.splice(Math.min(destination.index, order.length), 0, id)
-        applyProject(await reorderApi({ projectId: current.id, parentId: folderDst.parentId, order }))
-      }
+    const folderDrop = parseFolderDropId(source.droppableId)
+    if (folderDrop) {
+      const siblings =
+        folderDrop.kind === 'story'
+          ? childFolders(folderDrop.parentId)
+          : childCharacterFolders(folderDrop.parentId)
+      const order = siblings.map((f) => f.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      applyProject(
+        folderDrop.kind === 'story'
+          ? await window.api.folders.reorder({ projectId: current.id, parentId: folderDrop.parentId, order })
+          : await window.api.characterFolders.reorder({
+              projectId: current.id,
+              parentId: folderDrop.parentId,
+              order
+            })
+      )
       return
     }
-
-    if (source.droppableId !== destination.droppableId) return
-    if (source.index === destination.index) return
 
     const storyDrop = parseStoryDropId(source.droppableId)
     if (storyDrop) {
@@ -681,7 +667,7 @@ export function Sidebar(): React.JSX.Element {
   const renderDraggableChapterGroup = (s: Story, parentId: string | null, depth: number): React.JSX.Element => {
     const chapters = childChapters(s, parentId)
     return (
-      <Droppable droppableId={chapterDropId(s.id, parentId)} type="chapter">
+      <Droppable droppableId={chapterDropId(s.id, parentId)} type={`chapter:${s.id}:${parentId ?? 'root'}`}>
         {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
             {chapters.map((c, index) => (
@@ -743,7 +729,7 @@ export function Sidebar(): React.JSX.Element {
       )}
       {expanded[s.id] && !isDragging && (
         <div className="tree-children">
-          <Droppable droppableId={chapterDropId(s.id, null)} type="chapter">
+          <Droppable droppableId={chapterDropId(s.id, null)} type={`chapter:${s.id}:root`}>
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {childChapters(s, null).map((c, index) => (
@@ -803,7 +789,7 @@ export function Sidebar(): React.JSX.Element {
   )
 
   const renderStoryGroup = (folderId: string | null): React.JSX.Element => (
-    <Droppable droppableId={storyDropId(folderId)} type="story">
+    <Droppable droppableId={storyDropId(folderId)} type={`story:${folderId ?? 'root'}`}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {folderStories(folderId).map((story, index) => (
@@ -891,7 +877,7 @@ export function Sidebar(): React.JSX.Element {
   }
 
   const renderFolderGroup = (parentId: string | null, depth: number): React.JSX.Element => (
-    <Droppable droppableId={folderDropId(parentId)} type="folder">
+    <Droppable droppableId={folderDropId(parentId)} type={`folder:${parentId ?? 'root'}`}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childFolders(parentId).map((folder, index) => (
@@ -1097,7 +1083,7 @@ export function Sidebar(): React.JSX.Element {
   )
 
   const renderCharacterGroup = (folderId: string | null, depth: number): React.JSX.Element => (
-    <Droppable droppableId={characterDropId(folderId)} type="character">
+    <Droppable droppableId={characterDropId(folderId)} type={`character:${folderId ?? 'root'}`}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {charsInFolder(folderId).map((character, index) => (
@@ -1213,7 +1199,7 @@ export function Sidebar(): React.JSX.Element {
   }
 
   const renderCharacterFolderGroup = (parentId: string | null, depth: number): React.JSX.Element => (
-    <Droppable droppableId={characterFolderDropId(parentId)} type="character-folder">
+    <Droppable droppableId={characterFolderDropId(parentId)} type={`character-folder:${parentId ?? 'root'}`}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childCharacterFolders(parentId).map((folder, index) => (
