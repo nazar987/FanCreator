@@ -68,6 +68,8 @@ interface CapturedFormat {
   lineHeight: string | null
   // тип блока-образца: обычный текст или заголовок уровня 1/2/3 (S-H1)
   block: { type: 'paragraph' } | { type: 'heading'; level: number }
+  // жирность заголовка-образца (атрибут fontWeight: null = жирный, 'normal' = нет)
+  headingWeight: string | null
 }
 
 export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
@@ -81,8 +83,11 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   const openChapterById = React.useRef((id: string) => {
     const proj = currentRef.current
     for (const s of proj?.stories ?? []) {
+      if (s.deletedAt) continue
       const c = s.chapters.find((c) => c.id === id)
       if (c) {
+        // не открываем удалённую (в корзине) главу по ссылке
+        if (c.deletedAt) return
         openTab({
           id: `chapter:${c.id}`,
           kind: 'chapter',
@@ -355,9 +360,13 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       setToc(items)
       const top = (m: Map<string, number>): string | undefined =>
         [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+      // меняем базовый шрифт листа ТОЛЬКО если он реально изменился — иначе
+      // лишняя реверстка на каждое редактирование «выкидывала» прокрутку вниз.
       const dom = editor.view.dom as HTMLElement
-      dom.style.fontFamily = top(ffCount) ?? ''
-      dom.style.fontSize = top(fsCount) ?? ''
+      const ff = top(ffCount) ?? ''
+      const fs = top(fsCount) ?? ''
+      if (dom.style.fontFamily !== ff) dom.style.fontFamily = ff
+      if (dom.style.fontSize !== fs) dom.style.fontSize = fs
       recomputeZoomHeight() // высота «стола» могла измениться вместе с числом страниц
     }, 60)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,7 +402,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       highlight: (editor.getAttributes('highlight').color as string) ?? null,
       textAlign: para.textAlign ?? head.textAlign ?? null,
       lineHeight: para.lineHeight ?? head.lineHeight ?? null,
-      block: headingLevel ? { type: 'heading', level: headingLevel } : { type: 'paragraph' }
+      block: headingLevel ? { type: 'heading', level: headingLevel } : { type: 'paragraph' },
+      headingWeight: headingLevel ? ((head.fontWeight as string) ?? null) : null
     }
     setPainterActive(true)
   }
@@ -411,8 +421,11 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       // сейчас заголовок (heading→p). Если образец обычный, а цель уже обычный
       // текст/ПУНКТ СПИСКА — тип не трогаем, иначе ФПО выкидывал пункт из списка и
       // сбивал нумерацию (фидбэк v2.0.8).
-      if (f.block.type === 'heading') c = c.setHeading({ level: f.block.level as 1 | 2 | 3 })
-      else if (editor.isActive('heading')) c = c.setParagraph()
+      if (f.block.type === 'heading') {
+        c = c.setHeading({ level: f.block.level as 1 | 2 | 3 })
+        // переносим жирность заголовка-образца (вкл/выкл «жирный» у заголовка)
+        c = c.updateAttributes('heading', { fontWeight: f.headingWeight })
+      } else if (editor.isActive('heading')) c = c.setParagraph()
       c = f.bold ? c.setBold() : c.unsetBold()
       c = f.italic ? c.setItalic() : c.unsetItalic()
       c = f.underline ? c.setUnderline() : c.unsetUnderline()

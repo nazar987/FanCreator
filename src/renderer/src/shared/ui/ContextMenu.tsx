@@ -44,13 +44,24 @@ export function ContextMenuHost(): React.JSX.Element | null {
       setState(null)
       setSubmenu(null)
     }
+    // closeOnScroll: capture-фаза, чтобы ловить прокрутку любого контейнера —
+    // иначе меню «уезжало» при скролле страницы (фидбэк по ссылкам)
+    const onScroll = (e: Event): void => {
+      const t = e.target as HTMLElement | null
+      if (t && typeof t.closest === 'function' && t.closest('.ctx-menu')) return // скролл внутри меню
+      close()
+    }
     window.addEventListener('click', close)
     window.addEventListener('resize', close)
     window.addEventListener('blur', close)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('wheel', onScroll, { passive: true })
     return () => {
       window.removeEventListener('click', close)
       window.removeEventListener('resize', close)
       window.removeEventListener('blur', close)
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('wheel', onScroll)
     }
   }, [state])
 
