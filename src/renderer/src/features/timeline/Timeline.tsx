@@ -200,8 +200,10 @@ function TimelineEventCard({
   }
 
   return (
-    <div className="timeline-event" style={{ marginLeft: level * 28 }}>
-      <div className="timeline-event-marker">{event.order + 1}</div>
+    <div className={`timeline-event ${level > 0 ? 'timeline-event--nested' : ''}`} style={{ marginLeft: level * 32 }}>
+      <div className="timeline-event-rail">
+        <div className="timeline-event-marker">{event.order + 1}</div>
+      </div>
       <Card className="timeline-event-card">
         <div className="timeline-event-head">
           <span
@@ -212,6 +214,7 @@ function TimelineEventCard({
             <GripVertical size={15} />
           </span>
           <Input
+            className="timeline-event-title-input"
             value={title}
             aria-label="Название события"
             placeholder="Название события"
