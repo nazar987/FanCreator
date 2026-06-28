@@ -436,7 +436,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
 
   // компонент «рыбья кость» определён ниже
   return (
-    <div className="timeline" data-tour="timeline">
+    <div className={`timeline ${view === 'list' ? '' : 'timeline--canvas'}`} data-tour="timeline">
       <div className="timeline-inner">
         <div className="timeline-head">
           <div>

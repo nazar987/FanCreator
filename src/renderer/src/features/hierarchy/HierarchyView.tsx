@@ -47,7 +47,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
   }
 
   return (
-    <div className="timeline" data-tour="hierarchy">
+    <div className="timeline timeline--canvas" data-tour="hierarchy">
       <div className="timeline-inner">
         <div className="timeline-head">
           <div>
