@@ -670,11 +670,14 @@ export function Sidebar(): React.JSX.Element {
           <div ref={provided.innerRef} {...provided.droppableProps}>
             {chapters.map((c, index) => (
               <Draggable draggableId={c.id} index={index} key={c.id}>
-                {(dragProvided, snapshot) => (
-                  <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className="tree-chapter-node">
-                    {renderDraggableChapterRow(s, c, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
-                  </div>
-                )}
+                {(dragProvided, snapshot) => {
+                  const node = (
+                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className="tree-chapter-node">
+                      {renderDraggableChapterRow(s, c, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                    </div>
+                  )
+                  return renderDragPortal(node, snapshot.isDragging)
+                }}
               </Draggable>
             ))}
             {provided.placeholder}
@@ -730,34 +733,37 @@ export function Sidebar(): React.JSX.Element {
                 {childChapters(s, null).map((c, index) => (
                   <React.Fragment key={c.id}>
                     <Draggable draggableId={c.id} index={index}>
-                      {(dragProvided, snapshot) => (
-                        <div
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          className={`tree-row tree-chapter ${
-                            activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
-                          } ${activeChapterTrail.chapterIds.has(c.id) ? 'tree-row--ancestor' : ''} ${
-                            snapshot.isDragging ? 'tree-chapter--dragging' : ''
-                          }`}
-                          onClick={() => openChapter(s, c)}
-                          onDoubleClick={() => openChapter(s, c)}
-                          onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
-                        >
-                          <span
-                            className="tree-drag-handle"
-                            title="Изменить порядок главы"
-                            {...dragProvided.dragHandleProps}
-                            onClick={(event) => event.stopPropagation()}
+                      {(dragProvided, snapshot) => {
+                        const node = (
+                          <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            className={`tree-row tree-chapter ${
+                              activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
+                            } ${activeChapterTrail.chapterIds.has(c.id) ? 'tree-row--ancestor' : ''} ${
+                              snapshot.isDragging ? 'tree-chapter--dragging' : ''
+                            }`}
+                            onClick={() => openChapter(s, c)}
+                            onDoubleClick={() => openChapter(s, c)}
+                            onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
                           >
-                            <GripVertical size={14} />
-                          </span>
-                          <FileText size={14} />
-                          <span className="truncate" style={{ flex: 1 }}>
-                            {c.title || 'Без названия'}
-                          </span>
-                          <StatusBadge status={c.status} />
-                        </div>
-                      )}
+                            <span
+                              className="tree-drag-handle"
+                              title="Изменить порядок главы"
+                              {...dragProvided.dragHandleProps}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <GripVertical size={14} />
+                            </span>
+                            <FileText size={14} />
+                            <span className="truncate" style={{ flex: 1 }}>
+                              {c.title || 'Без названия'}
+                            </span>
+                            <StatusBadge status={c.status} />
+                          </div>
+                        )
+                        return renderDragPortal(node, snapshot.isDragging)
+                      }}
                     </Draggable>
                     {childChapters(s, c.id).length > 0 && (expanded[`chapter:${c.id}`] ?? true) && (
                       <div className="tree-subchapters">{renderDraggableChapterGroup(s, c.id, 1)}</div>
@@ -874,15 +880,18 @@ export function Sidebar(): React.JSX.Element {
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childFolders(parentId).map((folder, index) => (
             <Draggable draggableId={`folder:${folder.id}`} index={index} key={folder.id}>
-              {(dragProvided, snapshot) => (
-                <div
-                  ref={dragProvided.innerRef}
-                  {...dragProvided.draggableProps}
-                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
-                >
-                  {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
-                </div>
-              )}
+              {(dragProvided, snapshot) => {
+                const node = (
+                  <div
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                  >
+                    {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                  </div>
+                )
+                return renderDragPortal(node, snapshot.isDragging)
+              }}
             </Draggable>
           ))}
           {provided.placeholder}
@@ -1077,15 +1086,18 @@ export function Sidebar(): React.JSX.Element {
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {charsInFolder(folderId).map((character, index) => (
             <Draggable draggableId={`character:${character.id}`} index={index} key={character.id}>
-              {(dragProvided, snapshot) => (
-                <div
-                  ref={dragProvided.innerRef}
-                  {...dragProvided.draggableProps}
-                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
-                >
-                  {renderCharacterRow(character, depth, dragProvided.dragHandleProps)}
-                </div>
-              )}
+              {(dragProvided, snapshot) => {
+                const node = (
+                  <div
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                  >
+                    {renderCharacterRow(character, depth, dragProvided.dragHandleProps)}
+                  </div>
+                )
+                return renderDragPortal(node, snapshot.isDragging)
+              }}
             </Draggable>
           ))}
           {provided.placeholder}
@@ -1190,15 +1202,18 @@ export function Sidebar(): React.JSX.Element {
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childCharacterFolders(parentId).map((folder, index) => (
             <Draggable draggableId={`character-folder:${folder.id}`} index={index} key={folder.id}>
-              {(dragProvided, snapshot) => (
-                <div
-                  ref={dragProvided.innerRef}
-                  {...dragProvided.draggableProps}
-                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
-                >
-                  {renderCharacterFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
-                </div>
-              )}
+              {(dragProvided, snapshot) => {
+                const node = (
+                  <div
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                  >
+                    {renderCharacterFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                  </div>
+                )
+                return renderDragPortal(node, snapshot.isDragging)
+              }}
             </Draggable>
           ))}
           {provided.placeholder}
