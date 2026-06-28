@@ -63,6 +63,62 @@ export function Sidebar(): React.JSX.Element {
   const [propertiesStory, setPropertiesStory] = React.useState<Story | null>(null)
   const [trashOpen, setTrashOpen] = React.useState(false)
 
+  const activeChapterTrail = React.useMemo(() => {
+    const empty = {
+      storyId: null as string | null,
+      folderIds: new Set<string>(),
+      chapterIds: new Set<string>()
+    }
+    if (!current || !activeTabId?.startsWith('chapter:')) return empty
+    const chapterId = activeTabId.slice('chapter:'.length)
+    const story = current.stories.find((item) => item.chapters.some((chapter) => chapter.id === chapterId))
+    const chapter = story?.chapters.find((item) => item.id === chapterId)
+    if (!story || !chapter) return empty
+
+    const folderIds = new Set<string>()
+    const chapterIds = new Set<string>()
+    const visitedFolders = new Set<string>()
+    const visitedChapters = new Set<string>()
+
+    let folderCursor = story.folderId ?? null
+    while (folderCursor && !visitedFolders.has(folderCursor)) {
+      visitedFolders.add(folderCursor)
+      folderIds.add(folderCursor)
+      folderCursor = current.folders.find((folder) => folder.id === folderCursor)?.parentId ?? null
+    }
+
+    let chapterCursor = chapter.parentId ?? null
+    while (chapterCursor && !visitedChapters.has(chapterCursor)) {
+      visitedChapters.add(chapterCursor)
+      chapterIds.add(chapterCursor)
+      chapterCursor = story.chapters.find((item) => item.id === chapterCursor)?.parentId ?? null
+    }
+
+    return { storyId: story.id, folderIds, chapterIds }
+  }, [activeTabId, current])
+
+  React.useEffect(() => {
+    if (!current || !activeChapterTrail.storyId) return
+    setExpanded((prev) => {
+      let changed = false
+      const next = { ...prev, [activeChapterTrail.storyId!]: true }
+      if (!prev[activeChapterTrail.storyId!]) changed = true
+
+      activeChapterTrail.folderIds.forEach((id) => {
+        const key = `folder:${id}`
+        if (!prev[key]) changed = true
+        next[key] = true
+      })
+      activeChapterTrail.chapterIds.forEach((id) => {
+        const key = `chapter:${id}`
+        if (!prev[key]) changed = true
+        next[key] = true
+      })
+
+      return changed ? next : prev
+    })
+  }, [activeChapterTrail, current])
+
   if (!current) return <aside className="sidebar" />
 
   const dragPortal = typeof document === 'undefined' ? null : document.body
@@ -539,7 +595,9 @@ export function Sidebar(): React.JSX.Element {
         <div
           className={`tree-row tree-chapter ${
             activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
-          } ${isDragging ? 'tree-chapter--dragging' : ''}`}
+          } ${activeChapterTrail.chapterIds.has(c.id) ? 'tree-row--ancestor' : ''} ${
+            isDragging ? 'tree-chapter--dragging' : ''
+          }`}
           style={{ paddingLeft: 8 + depth * 14 }}
           onClick={() => openChapter(s, c)}
           onDoubleClick={() => openChapter(s, c)}
@@ -605,7 +663,7 @@ export function Sidebar(): React.JSX.Element {
   ): React.JSX.Element => (
     <>
       <div
-        className="tree-row"
+        className={`tree-row ${activeChapterTrail.storyId === s.id ? 'tree-row--ancestor' : ''}`}
         onClick={() => toggle(s.id)}
         onContextMenu={(e) => openContextMenu(e, storyMenu(s))}
       >
@@ -649,7 +707,9 @@ export function Sidebar(): React.JSX.Element {
                           {...dragProvided.draggableProps}
                           className={`tree-row tree-chapter ${
                             activeTabId === `chapter:${c.id}` ? 'tree-row--active' : ''
-                          } ${snapshot.isDragging ? 'tree-chapter--dragging' : ''}`}
+                          } ${activeChapterTrail.chapterIds.has(c.id) ? 'tree-row--ancestor' : ''} ${
+                            snapshot.isDragging ? 'tree-chapter--dragging' : ''
+                          }`}
                           onClick={() => openChapter(s, c)}
                           onDoubleClick={() => openChapter(s, c)}
                           onContextMenu={(e) => openContextMenu(e, chapterMenu(s, c))}
@@ -730,7 +790,7 @@ export function Sidebar(): React.JSX.Element {
     return (
       <div className="tree-node" key={f.id}>
         <div
-          className="tree-row"
+          className={`tree-row ${activeChapterTrail.folderIds.has(f.id) ? 'tree-row--ancestor' : ''}`}
           style={{ paddingLeft: 8 + depth * 14 }}
           onClick={() => toggle(key)}
           onContextMenu={(e) => openContextMenu(e, folderMenu(f))}
