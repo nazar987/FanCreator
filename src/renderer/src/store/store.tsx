@@ -5,13 +5,14 @@ import { confirmDialog } from '../shared/ui/dialogs'
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
 export interface OpenTab {
   id: string
-  kind: 'shelf' | 'chapter' | 'characters' | 'character' | 'board' | 'timeline'
+  kind: 'shelf' | 'chapter' | 'characters' | 'character' | 'board' | 'timeline' | 'hierarchy'
   title: string
   storyId?: string
   chapterId?: string
   characterId?: string
   boardId?: string
   timelineId?: string
+  hierarchyId?: string
 }
 
 interface StoreValue {
@@ -70,6 +71,8 @@ function isTabAlive(p: Project, tab: OpenTab): boolean {
   if (tab.kind === 'character' && tab.characterId) return p.characters.some((c) => c.id === tab.characterId)
   if (tab.kind === 'board' && tab.boardId) return p.boards.some((b) => b.id === tab.boardId)
   if (tab.kind === 'timeline' && tab.timelineId) return p.timelines.some((t) => t.id === tab.timelineId)
+  if (tab.kind === 'hierarchy' && tab.hierarchyId)
+    return (p.hierarchies ?? []).some((h) => h.id === tab.hierarchyId)
   return true
 }
 

@@ -9,6 +9,7 @@ import {
   UserRound,
   LayoutGrid,
   Waypoints,
+  Network,
   CircleHelp
 } from 'lucide-react'
 import { useStore } from '../store/store'
@@ -104,6 +105,19 @@ export function TabBar(): React.JSX.Element {
             })
           }
         }
+      },
+      {
+        label: 'Новое дерево',
+        icon: <Network size={15} />,
+        onClick: async () => {
+          if (!current) return
+          const title = await promptText({ title: 'Новое дерево', placeholder: 'Название дерева' })
+          if (!title) return
+          const project = await window.api.hierarchies.add({ projectId: current.id, title })
+          applyProject(project)
+          const h = project?.hierarchies[project.hierarchies.length - 1]
+          if (h) openTab({ id: `hierarchy:${h.id}`, kind: 'hierarchy', title: h.title, hierarchyId: h.id })
+        }
       }
     ]
     openContextMenu(e, items)
@@ -138,6 +152,8 @@ export function TabBar(): React.JSX.Element {
             <LayoutGrid size={14} />
           ) : t.kind === 'timeline' ? (
             <Waypoints size={14} />
+          ) : t.kind === 'hierarchy' ? (
+            <Network size={14} />
           ) : (
             <FileText size={14} />
           )}

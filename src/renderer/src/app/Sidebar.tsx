@@ -26,7 +26,8 @@ import {
   ArrowDown,
   UserRound,
   UserPlus,
-  Trees
+  Trees,
+  Network
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -1186,6 +1187,73 @@ export function Sidebar(): React.JSX.Element {
   const orderedTimelines = [...current.timelines].sort((a, b) => a.order - b.order)
   const orderedBoards = [...current.boards].sort((a, b) => a.order - b.order)
 
+  // Раздел «Деревья» (Hierarchy) — вынесен из таймлайна, отдельная сущность
+  const renderHierarchySection = (): React.JSX.Element | null => {
+    const items = current.hierarchies ?? []
+    if (!items.length) return null
+    const isOpen = expanded['sec:hierarchies'] ?? false
+    return (
+      <div className="tree-node" key="sec:hierarchies">
+        <div className="tree-row" onClick={() => toggle('sec:hierarchies')}>
+          <span className={`chev ${isOpen ? 'chev--open' : ''}`}>
+            <ChevronRight size={15} />
+          </span>
+          <Network size={15} />
+          <span className="truncate" style={{ flex: 1, fontWeight: 600 }}>
+            Деревья
+          </span>
+          <span className="faint" style={{ fontSize: 12 }}>
+            {items.length}
+          </span>
+        </div>
+        {isOpen && (
+          <div className="tree-children">
+            {items.map((h) => (
+              <div
+                key={h.id}
+                className={`tree-row tree-chapter ${activeTabId === `hierarchy:${h.id}` ? 'tree-row--active' : ''}`}
+                onClick={() =>
+                  openTab({ id: `hierarchy:${h.id}`, kind: 'hierarchy', title: h.title, hierarchyId: h.id })
+                }
+                onContextMenu={(e) =>
+                  openContextMenu(e, [
+                    {
+                      label: 'Переименовать',
+                      icon: <Pencil size={15} />,
+                      onClick: async () => {
+                        const title = await promptText({ title: 'Переименовать дерево', initial: h.title })
+                        if (title && title !== h.title)
+                          applyProject(
+                            await window.api.hierarchies.rename({ projectId: current.id, hierarchyId: h.id, title })
+                          )
+                      }
+                    },
+                    {
+                      label: 'Удалить',
+                      icon: <Trash2 size={15} />,
+                      danger: true,
+                      onClick: async () => {
+                        if (!(await confirmDialog({ title: `Удалить дерево «${h.title}»?`, danger: true }))) return
+                        applyProject(
+                          await window.api.hierarchies.delete({ projectId: current.id, hierarchyId: h.id })
+                        )
+                      }
+                    }
+                  ])
+                }
+              >
+                <Network size={14} />
+                <span className="truncate" style={{ flex: 1 }}>
+                  {h.title}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const moveTimeline = async (item: { id: string }, offset: -1 | 1): Promise<void> => {
     const order = shiftedOrder(orderedTimelines, item.id, offset)
     if (!order) return
@@ -1350,6 +1418,7 @@ export function Sidebar(): React.JSX.Element {
                 'board:',
                 moveBoard
               )}
+            {renderHierarchySection()}
           </>
         )}
       </div>
