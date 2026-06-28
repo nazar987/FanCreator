@@ -132,6 +132,14 @@
   border-radius: var(--r-lg);
   background: var(--panel);
 }
+/* внутри холста (ZoomPan) убираем собственную рамку/скролл дендрограммы —
+   иначе получалась «коробка в коробке»; дерево живёт прямо на холсте */
+.zoompan-inner .dendro-scroll {
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
 .dendro {
   position: relative;
   padding: 8px;
