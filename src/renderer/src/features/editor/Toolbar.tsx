@@ -188,6 +188,21 @@ export function Toolbar({
     (editor.getAttributes('heading').lineHeight as string) ||
     '1.7'
 
+  // Сохраняем позицию прокрутки при форматировании: иначе при выделении всего
+  // (Ctrl+A) и смене шрифта/размера фокус прыгал к концу выделения (в конец главы).
+  const keepScroll = (fn: () => void): void => {
+    const scroller = editor.view.dom.closest('.editor-scroll') as HTMLElement | null
+    const top = scroller?.scrollTop ?? null
+    fn()
+    if (scroller && top != null) {
+      const restore = (): void => {
+        scroller.scrollTop = top
+      }
+      requestAnimationFrame(restore)
+      window.setTimeout(restore, 60)
+    }
+  }
+
   const setBlock = (v: string): void => {
     const isHeading = v !== 'p'
     let c = editor.chain().focus()
@@ -231,7 +246,7 @@ export function Toolbar({
       <select
         className="tb-select"
         value={curFont}
-        onChange={(e) => editor.chain().focus().setFontFamily(e.target.value).run()}
+        onChange={(e) => keepScroll(() => editor.chain().focus().setFontFamily(e.target.value).run())}
         title="Шрифт"
       >
         {extraFont && (
@@ -247,7 +262,7 @@ export function Toolbar({
       <select
         className="tb-select tb-select--sm"
         value={curSize}
-        onChange={(e) => editor.chain().focus().setFontSize(e.target.value).run()}
+        onChange={(e) => keepScroll(() => editor.chain().focus().setFontSize(e.target.value).run())}
         title="Размер шрифта"
       >
         {SIZES.map((s) => (
@@ -261,7 +276,7 @@ export function Toolbar({
         className="tb-select tb-select--sm"
         value={curLineHeight}
         title="Межстрочный интервал"
-        onChange={(e) => editor.chain().focus().setLineHeight(e.target.value).run()}
+        onChange={(e) => keepScroll(() => editor.chain().focus().setLineHeight(e.target.value).run())}
       >
         {LINE_HEIGHTS.map((lh) => (
           <option key={lh} value={lh}>
