@@ -62,6 +62,8 @@ export function Sidebar(): React.JSX.Element {
   const [results, setResults] = React.useState<SearchResult[]>([])
   const [propertiesStory, setPropertiesStory] = React.useState<Story | null>(null)
   const [trashOpen, setTrashOpen] = React.useState(false)
+  const suppressTreeToggleRef = React.useRef(false)
+  const activeChapterAutoExpandedRef = React.useRef<string | null>(null)
 
   const activeChapterTrail = React.useMemo(() => {
     const empty = {
@@ -98,7 +100,12 @@ export function Sidebar(): React.JSX.Element {
   }, [activeTabId, current])
 
   React.useEffect(() => {
-    if (!current || !activeChapterTrail.storyId) return
+    if (!current || !activeChapterTrail.storyId) {
+      if (!activeTabId?.startsWith('chapter:')) activeChapterAutoExpandedRef.current = null
+      return
+    }
+    if (activeChapterAutoExpandedRef.current === activeTabId) return
+    activeChapterAutoExpandedRef.current = activeTabId
     setExpanded((prev) => {
       let changed = false
       const next = { ...prev, [activeChapterTrail.storyId!]: true }
@@ -117,7 +124,29 @@ export function Sidebar(): React.JSX.Element {
 
       return changed ? next : prev
     })
-  }, [activeChapterTrail, current])
+  }, [activeChapterTrail, activeTabId, current])
+
+  const onTreeRowToggle = (event: React.MouseEvent, key: string): void => {
+    if (suppressTreeToggleRef.current) {
+      event.stopPropagation()
+      return
+    }
+    toggle(key)
+  }
+
+  const onTreeDragStart = (): void => {
+    suppressTreeToggleRef.current = true
+  }
+
+  const onTreeDragEnd = async (result: DropResult): Promise<void> => {
+    try {
+      await reorderSidebarItems(result)
+    } finally {
+      window.setTimeout(() => {
+        suppressTreeToggleRef.current = false
+      }, 120)
+    }
+  }
 
   if (!current) return <aside className="sidebar" />
 
@@ -664,7 +693,7 @@ export function Sidebar(): React.JSX.Element {
     <>
       <div
         className={`tree-row ${activeChapterTrail.storyId === s.id ? 'tree-row--ancestor' : ''}`}
-        onClick={() => toggle(s.id)}
+        onClick={(event) => onTreeRowToggle(event, s.id)}
         onContextMenu={(e) => openContextMenu(e, storyMenu(s))}
       >
         {storyDragHandle && (
@@ -792,7 +821,7 @@ export function Sidebar(): React.JSX.Element {
         <div
           className={`tree-row ${activeChapterTrail.folderIds.has(f.id) ? 'tree-row--ancestor' : ''}`}
           style={{ paddingLeft: 8 + depth * 14 }}
-          onClick={() => toggle(key)}
+          onClick={(event) => onTreeRowToggle(event, key)}
           onContextMenu={(e) => openContextMenu(e, folderMenu(f))}
         >
           <span
@@ -845,18 +874,15 @@ export function Sidebar(): React.JSX.Element {
         <div ref={provided.innerRef} {...provided.droppableProps}>
           {childFolders(parentId).map((folder, index) => (
             <Draggable draggableId={`folder:${folder.id}`} index={index} key={folder.id}>
-              {(dragProvided, snapshot) => {
-                const node = (
-                  <div
-                    ref={dragProvided.innerRef}
-                    {...dragProvided.draggableProps}
-                    className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
-                  >
-                    {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
-                  </div>
-                )
-                return renderDragPortal(node, snapshot.isDragging)
-              }}
+              {(dragProvided, snapshot) => (
+                <div
+                  ref={dragProvided.innerRef}
+                  {...dragProvided.draggableProps}
+                  className={snapshot.isDragging ? 'tree-node--dragging' : undefined}
+                >
+                  {renderFolder(folder, depth, dragProvided.dragHandleProps, snapshot.isDragging)}
+                </div>
+              )}
             </Draggable>
           ))}
           {provided.placeholder}
@@ -1412,7 +1438,7 @@ export function Sidebar(): React.JSX.Element {
               </div>
             )}
 
-            <DragDropContext onDragEnd={reorderSidebarItems}>
+            <DragDropContext onDragStart={onTreeDragStart} onDragEnd={onTreeDragEnd}>
               {renderFolderGroup(null, 0)}
               {renderStoryGroup(null)}
             </DragDropContext>
@@ -1445,7 +1471,7 @@ export function Sidebar(): React.JSX.Element {
               </div>
               {expanded['sec:characters'] && (
                 <div className="tree-children">
-                  <DragDropContext onDragEnd={reorderSidebarItems}>
+                  <DragDropContext onDragStart={onTreeDragStart} onDragEnd={onTreeDragEnd}>
                     {renderCharacterFolderGroup(null, 0)}
                     {renderCharacterGroup(null, 0)}
                     {renderGenealogyRows(null, 0)}
