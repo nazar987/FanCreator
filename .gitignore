@@ -17,3 +17,6 @@ node_modules
 
 # Claude Code local tooling (планы, сессии, временные worktrees) — не коммитим
 .claude/
+
+# TS incremental build info
+*.tsbuildinfo
