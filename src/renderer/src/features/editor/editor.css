@@ -242,23 +242,24 @@
 }
 /* Размеры заголовков в АБСОЛЮТНЫХ px (не em): иначе при смене базового шрифта
    документа (#6) заголовки бы съёживались. Единый межстрочный (S-H6). */
+/* симметричные отступы у заголовков — раньше сверху зазор был больше, чем снизу */
 .fc-prose h1 {
   font-size: 32px;
-  margin: 0.4em 0 0.4em;
+  margin: 0.35em 0;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .fc-prose h2 {
   font-size: 24px;
-  margin: 0.4em 0 0.3em;
+  margin: 0.35em 0;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .fc-prose h3 {
   font-size: 20px;
-  margin: 0.4em 0 0.3em;
+  margin: 0.35em 0;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .fc-prose a {
   color: #2563cc;
@@ -307,7 +308,8 @@
   display: inline-block;
   min-width: 2em; /* было width:2em → широкие номера (6.1.2) налезали на текст */
   margin-left: -2em;
-  margin-right: 0.3em;
+  /* без margin-right: иначе первая строка пункта была сдвинута относительно
+     переносов (выглядело как «красная строка») */
   white-space: nowrap;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
