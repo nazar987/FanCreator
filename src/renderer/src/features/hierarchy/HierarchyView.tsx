@@ -31,8 +31,9 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
   const top = childrenOf(null)
 
   const addNode = async (parentId: string | null): Promise<void> => {
+    // пустой узел (без текста «Узел») — пользователь сразу пишет своё
     applyProject(
-      await window.api.hierarchyNodes.add({ projectId, hierarchyId, parentId: parentId ?? null, title: 'Узел' })
+      await window.api.hierarchyNodes.add({ projectId, hierarchyId, parentId: parentId ?? null, title: '' })
     )
   }
   const editNode = async (ev: TimelineEvent): Promise<void> => {

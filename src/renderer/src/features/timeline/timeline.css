@@ -149,6 +149,12 @@
   inset: 8px;
   overflow: visible;
 }
+/* подсказка в пустом узле (вместо текста «Узел») */
+.dendro-node-placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+  font-weight: 400;
+}
 .dendro-node {
   position: absolute;
   display: grid;

@@ -98,7 +98,7 @@ function GenealogyTree({
       </svg>
       {nodes.map(({ node, x, y, depth }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
-        const label = ch?.name || node.title || 'Пусто'
+        const label = ch?.name || node.title || ''
         return (
           <div
             key={node.id}
@@ -112,7 +112,11 @@ function GenealogyTree({
               title={ch ? 'Открыть персонажа' : undefined}
             >
               {ch && <span className="genealogy-dot" style={{ background: ch.color ?? '#7aa2f7' }} />}
-              <span className="truncate">{label}</span>
+              {label ? (
+                <span className="truncate">{label}</span>
+              ) : (
+                <span className="dendro-node-placeholder">Персонаж или текст…</span>
+              )}
             </div>
             <div className="dendro-node-actions">
               <button title="Добавить потомка" onClick={(e) => { e.stopPropagation(); onAddChild(node.id) }}>

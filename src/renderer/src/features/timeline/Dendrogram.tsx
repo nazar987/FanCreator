@@ -102,7 +102,9 @@ export function Dendrogram({
             title={event.note || undefined}
             onDoubleClick={() => onEdit(event)}
           >
-            <div className="dendro-node-text">{event.title || 'Без названия'}</div>
+            <div className="dendro-node-text">
+              {event.title || <span className="dendro-node-placeholder">Название…</span>}
+            </div>
             <div className="dendro-node-actions">
               <button
                 title="Добавить дочерний узел"
