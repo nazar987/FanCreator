@@ -308,10 +308,11 @@
 .fc-prose ol > li > p:first-of-type::before {
   content: counters(fc-ol, '.') '. ';
   display: inline-block;
-  min-width: 2em; /* было width:2em → широкие номера (6.1.2) налезали на текст */
+  /* фикс. ширина (не min-width!) — иначе номер «уезжал» вправо на разрыве страницы.
+     Глубокие номера (8.1.1) могут быть чуть тесными — компромисс ради разрыва. */
+  width: 2em;
   margin-left: -2em;
-  /* без margin-right: иначе первая строка пункта была сдвинута относительно
-     переносов (выглядело как «красная строка») */
+  margin-right: 0.3em;
   white-space: nowrap;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
