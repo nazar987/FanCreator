@@ -1,5 +1,6 @@
 import React from 'react'
 import { Plus, Trash2, Tag, ChevronRight, ChevronDown } from 'lucide-react'
+import type { EdgeLabelOrientation } from '../../shared/edgeLabelOrientation'
 
 /**
  * Древовидная диаграмма (tree diagram): дерево слева-направо с локтевыми
@@ -28,6 +29,7 @@ interface DendrogramProps {
   onToggleCollapse?: (event: DendroNode) => void
   /** Подписать связь «родитель → этот узел». */
   onEditEdgeLabel?: (event: DendroNode) => void
+  edgeLabelOrientation?: EdgeLabelOrientation
 }
 
 const NODE_W = 210
@@ -49,10 +51,21 @@ interface Link {
   x2: number
   y2: number
   midX: number
-  /** Точка для подписи связи (на горизонтальном отрезке у потомка). */
-  labelX: number
-  labelY: number
   child: DendroNode
+}
+
+const getEdgeLabelPlacement = (
+  link: Link,
+  orientation: EdgeLabelOrientation
+): { x: number; y: number; orientation: Exclude<EdgeLabelOrientation, 'auto'> } => {
+  const resolved =
+    orientation === 'auto' ? (Math.abs(link.y2 - link.y1) > ROW_H * 0.55 ? 'vertical' : 'horizontal') : orientation
+
+  if (resolved === 'vertical') {
+    return { x: link.midX, y: (link.y1 + link.y2) / 2, orientation: resolved }
+  }
+
+  return { x: (link.midX + link.x2) / 2, y: link.y2, orientation: resolved }
 }
 
 export function Dendrogram({
@@ -62,7 +75,8 @@ export function Dendrogram({
   onAddChild,
   onDelete,
   onToggleCollapse,
-  onEditEdgeLabel
+  onEditEdgeLabel,
+  edgeLabelOrientation = 'auto'
 }: DendrogramProps): React.JSX.Element {
   const { nodes, links, width, height } = React.useMemo(() => {
     const nodes: Placed[] = []
@@ -99,8 +113,6 @@ export function Dendrogram({
             x2,
             y2: childYs[idx],
             midX,
-            labelX: midX,
-            labelY: childYs[idx],
             child: kid
           })
         })
@@ -137,19 +149,21 @@ export function Dendrogram({
             />
           ))}
         </svg>
-        {links.map((l) =>
-          l.child.edgeLabel ? (
+        {links.map((l) => {
+          if (!l.child.edgeLabel) return null
+          const label = getEdgeLabelPlacement(l, edgeLabelOrientation)
+          return (
             <button
               key={`lbl-${l.child.id}`}
-              className="dendro-edge-label"
-              style={{ left: l.labelX, top: l.labelY }}
+              className={`dendro-edge-label dendro-edge-label--${label.orientation}`}
+              style={{ left: label.x, top: label.y }}
               title="Изменить подпись связи"
               onClick={() => onEditEdgeLabel?.(l.child)}
             >
               {l.child.edgeLabel}
             </button>
-          ) : null
-        )}
+          )
+        })}
         {nodes.map(({ event, x, y, depth, hasChildren, hiddenCount }) => (
           <div
             key={event.id}

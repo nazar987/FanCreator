@@ -6,6 +6,13 @@ import { Button } from '../../shared/ui/components'
 import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
+import {
+  EDGE_LABEL_ORIENTATIONS,
+  EDGE_LABEL_ORIENTATION_LABEL,
+  type EdgeLabelOrientation,
+  readEdgeLabelOrientation,
+  writeEdgeLabelOrientation
+} from '../../shared/edgeLabelOrientation'
 
 const NODE_W = 200
 const NODE_H = 62
@@ -26,9 +33,23 @@ interface Link {
   x2: number
   y2: number
   midX: number
-  labelX: number
-  labelY: number
   child: GenealogyNode
+}
+
+const GENEALOGY_EDGE_LABEL_ORIENTATION_KEY = 'fancreator.genealogy.edgeLabelOrientation'
+
+const getEdgeLabelPlacement = (
+  link: Link,
+  orientation: EdgeLabelOrientation
+): { x: number; y: number; orientation: Exclude<EdgeLabelOrientation, 'auto'> } => {
+  const resolved =
+    orientation === 'auto' ? (Math.abs(link.y2 - link.y1) > ROW_H * 0.55 ? 'vertical' : 'horizontal') : orientation
+
+  if (resolved === 'vertical') {
+    return { x: link.midX, y: (link.y1 + link.y2) / 2, orientation: resolved }
+  }
+
+  return { x: (link.midX + link.x2) / 2, y: link.y2, orientation: resolved }
 }
 
 /** Дерево родословной (сверху-вниз по поколениям, слева-направо как дендрограмма). */
@@ -42,7 +63,8 @@ function GenealogyTree({
   onDelete,
   onToggleCollapse,
   onEditEdgeLabel,
-  onOpenCharacter
+  onOpenCharacter,
+  edgeLabelOrientation
 }: {
   g: GenealogyT
   childrenOf: (parentId: string | null) => GenealogyNode[]
@@ -54,6 +76,7 @@ function GenealogyTree({
   onToggleCollapse: (node: GenealogyNode) => void
   onEditEdgeLabel: (node: GenealogyNode) => void
   onOpenCharacter: (characterId: string) => void
+  edgeLabelOrientation: EdgeLabelOrientation
 }): React.JSX.Element {
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
@@ -133,8 +156,6 @@ function GenealogyTree({
             x2,
             y2: childYs[idx],
             midX,
-            labelX: midX,
-            labelY: childYs[idx],
             child: kid
           })
         })
@@ -172,12 +193,14 @@ function GenealogyTree({
           />
         ))}
       </svg>
-      {links.map((l) =>
-        l.child.edgeLabel ? (
+      {links.map((l) => {
+        if (!l.child.edgeLabel) return null
+        const label = getEdgeLabelPlacement(l, edgeLabelOrientation)
+        return (
           <button
             key={`lbl-${l.child.id}`}
-            className="dendro-edge-label"
-            style={{ left: l.labelX, top: l.labelY }}
+            className={`dendro-edge-label dendro-edge-label--${label.orientation}`}
+            style={{ left: label.x, top: label.y }}
             title="Изменить подпись связи"
             onClick={(e) => {
               e.stopPropagation()
@@ -186,8 +209,8 @@ function GenealogyTree({
           >
             {l.child.edgeLabel}
           </button>
-        ) : null
-      )}
+        )
+      })}
       {nodes.map(({ node, x, y, depth, hasChildren, hiddenCount }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
@@ -286,6 +309,9 @@ export function Genealogy(): React.JSX.Element {
     [project]
   )
   const active = list.find((x) => x.id === activeId) ?? list[0]
+  const [edgeLabelOrientation, setEdgeLabelOrientation] = React.useState<EdgeLabelOrientation>(() =>
+    readEdgeLabelOrientation(GENEALOGY_EDGE_LABEL_ORIENTATION_KEY)
+  )
 
   if (!project) return <div className="dim">Проект не открыт</div>
 
@@ -377,6 +403,11 @@ export function Genealogy(): React.JSX.Element {
     if (c) openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
   }
 
+  const changeEdgeLabelOrientation = (value: EdgeLabelOrientation): void => {
+    setEdgeLabelOrientation(value)
+    writeEdgeLabelOrientation(GENEALOGY_EDGE_LABEL_ORIENTATION_KEY, value)
+  }
+
   return (
     <div className="genealogy genealogy--canvas">
       <div className="genealogy-bar">
@@ -415,6 +446,20 @@ export function Genealogy(): React.JSX.Element {
             <span className="dim genealogy-hint">
               Двойной клик по узлу — привязать персонажа или вписать текст. Ctrl+колесо — масштаб.
             </span>
+            <label className="edge-label-mode">
+              <span>Подписи</span>
+              <select
+                className="input"
+                value={edgeLabelOrientation}
+                onChange={(event) => changeEdgeLabelOrientation(event.target.value as EdgeLabelOrientation)}
+              >
+                {EDGE_LABEL_ORIENTATIONS.map((orientation) => (
+                  <option key={orientation} value={orientation}>
+                    {EDGE_LABEL_ORIENTATION_LABEL[orientation]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           {active.nodes.length === 0 ? (
             <div className="genealogy-empty dim">Пустое древо. Нажмите «Добавить корень».</div>
@@ -431,6 +476,7 @@ export function Genealogy(): React.JSX.Element {
                 onToggleCollapse={toggleCollapse}
                 onEditEdgeLabel={(node) => void editEdgeLabel(node)}
                 onOpenCharacter={openCharacter}
+                edgeLabelOrientation={edgeLabelOrientation}
               />
             </ZoomPan>
           )}

@@ -340,25 +340,53 @@
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 2;
-  max-width: 84px;
-  padding: 1px 6px;
-  border: none;
+  max-width: 118px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
   border-radius: var(--r-sm, 6px);
-  background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
-  color: var(--text-faint);
+  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  color: var(--text-dim);
   font-size: 10.5px;
-  font-weight: 500;
+  font-weight: 650;
   letter-spacing: 0.01em;
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  transition: color var(--t-fast), background var(--t-fast);
+  box-shadow: 0 8px 22px -18px var(--accent-glow);
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+.dendro-edge-label--vertical {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+.dendro-edge-label--horizontal {
+  transform: translate(-50%, -50%);
 }
 .dendro-edge-label:hover {
   background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--stroke));
   color: var(--text);
+}
+
+.edge-label-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.edge-label-mode .input {
+  width: 148px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.genealogy-toolbar .edge-label-mode {
+  margin-left: auto;
 }
 
 /* свёрнутый узел: глушим вид + кнопка сворачивания со счётчиком скрытых */

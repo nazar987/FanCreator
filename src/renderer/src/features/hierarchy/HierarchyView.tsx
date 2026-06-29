@@ -6,6 +6,15 @@ import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
 import type { HierarchyNode } from '@shared/types'
 import { Dendrogram, type DendroNode } from '../timeline/Dendrogram'
+import {
+  EDGE_LABEL_ORIENTATIONS,
+  EDGE_LABEL_ORIENTATION_LABEL,
+  type EdgeLabelOrientation,
+  readEdgeLabelOrientation,
+  writeEdgeLabelOrientation
+} from '../../shared/edgeLabelOrientation'
+
+const HIERARCHY_EDGE_LABEL_ORIENTATION_KEY = 'fancreator.hierarchy.edgeLabelOrientation'
 
 /**
  * Дерево — самостоятельный раздел (вынесен из таймлайна). Использует данные
@@ -14,6 +23,9 @@ import { Dendrogram, type DendroNode } from '../timeline/Dendrogram'
  */
 export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.JSX.Element {
   const { current, applyProject } = useStore()
+  const [edgeLabelOrientation, setEdgeLabelOrientation] = React.useState<EdgeLabelOrientation>(() =>
+    readEdgeLabelOrientation(HIERARCHY_EDGE_LABEL_ORIENTATION_KEY)
+  )
   const h = current?.hierarchies?.find((x) => x.id === hierarchyId)
   if (!current || !h) return <div className="timeline-missing dim">Дерево не найдено</div>
   const projectId = current.id
@@ -64,6 +76,11 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
     )
   }
 
+  const changeEdgeLabelOrientation = (value: EdgeLabelOrientation): void => {
+    setEdgeLabelOrientation(value)
+    writeEdgeLabelOrientation(HIERARCHY_EDGE_LABEL_ORIENTATION_KEY, value)
+  }
+
   return (
     <div className="timeline timeline--canvas" data-tour="hierarchy">
       <div className="timeline-inner">
@@ -72,9 +89,25 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
             <div className="home-title">{h.title}</div>
             <div className="home-sub">Дерево · Ctrl+колесо — масштаб, перетаскивание — сдвиг</div>
           </div>
-          <Button variant="soft" onClick={() => addNode(null)}>
-            <GitBranchPlus size={16} /> Добавить корень
-          </Button>
+          <div className="row">
+            <label className="edge-label-mode">
+              <span>Подписи</span>
+              <select
+                className="input"
+                value={edgeLabelOrientation}
+                onChange={(event) => changeEdgeLabelOrientation(event.target.value as EdgeLabelOrientation)}
+              >
+                {EDGE_LABEL_ORIENTATIONS.map((orientation) => (
+                  <option key={orientation} value={orientation}>
+                    {EDGE_LABEL_ORIENTATION_LABEL[orientation]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button variant="soft" onClick={() => addNode(null)}>
+              <GitBranchPlus size={16} /> Добавить корень
+            </Button>
+          </div>
         </div>
         {h.nodes.length === 0 ? (
           <div className="timeline-empty dim">Дерево пустое. Нажмите «Добавить корень».</div>
@@ -88,6 +121,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
               onDelete={(ev) => void deleteNode(ev)}
               onToggleCollapse={(ev) => void toggleCollapse(ev)}
               onEditEdgeLabel={(ev) => void editEdgeLabel(ev)}
+              edgeLabelOrientation={edgeLabelOrientation}
             />
           </ZoomPan>
         )}
