@@ -1,11 +1,15 @@
 import React from 'react'
 import { Plus, Trash2, Tag, ChevronRight, ChevronDown } from 'lucide-react'
-import type { EdgeLabelOrientation } from '../../shared/edgeLabelOrientation'
+import { measureTextWidth } from '../../shared/measureText'
 
 /**
  * Древовидная диаграмма (tree diagram): дерево слева-направо с локтевыми
  * соединителями и прямоугольными узлами. Узлы можно сворачивать (потомки
  * скрываются, но хранятся внутри) и подписывать связи между блоками.
+ *
+ * Расстояние между уровнями растягивается под самую длинную подпись на этом
+ * уровне — поэтому подписи всегда лежат горизонтально на линии и ничего не
+ * перекрывают.
  */
 export interface DendroNode {
   id: string
@@ -29,13 +33,16 @@ interface DendrogramProps {
   onToggleCollapse?: (event: DendroNode) => void
   /** Подписать связь «родитель → этот узел». */
   onEditEdgeLabel?: (event: DendroNode) => void
-  edgeLabelOrientation?: EdgeLabelOrientation
 }
 
 const NODE_W = 210
 const NODE_H = 68
-const COL_W = 300
 const ROW_H = 92
+const BASE_GAP = 90 // зазор между уровнями, когда подписей нет
+const STUB = 26 // вывод от родителя до вертикальной «шины»
+const LABEL_PAD = 24 // воздух вокруг подписи на линии
+const LABEL_MAX = 230 // потолок ширины колонки под длинную подпись
+const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
 
 interface Placed {
   event: DendroNode
@@ -51,21 +58,9 @@ interface Link {
   x2: number
   y2: number
   midX: number
+  labelX: number
+  labelY: number
   child: DendroNode
-}
-
-const getEdgeLabelPlacement = (
-  link: Link,
-  orientation: EdgeLabelOrientation
-): { x: number; y: number; orientation: Exclude<EdgeLabelOrientation, 'auto'> } => {
-  const resolved =
-    orientation === 'auto' ? (Math.abs(link.y2 - link.y1) > ROW_H * 0.55 ? 'vertical' : 'horizontal') : orientation
-
-  if (resolved === 'vertical') {
-    return { x: link.midX, y: (link.y1 + link.y2) / 2, orientation: resolved }
-  }
-
-  return { x: (link.midX + link.x2) / 2, y: link.y2, orientation: resolved }
 }
 
 export function Dendrogram({
@@ -75,8 +70,7 @@ export function Dendrogram({
   onAddChild,
   onDelete,
   onToggleCollapse,
-  onEditEdgeLabel,
-  edgeLabelOrientation = 'auto'
+  onEditEdgeLabel
 }: DendrogramProps): React.JSX.Element {
   const { nodes, links, width, height } = React.useMemo(() => {
     const nodes: Placed[] = []
@@ -90,13 +84,32 @@ export function Dendrogram({
       return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
     }
 
-    // tidy-tree: лист получает свой ряд, родитель центрируется по детям
-    const layout = (event: DendroNode, depth: number): number => {
+    // 1) предпроход: самая длинная подпись на каждом уровне (учитываем свёрнутость)
+    const labelWByDepth: number[] = []
+    const scan = (node: DendroNode, depth: number): void => {
       maxDepth = Math.max(maxDepth, depth)
+      if (node.edgeLabel) {
+        labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
+      }
+      if (node.collapsed) return
+      childrenOf(node.id).forEach((kid) => scan(kid, depth + 1))
+    }
+    events.forEach((event) => scan(event, 0))
+
+    // 2) x-координаты колонок: зазор растягивается под подпись уровня
+    const colX: number[] = [0]
+    for (let d = 1; d <= maxDepth; d++) {
+      const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
+      const gap = labelW > 0 ? Math.max(BASE_GAP, STUB + labelW + LABEL_PAD) : BASE_GAP
+      colX[d] = colX[d - 1] + NODE_W + gap
+    }
+
+    // 3) раскладка: лист получает свой ряд, родитель центрируется по детям
+    const layout = (event: DendroNode, depth: number): number => {
       const allKids = childrenOf(event.id)
       const hasChildren = allKids.length > 0
       const kids = event.collapsed ? [] : allKids
-      const x = depth * COL_W
+      const x = colX[depth]
       let y: number
       if (kids.length === 0) {
         y = leaf * ROW_H + ROW_H / 2
@@ -105,14 +118,17 @@ export function Dendrogram({
         const childYs = kids.map((kid) => layout(kid, depth + 1))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
         kids.forEach((kid, idx) => {
-          const x2 = (depth + 1) * COL_W
-          const midX = x + NODE_W + (COL_W - NODE_W) / 2
+          const x1 = x + NODE_W
+          const x2 = colX[depth + 1]
+          const midX = x1 + STUB // вертикальная «шина» рядом с родителем
           links.push({
-            x1: x + NODE_W,
+            x1,
             y1: y,
             x2,
             y2: childYs[idx],
             midX,
+            labelX: (midX + x2) / 2, // по центру длинного захода к ребёнку
+            labelY: childYs[idx],
             child: kid
           })
         })
@@ -129,7 +145,7 @@ export function Dendrogram({
     }
 
     events.forEach((event) => layout(event, 0))
-    const width = (maxDepth + 1) * COL_W + 28
+    const width = colX[maxDepth] + NODE_W + 28
     const height = Math.max(leaf, 1) * ROW_H + 20
     return { nodes, links, width, height }
   }, [events, childrenOf])
@@ -149,21 +165,19 @@ export function Dendrogram({
             />
           ))}
         </svg>
-        {links.map((l) => {
-          if (!l.child.edgeLabel) return null
-          const label = getEdgeLabelPlacement(l, edgeLabelOrientation)
-          return (
+        {links.map((l) =>
+          l.child.edgeLabel ? (
             <button
               key={`lbl-${l.child.id}`}
-              className={`dendro-edge-label dendro-edge-label--${label.orientation}`}
-              style={{ left: label.x, top: label.y }}
+              className="dendro-edge-label"
+              style={{ left: l.labelX, top: l.labelY }}
               title="Изменить подпись связи"
               onClick={() => onEditEdgeLabel?.(l.child)}
             >
               {l.child.edgeLabel}
             </button>
-          )
-        })}
+          ) : null
+        )}
         {nodes.map(({ event, x, y, depth, hasChildren, hiddenCount }) => (
           <div
             key={event.id}

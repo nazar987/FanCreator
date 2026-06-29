@@ -6,18 +6,16 @@ import { Button } from '../../shared/ui/components'
 import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
-import {
-  EDGE_LABEL_ORIENTATIONS,
-  EDGE_LABEL_ORIENTATION_LABEL,
-  type EdgeLabelOrientation,
-  readEdgeLabelOrientation,
-  writeEdgeLabelOrientation
-} from '../../shared/edgeLabelOrientation'
+import { measureTextWidth } from '../../shared/measureText'
 
 const NODE_W = 200
 const NODE_H = 62
-const COL_W = 290
 const ROW_H = 90
+const BASE_GAP = 90 // зазор между уровнями, когда подписей нет
+const STUB = 26 // вывод от родителя до вертикальной «шины»
+const LABEL_PAD = 24 // воздух вокруг подписи на линии
+const LABEL_MAX = 230 // потолок ширины колонки под длинную подпись
+const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
 
 interface Placed {
   node: GenealogyNode
@@ -33,23 +31,9 @@ interface Link {
   x2: number
   y2: number
   midX: number
+  labelX: number
+  labelY: number
   child: GenealogyNode
-}
-
-const GENEALOGY_EDGE_LABEL_ORIENTATION_KEY = 'fancreator.genealogy.edgeLabelOrientation'
-
-const getEdgeLabelPlacement = (
-  link: Link,
-  orientation: EdgeLabelOrientation
-): { x: number; y: number; orientation: Exclude<EdgeLabelOrientation, 'auto'> } => {
-  const resolved =
-    orientation === 'auto' ? (Math.abs(link.y2 - link.y1) > ROW_H * 0.55 ? 'vertical' : 'horizontal') : orientation
-
-  if (resolved === 'vertical') {
-    return { x: link.midX, y: (link.y1 + link.y2) / 2, orientation: resolved }
-  }
-
-  return { x: (link.midX + link.x2) / 2, y: link.y2, orientation: resolved }
 }
 
 /** Дерево родословной (сверху-вниз по поколениям, слева-направо как дендрограмма). */
@@ -63,8 +47,7 @@ function GenealogyTree({
   onDelete,
   onToggleCollapse,
   onEditEdgeLabel,
-  onOpenCharacter,
-  edgeLabelOrientation
+  onOpenCharacter
 }: {
   g: GenealogyT
   childrenOf: (parentId: string | null) => GenealogyNode[]
@@ -76,7 +59,6 @@ function GenealogyTree({
   onToggleCollapse: (node: GenealogyNode) => void
   onEditEdgeLabel: (node: GenealogyNode) => void
   onOpenCharacter: (characterId: string) => void
-  edgeLabelOrientation: EdgeLabelOrientation
 }): React.JSX.Element {
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
@@ -134,12 +116,32 @@ function GenealogyTree({
       const kids = childrenOf(id)
       return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
     }
-    const layout = (node: GenealogyNode, depth: number): number => {
+
+    // предпроход: самая длинная подпись на каждом уровне (учитываем свёрнутость)
+    const labelWByDepth: number[] = []
+    const scan = (node: GenealogyNode, depth: number): void => {
       maxDepth = Math.max(maxDepth, depth)
+      if (node.edgeLabel) {
+        labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
+      }
+      if (node.collapsed) return
+      childrenOf(node.id).forEach((kid) => scan(kid, depth + 1))
+    }
+    childrenOf(null).forEach((n) => scan(n, 0))
+
+    // x-координаты колонок: зазор растягивается под подпись уровня
+    const colX: number[] = [0]
+    for (let d = 1; d <= maxDepth; d++) {
+      const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
+      const gap = labelW > 0 ? Math.max(BASE_GAP, STUB + labelW + LABEL_PAD) : BASE_GAP
+      colX[d] = colX[d - 1] + NODE_W + gap
+    }
+
+    const layout = (node: GenealogyNode, depth: number): number => {
       const allKids = childrenOf(node.id)
       const hasChildren = allKids.length > 0
       const kids = node.collapsed ? [] : allKids
-      const x = depth * COL_W
+      const x = colX[depth]
       let y: number
       if (kids.length === 0) {
         y = leaf * ROW_H + ROW_H / 2
@@ -148,14 +150,17 @@ function GenealogyTree({
         const childYs = kids.map((kid) => layout(kid, depth + 1))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
         kids.forEach((kid, idx) => {
-          const x2 = (depth + 1) * COL_W
-          const midX = x + NODE_W + (COL_W - NODE_W) / 2
+          const x1 = x + NODE_W
+          const x2 = colX[depth + 1]
+          const midX = x1 + STUB
           links.push({
-            x1: x + NODE_W,
+            x1,
             y1: y,
             x2,
             y2: childYs[idx],
             midX,
+            labelX: (midX + x2) / 2,
+            labelY: childYs[idx],
             child: kid
           })
         })
@@ -174,7 +179,7 @@ function GenealogyTree({
     return {
       nodes: placed,
       links,
-      width: (maxDepth + 1) * COL_W + 28,
+      width: colX[maxDepth] + NODE_W + 28,
       height: Math.max(leaf, 1) * ROW_H + 20
     }
   }, [g, childrenOf])
@@ -193,14 +198,12 @@ function GenealogyTree({
           />
         ))}
       </svg>
-      {links.map((l) => {
-        if (!l.child.edgeLabel) return null
-        const label = getEdgeLabelPlacement(l, edgeLabelOrientation)
-        return (
+      {links.map((l) =>
+        l.child.edgeLabel ? (
           <button
             key={`lbl-${l.child.id}`}
-            className={`dendro-edge-label dendro-edge-label--${label.orientation}`}
-            style={{ left: label.x, top: label.y }}
+            className="dendro-edge-label"
+            style={{ left: l.labelX, top: l.labelY }}
             title="Изменить подпись связи"
             onClick={(e) => {
               e.stopPropagation()
@@ -209,8 +212,8 @@ function GenealogyTree({
           >
             {l.child.edgeLabel}
           </button>
-        )
-      })}
+        ) : null
+      )}
       {nodes.map(({ node, x, y, depth, hasChildren, hiddenCount }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
@@ -309,9 +312,6 @@ export function Genealogy(): React.JSX.Element {
     [project]
   )
   const active = list.find((x) => x.id === activeId) ?? list[0]
-  const [edgeLabelOrientation, setEdgeLabelOrientation] = React.useState<EdgeLabelOrientation>(() =>
-    readEdgeLabelOrientation(GENEALOGY_EDGE_LABEL_ORIENTATION_KEY)
-  )
 
   if (!project) return <div className="dim">Проект не открыт</div>
 
@@ -403,11 +403,6 @@ export function Genealogy(): React.JSX.Element {
     if (c) openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
   }
 
-  const changeEdgeLabelOrientation = (value: EdgeLabelOrientation): void => {
-    setEdgeLabelOrientation(value)
-    writeEdgeLabelOrientation(GENEALOGY_EDGE_LABEL_ORIENTATION_KEY, value)
-  }
-
   return (
     <div className="genealogy genealogy--canvas">
       <div className="genealogy-bar">
@@ -446,20 +441,6 @@ export function Genealogy(): React.JSX.Element {
             <span className="dim genealogy-hint">
               Двойной клик по узлу — привязать персонажа или вписать текст. Ctrl+колесо — масштаб.
             </span>
-            <label className="edge-label-mode">
-              <span>Подписи</span>
-              <select
-                className="input"
-                value={edgeLabelOrientation}
-                onChange={(event) => changeEdgeLabelOrientation(event.target.value as EdgeLabelOrientation)}
-              >
-                {EDGE_LABEL_ORIENTATIONS.map((orientation) => (
-                  <option key={orientation} value={orientation}>
-                    {EDGE_LABEL_ORIENTATION_LABEL[orientation]}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
           {active.nodes.length === 0 ? (
             <div className="genealogy-empty dim">Пустое древо. Нажмите «Добавить корень».</div>
@@ -476,7 +457,6 @@ export function Genealogy(): React.JSX.Element {
                 onToggleCollapse={toggleCollapse}
                 onEditEdgeLabel={(node) => void editEdgeLabel(node)}
                 onOpenCharacter={openCharacter}
-                edgeLabelOrientation={edgeLabelOrientation}
               />
             </ZoomPan>
           )}
