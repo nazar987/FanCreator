@@ -77,6 +77,14 @@ function isTabAlive(p: Project, tab: OpenTab): boolean {
 }
 
 const sessionKey = (projectId: string): string => `fancreator.session.${projectId}`
+function hasStoredTheme(): boolean {
+  try {
+    return localStorage.getItem(THEME_KEY) != null
+  } catch {
+    return false
+  }
+}
+
 function loadSession(projectId: string): { tabs: OpenTab[]; activeTabId: string | null } | null {
   try {
     const raw = localStorage.getItem(sessionKey(projectId))
@@ -224,7 +232,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       setCurrent(p)
       setCharacterFolderId(null)
       setCharacterFolderNonce(0)
-      if (p.theme) applyThemeLocal(p.theme)
+      if (p.theme && !hasStoredTheme()) applyThemeLocal(p.theme)
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
       // восстановление вкладок прошлой сессии (как в браузере)
