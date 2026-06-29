@@ -1477,7 +1477,8 @@ export function Sidebar(): React.JSX.Element {
                   title="Открыть раздел персонажей"
                   onClick={(e) => {
                     e.stopPropagation()
-                    openTab({ id: 'characters', kind: 'characters', title: 'Персонажи' })
+                    // в корень раздела (список всех папок), а не в последнюю папку
+                    goToCharacterFolder(null)
                   }}
                 >
                   <ArrowRight size={14} />
