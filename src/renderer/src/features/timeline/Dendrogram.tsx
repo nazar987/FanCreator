@@ -99,7 +99,7 @@ export function Dendrogram({
             x2,
             y2: childYs[idx],
             midX,
-            labelX: (midX + x2) / 2,
+            labelX: midX,
             labelY: childYs[idx],
             child: kid
           })

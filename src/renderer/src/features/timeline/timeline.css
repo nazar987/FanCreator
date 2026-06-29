@@ -334,28 +334,29 @@
   color: var(--text);
 }
 
-/* подпись связи между блоками (на линии-соединителе) */
+/* подпись связи между блоками — тихий ярлычок прямо на линии-соединителе
+   (по центру промежутка, перекрывает линию своим фоном) */
 .dendro-edge-label {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 2;
-  max-width: 130px;
-  padding: 2px 8px;
-  border: 1px solid var(--stroke-strong);
-  border-radius: 999px;
-  background: var(--panel-solid);
-  color: var(--text-dim);
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.2;
+  max-width: 84px;
+  padding: 1px 6px;
+  border: none;
+  border-radius: var(--r-sm, 6px);
+  background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
+  color: var(--text-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+  transition: color var(--t-fast), background var(--t-fast);
 }
 .dendro-edge-label:hover {
-  border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--text);
 }
