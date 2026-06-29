@@ -411,7 +411,10 @@ export function Characters(): React.JSX.Element {
 
   React.useEffect(() => {
     if (!current || characterFolderNonce === 0) return
+    // переход «зайти в папку» (стрелка в дереве) — открываем папку с её
+    // содержимым в разделе «Персонажи», а не оставляем на «Родословных»
     setFolderId(characterFolderId)
+    setSection('characters')
   }, [current?.id, characterFolderId, characterFolderNonce])
 
   React.useEffect(() => {

@@ -33,6 +33,7 @@ function GenealogyTree({
   characterById,
   onAddChild,
   onEditNode,
+  onEditText,
   onDelete,
   onOpenCharacter
 }: {
@@ -41,9 +42,57 @@ function GenealogyTree({
   characterById: (id: string) => { name: string; color?: string } | undefined
   onAddChild: (parentId: string | null) => void
   onEditNode: (node: GenealogyNode, e: React.MouseEvent) => void
+  onEditText: (node: GenealogyNode, title: string) => void
   onDelete: (node: GenealogyNode) => void
   onOpenCharacter: (characterId: string) => void
 }): React.JSX.Element {
+  const [editingId, setEditingId] = React.useState<string | null>(null)
+  const [draft, setDraft] = React.useState('')
+  const cancelEditRef = React.useRef(false)
+  const openCharacterTimerRef = React.useRef<number | null>(null)
+
+  const startTextEdit = (node: GenealogyNode): void => {
+    if (openCharacterTimerRef.current != null) {
+      window.clearTimeout(openCharacterTimerRef.current)
+      openCharacterTimerRef.current = null
+    }
+    cancelEditRef.current = false
+    setEditingId(node.id)
+    setDraft(node.title ?? '')
+  }
+
+  const finishTextEdit = (node: GenealogyNode): void => {
+    if (editingId !== node.id) return
+    if (cancelEditRef.current) {
+      cancelEditRef.current = false
+      setEditingId(null)
+      return
+    }
+    onEditText(node, draft.trim())
+    setEditingId(null)
+  }
+
+  const cancelTextEdit = (): void => {
+    cancelEditRef.current = true
+    setEditingId(null)
+  }
+
+  const handleCharacterClick = (characterId: string | null | undefined): void => {
+    if (!characterId) return
+    if (openCharacterTimerRef.current != null) window.clearTimeout(openCharacterTimerRef.current)
+    openCharacterTimerRef.current = window.setTimeout(() => {
+      onOpenCharacter(characterId)
+      openCharacterTimerRef.current = null
+    }, 180)
+  }
+
+  React.useEffect(
+    () => () => {
+      if (openCharacterTimerRef.current != null) window.clearTimeout(openCharacterTimerRef.current)
+    },
+    []
+  )
+
   const { nodes, links, width, height } = React.useMemo(() => {
     const placed: Placed[] = []
     const links: Link[] = []
@@ -99,13 +148,34 @@ function GenealogyTree({
       {nodes.map(({ node, x, y, depth }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
+        const isEditing = editingId === node.id
         return (
           <div
             key={node.id}
             className={`dendro-node genealogy-node ${depth === 0 ? 'dendro-node--root' : ''}`}
             style={{ left: x, top: y - NODE_H / 2, width: NODE_W, minHeight: NODE_H }}
-            onDoubleClick={(e) => onEditNode(node, e)}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              startTextEdit(node)
+            }}
           >
+            {isEditing ? (
+              <input
+                className="genealogy-node-input"
+                value={draft}
+                autoFocus
+                placeholder="Персонаж или текст..."
+                onChange={(event) => setDraft(event.target.value)}
+                onFocus={(event) => event.currentTarget.select()}
+                onBlur={() => finishTextEdit(node)}
+                onClick={(event) => event.stopPropagation()}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Escape') cancelTextEdit()
+                }}
+              />
+            ) : (
             <div
               className={`genealogy-node-label ${ch ? 'is-character' : ''}`}
               onClick={() => ch && node.characterId && onOpenCharacter(node.characterId)}
@@ -118,6 +188,7 @@ function GenealogyTree({
                 <span className="dendro-node-placeholder">Персонаж или текст…</span>
               )}
             </div>
+            )}
             <div className="dendro-node-actions">
               <button title="Добавить потомка" onClick={(e) => { e.stopPropagation(); onAddChild(node.id) }}>
                 <Plus size={13} />
@@ -228,6 +299,9 @@ export function Genealogy(): React.JSX.Element {
         : [])
     ])
   }
+  const editNodeText = (node: GenealogyNode, title: string): void => {
+    void updateNode(node, { title, characterId: null })
+  }
   const openCharacter = (characterId: string): void => {
     const c = project.characters.find((x) => x.id === characterId)
     if (c) openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
@@ -282,6 +356,7 @@ export function Genealogy(): React.JSX.Element {
                 characterById={characterById}
                 onAddChild={(parentId) => void addNode(parentId)}
                 onEditNode={editNode}
+                onEditText={editNodeText}
                 onDelete={(node) => void deleteNode(node)}
                 onOpenCharacter={openCharacter}
               />
