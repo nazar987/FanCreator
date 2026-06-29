@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Trash2, GitBranchPlus, Pencil } from 'lucide-react'
+import { Plus, Trash2, GitBranchPlus, Pencil, Tag, ChevronRight, ChevronDown } from 'lucide-react'
 import type { Genealogy as GenealogyT, GenealogyNode } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
@@ -17,6 +17,8 @@ interface Placed {
   x: number
   y: number
   depth: number
+  hasChildren: boolean
+  hiddenCount: number
 }
 interface Link {
   x1: number
@@ -24,6 +26,9 @@ interface Link {
   x2: number
   y2: number
   midX: number
+  labelX: number
+  labelY: number
+  child: GenealogyNode
 }
 
 /** Дерево родословной (сверху-вниз по поколениям, слева-направо как дендрограмма). */
@@ -35,6 +40,8 @@ function GenealogyTree({
   onEditNode,
   onEditText,
   onDelete,
+  onToggleCollapse,
+  onEditEdgeLabel,
   onOpenCharacter
 }: {
   g: GenealogyT
@@ -44,6 +51,8 @@ function GenealogyTree({
   onEditNode: (node: GenealogyNode, e: React.MouseEvent) => void
   onEditText: (node: GenealogyNode, title: string) => void
   onDelete: (node: GenealogyNode) => void
+  onToggleCollapse: (node: GenealogyNode) => void
+  onEditEdgeLabel: (node: GenealogyNode) => void
   onOpenCharacter: (characterId: string) => void
 }): React.JSX.Element {
   const [editingId, setEditingId] = React.useState<string | null>(null)
@@ -98,9 +107,15 @@ function GenealogyTree({
     const links: Link[] = []
     let leaf = 0
     let maxDepth = 0
+    const countDescendants = (id: string): number => {
+      const kids = childrenOf(id)
+      return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
+    }
     const layout = (node: GenealogyNode, depth: number): number => {
       maxDepth = Math.max(maxDepth, depth)
-      const kids = childrenOf(node.id)
+      const allKids = childrenOf(node.id)
+      const hasChildren = allKids.length > 0
+      const kids = node.collapsed ? [] : allKids
       const x = depth * COL_W
       let y: number
       if (kids.length === 0) {
@@ -109,17 +124,29 @@ function GenealogyTree({
       } else {
         const childYs = kids.map((kid) => layout(kid, depth + 1))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
-        kids.forEach((_, idx) => {
+        kids.forEach((kid, idx) => {
+          const x2 = (depth + 1) * COL_W
+          const midX = x + NODE_W + (COL_W - NODE_W) / 2
           links.push({
             x1: x + NODE_W,
             y1: y,
-            x2: (depth + 1) * COL_W,
+            x2,
             y2: childYs[idx],
-            midX: x + NODE_W + (COL_W - NODE_W) / 2
+            midX,
+            labelX: (midX + x2) / 2,
+            labelY: childYs[idx],
+            child: kid
           })
         })
       }
-      placed.push({ node, x, y, depth })
+      placed.push({
+        node,
+        x,
+        y,
+        depth,
+        hasChildren,
+        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0
+      })
       return y
     }
     childrenOf(null).forEach((n) => layout(n, 0))
@@ -145,14 +172,32 @@ function GenealogyTree({
           />
         ))}
       </svg>
-      {nodes.map(({ node, x, y, depth }) => {
+      {links.map((l) =>
+        l.child.edgeLabel ? (
+          <button
+            key={`lbl-${l.child.id}`}
+            className="dendro-edge-label"
+            style={{ left: l.labelX, top: l.labelY }}
+            title="Изменить подпись связи"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEditEdgeLabel(l.child)
+            }}
+          >
+            {l.child.edgeLabel}
+          </button>
+        ) : null
+      )}
+      {nodes.map(({ node, x, y, depth, hasChildren, hiddenCount }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
         const isEditing = editingId === node.id
         return (
           <div
             key={node.id}
-            className={`dendro-node genealogy-node ${depth === 0 ? 'dendro-node--root' : ''}`}
+            className={`dendro-node genealogy-node ${depth === 0 ? 'dendro-node--root' : ''} ${
+              node.collapsed ? 'dendro-node--collapsed' : ''
+            }`}
             style={{ left: x, top: y - NODE_H / 2, width: NODE_W, minHeight: NODE_H }}
             onDoubleClick={(e) => {
               e.stopPropagation()
@@ -189,10 +234,28 @@ function GenealogyTree({
               )}
             </div>
             )}
+            {hasChildren && (
+              <button
+                className="dendro-node-collapse"
+                title={node.collapsed ? `Развернуть (скрыто: ${hiddenCount})` : 'Свернуть узел'}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleCollapse(node)
+                }}
+              >
+                {node.collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                {node.collapsed && <span className="dendro-node-count">{hiddenCount}</span>}
+              </button>
+            )}
             <div className="dendro-node-actions">
               <button title="Добавить потомка" onClick={(e) => { e.stopPropagation(); onAddChild(node.id) }}>
                 <Plus size={13} />
               </button>
+              {depth > 0 && (
+                <button title="Подписать связь с родителем" onClick={(e) => { e.stopPropagation(); onEditEdgeLabel(node) }}>
+                  <Tag size={12} />
+                </button>
+              )}
               <button title="Изменить" onClick={(e) => { e.stopPropagation(); onEditNode(node, e) }}>
                 <Pencil size={12} />
               </button>
@@ -302,6 +365,13 @@ export function Genealogy(): React.JSX.Element {
   const editNodeText = (node: GenealogyNode, title: string): void => {
     void updateNode(node, { title, characterId: null })
   }
+  const toggleCollapse = (node: GenealogyNode): void => {
+    void updateNode(node, { collapsed: !node.collapsed })
+  }
+  const editEdgeLabel = async (node: GenealogyNode): Promise<void> => {
+    const edgeLabel = await promptText({ title: 'Подпись связи', initial: node.edgeLabel ?? '' })
+    if (edgeLabel != null) void updateNode(node, { edgeLabel })
+  }
   const openCharacter = (characterId: string): void => {
     const c = project.characters.find((x) => x.id === characterId)
     if (c) openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
@@ -358,6 +428,8 @@ export function Genealogy(): React.JSX.Element {
                 onEditNode={editNode}
                 onEditText={editNodeText}
                 onDelete={(node) => void deleteNode(node)}
+                onToggleCollapse={toggleCollapse}
+                onEditEdgeLabel={(node) => void editEdgeLabel(node)}
                 onOpenCharacter={openCharacter}
               />
             </ZoomPan>

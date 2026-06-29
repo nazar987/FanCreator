@@ -778,10 +778,10 @@ export function registerIpc(): void {
     })
   )
 
-  ipcMain.handle('hierarchyNodes:update', (_e, { projectId, hierarchyId, nodeId, title }) =>
+  ipcMain.handle('hierarchyNodes:update', (_e, { projectId, hierarchyId, nodeId, patch }) =>
     mutate(projectId, (p) => {
       const node = p.hierarchies?.find((item) => item.id === hierarchyId)?.nodes.find((item) => item.id === nodeId)
-      if (node) node.title = title
+      if (node) Object.assign(node, patch)
     })
   )
 

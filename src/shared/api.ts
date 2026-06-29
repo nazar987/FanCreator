@@ -13,6 +13,7 @@ import type {
   BoardArrow,
   TimelineEvent,
   Hierarchy,
+  HierarchyNode,
   GenealogyNode
 } from './types'
 
@@ -182,7 +183,12 @@ export interface FanCreatorApi {
   }
   hierarchyNodes: {
     add(input: { projectId: string; hierarchyId: string; parentId: string | null; title: string }): Promise<Project | null>
-    update(input: { projectId: string; hierarchyId: string; nodeId: string; title: string }): Promise<Project | null>
+    update(input: {
+      projectId: string
+      hierarchyId: string
+      nodeId: string
+      patch: Partial<Pick<HierarchyNode, 'title' | 'edgeLabel' | 'collapsed'>>
+    }): Promise<Project | null>
     delete(input: { projectId: string; hierarchyId: string; nodeId: string }): Promise<Project | null>
     reorder(input: {
       projectId: string
@@ -208,7 +214,7 @@ export interface FanCreatorApi {
       projectId: string
       genealogyId: string
       nodeId: string
-      patch: Partial<Pick<GenealogyNode, 'characterId' | 'title' | 'parentId' | 'order'>>
+      patch: Partial<Pick<GenealogyNode, 'characterId' | 'title' | 'parentId' | 'order' | 'edgeLabel' | 'collapsed'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; genealogyId: string; nodeId: string }): Promise<Project | null>
   }

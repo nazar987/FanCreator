@@ -45,6 +45,10 @@ export interface HierarchyNode {
   id: string
   parentId: string | null
   title: string
+  /** Подпись на связи от родителя к этому узлу (на линии-соединителе). */
+  edgeLabel?: string
+  /** Узел свёрнут: его потомки скрыты, но хранятся внутри. */
+  collapsed?: boolean
 }
 
 /** Узел родословной: привязан к персонажу проекта или свободный текст. */
@@ -54,6 +58,10 @@ export interface GenealogyNode {
   characterId?: string | null
   title?: string
   order: number
+  /** Подпись на связи от родителя к этому узлу (на линии-соединителе). */
+  edgeLabel?: string
+  /** Узел свёрнут: его потомки скрыты, но хранятся внутри. */
+  collapsed?: boolean
 }
 
 /** Родословная (дерево) — живёт в разделе «Персонажи», опц. внутри папки. */
