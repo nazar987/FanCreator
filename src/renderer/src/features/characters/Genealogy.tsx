@@ -178,7 +178,7 @@ function GenealogyTree({
             ) : (
             <div
               className={`genealogy-node-label ${ch ? 'is-character' : ''}`}
-              onClick={() => ch && node.characterId && onOpenCharacter(node.characterId)}
+              onClick={() => handleCharacterClick(ch ? node.characterId : null)}
               title={ch ? 'Открыть персонажа' : undefined}
             >
               {ch && <span className="genealogy-dot" style={{ background: ch.color ?? '#7aa2f7' }} />}
