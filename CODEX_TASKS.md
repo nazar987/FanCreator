@@ -1265,3 +1265,84 @@ Toolbar.tsx, *Delete.ts, FontSize.ts, PageBreak.ts) — там идут прав
   (tree-row--active) — нужно добавить индикацию предков. Путь считать по
   chapter.parentId → story → folder.parentId.
   **Приёмка:** открыл главу в глубокой папке — видно (подсветкой) цепочку папок до неё.
+
+# ФАЗА 16 — фидбэк по v2.1.0 (Codex)
+
+- **T-M1 — Цвет узлов в разделе «Деревья» (Medium).**
+  Заказчица: «добавить корень → выбрать ему цвет → все ветки (потомки) того же
+  цвета; и чтобы можно было каждый узел потом перекрасить отдельно». Цель —
+  визуально различать ветки, когда корней/веток много и текст сливается.
+
+  **ВАЖНО — область:** только самостоятельный раздел **«Деревья»**
+  (`HierarchyView.tsx` + общий `Dendrogram.tsx`). Родословные (`Genealogy.tsx`)
+  НЕ трогать — там цвет уже берётся от привязанного персонажа.
+  `Dendrogram.tsx` лежит в `features/timeline/`, это НЕ редактор — трогать можно.
+  НО НЕ СЛОМАЙ недавние фичи в этих файлах: авто-размер блоков, сворачивание
+  узлов (collapsed), инлайн-подписи связей (onSetEdgeLabel). Просто добавляй
+  цвет рядом, по аналогии.
+
+  **1) Данные** (`src/shared/types.ts`): в интерфейс `HierarchyNode` добавь
+  `color?: string` (рядом с `edgeLabel?`, `collapsed?`). Коммент: «цвет узла;
+  если не задан — наследуется от ближайшего предка с цветом».
+
+  **2) API-тип** (`src/shared/api.ts`): в `hierarchyNodes.update` расширь
+  `patch: Partial<Pick<HierarchyNode, 'title' | 'edgeLabel' | 'collapsed'>>` →
+  добавь `'color'`. Обработчик в main НЕ меняй — `hierarchyNodes:update` уже
+  делает `Object.assign(node, patch)`.
+
+  **3) Dendrogram** (`src/renderer/src/features/timeline/Dendrogram.tsx`):
+  - В `interface DendroNode` добавь `color?: string`.
+  - В `DendrogramProps` добавь `onSetColor?: (event: DendroNode, color: string) => void`.
+  - **Наследование цвета** считается при раскладке (родитель обрабатывается
+    раньше детей): в рекурсии `layout(node, depth)` протяни параметр
+    `inheritedColor: string | undefined`. Эффективный цвет узла:
+    `const color = node.color || inheritedColor`. Передавай `color` детям
+    (`layout(kid, depth + 1, color)`) и сохрани его в `Placed` (добавь поле
+    `color?: string`).
+  - **Применение цвета** к блоку: если у узла есть эффективный `color` — задай
+    инлайном рамку и лёгкую подсветку, напр.
+    `style={{ ..., borderColor: color, boxShadow: '0 0 0 1px ' + color + ' inset' }}`
+    (или фон-тинт через `color`). Если цвета нет — НИЧЕГО не задавай инлайном,
+    оставь дефолт из CSS (`.dendro-node` использует var(--stroke-strong) и т.д.).
+    Не хардкодь дефолтные цвета — только пользовательский идёт инлайном.
+  - **Кнопка цвета** в `.dendro-node-actions` (рядом с Plus/Tag/✎/Trash2):
+    иконка `Palette` из `lucide-react`. По клику открывай палитру у курсора:
+    ```ts
+    import { openColorPicker } from '../../shared/ui/ColorPalette'
+    // в onClick (после e.stopPropagation()):
+    openColorPicker({
+      value: event.color,            // текущий ЭФФЕКТИВНЫЙ цвет узла
+      title: 'Цвет узла',
+      onChange: (c) => onSetColor?.(event, c),
+      onClear: () => onSetColor?.(event, ''),   // сброс → снова наследует
+      clearLabel: 'Как у родителя'
+    })
+    ```
+    (`ColorPickerHost` уже смонтирован в приложении — отдельно ничего не нужно.)
+
+  **4) HierarchyView** (`src/renderer/src/features/hierarchy/HierarchyView.tsx`):
+  - В `asEvent(n)` добавь `color: n.color` в возвращаемый `DendroNode`.
+  - Добавь хэндлер:
+    ```ts
+    const setColor = async (ev: DendroNode, color: string): Promise<void> => {
+      applyProject(
+        await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { color } })
+      )
+    }
+    ```
+  - Передай в `<Dendrogram ... onSetColor={(ev, c) => void setColor(ev, c)} />`.
+
+  **Тонкость наследования:** в `onSetColor` сохраняем именно `node.color` (своё),
+  а в палитру (`value`) и в рендер подаём ЭФФЕКТИВНЫЙ (своё ?? унаследованное).
+  Пустая строка `''` в `color` = «нет своего цвета» → узел снова наследует от
+  предка (в `layout` проверяй `node.color || inheritedColor`, пустая строка
+  ложная — наследование сработает само).
+
+  **Приёмка:**
+  - Создал корень, задал ему цвет → корень и все потомки окрасились.
+  - Перекрасил один из потомков → он и его поддерево стали новым цветом, соседние
+    ветки не изменились.
+  - «Как у родителя» на узле → он снова берёт цвет предка.
+  - Цвет сохраняется после перезапуска. `npm run typecheck` — 0 ошибок.
+  - Сворачивание узлов, инлайн-подписи связей и авто-размер блоков по-прежнему
+    работают (ничего не сломано).

@@ -139,10 +139,10 @@ export const WordDelete = Extension.create({
             // пустой пункт — делаем «без номера» (пустая строка), нумерация ниже
             // продолжается автоматически (S-H3, как в Word)
             if ($from.node(d).textContent.length === 0) return blankOutEmptyListItem(editor)
-            // первый непустой пункт — выводим из списка (текст сохраняется)
-            if ($from.index(d - 1) === 0) return editor.chain().liftListItem('listItem').run()
-            // средний/последний непустой — обычное слияние с предыдущим пунктом
-            return false
+            // непустой пункт: Backspace в начале строки СНИМАЕТ номер и оставляет
+            // текст на той же строке (выводим из списка), а не сливает с прошлым
+            // пунктом (как в Word). Работает для любого пункта, не только первого.
+            return editor.chain().liftListItem('listItem').run()
           }
         }
         return false

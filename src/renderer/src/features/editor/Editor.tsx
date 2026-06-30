@@ -15,6 +15,48 @@ interface EditorProps {
 }
 
 /**
+ * Заголовок главы («глава N», «пролог», «эпилог», «часть …») не должен приходить
+ * пунктом нумерованного списка. Находим такие короткие пункты и выносим их из
+ * списка обычным абзацем (номер не появляется). Список при этом корректно
+ * разбивается: пункты до — остаются, после — образуют новый список.
+ */
+function isChapterHeadingText(text: string): boolean {
+  const t = text.replace(/ /g, ' ').trim()
+  if (!t) return false
+  return /^(глава|пролог|эпилог|часть)\b/i.test(t) && t.split(/\s+/).length <= 4
+}
+
+function liftChapterListItems(doc: Document): void {
+  for (let guard = 0; guard < 300; guard++) {
+    const li = Array.from(doc.querySelectorAll('li')).find((el) =>
+      isChapterHeadingText(el.textContent || '')
+    )
+    if (!li) return
+    const list = li.parentElement
+    if (!list || (list.tagName !== 'OL' && list.tagName !== 'UL')) {
+      li.replaceWith(...Array.from(li.childNodes))
+      continue
+    }
+    const para = doc.createElement('p')
+    para.innerHTML = li.innerHTML
+    const rest: Element[] = []
+    let sib = li.nextElementSibling
+    while (sib) {
+      rest.push(sib)
+      sib = sib.nextElementSibling
+    }
+    list.after(para)
+    if (rest.length) {
+      const tail = doc.createElement(list.tagName.toLowerCase())
+      rest.forEach((el) => tail.appendChild(el))
+      para.after(tail)
+    }
+    li.remove()
+    if (!list.querySelector('li')) list.remove()
+  }
+}
+
+/**
  * Сжимает картинку до разумного размера перед сохранением — чтобы гигантские
  * изображения не съедали память (вылет Oilpan OOM) и не раздували файлы.
  */
@@ -257,6 +299,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
             const text = (p.textContent || '').replace(/ /g, ' ').trim()
             if (!text && !p.querySelector('img')) p.remove()
           })
+          // «глава N» (пролог/эпилог/часть) не должна приходить нумерованным пунктом —
+          // выносим такую короткую строку из списка обычным абзацем (без номера)
+          liftChapterListItems(doc)
           return doc.body.innerHTML
         } catch {
           return html
