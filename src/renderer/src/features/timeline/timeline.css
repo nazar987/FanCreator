@@ -295,14 +295,14 @@
   background: linear-gradient(160deg, var(--accent-soft), var(--surface-2, var(--panel-solid)));
 }
 .dendro-node-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  /* показываем ПОЛНЫЙ текст: блок растёт по высоте, длинные слова переносятся */
   font-weight: 600;
   font-size: 13.5px;
   line-height: 1.3;
   color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .dendro-node-actions {
   position: absolute;
@@ -361,6 +361,23 @@
 .dendro-edge-label:hover {
   background: var(--accent-soft);
   color: var(--text);
+}
+/* инлайн-редактор подписи связи (как на доске) — на месте подписи, над линией */
+.dendro-edge-input {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 6px));
+  z-index: 3;
+  min-width: 90px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--stroke));
+  border-radius: 8px;
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* свёрнутый узел: глушим вид + кнопка сворачивания со счётчиком скрытых */

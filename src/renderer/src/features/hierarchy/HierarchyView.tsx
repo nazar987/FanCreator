@@ -56,9 +56,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
       })
     )
   }
-  const editEdgeLabel = async (ev: DendroNode): Promise<void> => {
-    const edgeLabel = await promptText({ title: 'Подпись связи', initial: ev.edgeLabel ?? '' })
-    if (edgeLabel == null) return
+  const setEdgeLabel = async (ev: DendroNode, edgeLabel: string): Promise<void> => {
     applyProject(
       await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { edgeLabel } })
     )
@@ -87,7 +85,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
               onAddChild={(ev) => void addNode(ev.id)}
               onDelete={(ev) => void deleteNode(ev)}
               onToggleCollapse={(ev) => void toggleCollapse(ev)}
-              onEditEdgeLabel={(ev) => void editEdgeLabel(ev)}
+              onSetEdgeLabel={(ev, value) => void setEdgeLabel(ev, value)}
             />
           </ZoomPan>
         )}

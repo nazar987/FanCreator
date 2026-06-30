@@ -906,9 +906,16 @@
 .genealogy-node-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-weight: 600;
   padding-right: 4px;
+}
+/* полное имя узла: переносится, блок растёт — никаких «…» */
+.genealogy-node-name {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .genealogy-node-label.is-character {
   cursor: pointer;

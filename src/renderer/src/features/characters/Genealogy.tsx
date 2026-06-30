@@ -8,19 +8,40 @@ import { openContextMenu } from '../../shared/ui/ContextMenu'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
 import { measureTextWidth } from '../../shared/measureText'
 
-const NODE_W = 200
-const NODE_H = 62
-const ROW_H = 90
-const BASE_GAP = 90 // зазор между уровнями, когда подписей нет
+// блок авто-размера: ширина растёт под полный текст до максимума, дальше перенос
+const NODE_MIN_W = 150
+const NODE_MAX_W = 320
+const NODE_MIN_H = 56
+const NODE_PAD_X = 30
+const NODE_PAD_Y = 26
+const LINE_H = 18
+const DOT_W = 16 // место под цветную точку персонажа
+const NODE_FONT = '600 13.5px Inter, system-ui, sans-serif'
+
+const ROW_GAP = 26 // вертикальный зазор между блоками
 const STUB = 26 // вывод от родителя до вертикальной «шины»
-const LABEL_PAD = 24 // воздух вокруг подписи на линии
-const LABEL_MAX = 230 // потолок ширины колонки под длинную подпись
+const LEAD_MIN = 42 // мин. горизонтальный заход к ребёнку
+const LABEL_PAD = 24
+const LABEL_MAX = 230
 const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
+
+const clamp = (min: number, v: number, max: number): number => Math.max(min, Math.min(v, max))
+
+function nodeSize(text: string, hasDot: boolean): { w: number; h: number } {
+  const t = text || 'Персонаж или текст…'
+  const textW = measureTextWidth(t, NODE_FONT) + (hasDot ? DOT_W : 0)
+  const w = clamp(NODE_MIN_W, textW + NODE_PAD_X, NODE_MAX_W)
+  const lines = Math.max(1, Math.ceil(textW / (w - NODE_PAD_X)))
+  const h = Math.max(NODE_MIN_H, lines * LINE_H + NODE_PAD_Y)
+  return { w, h }
+}
 
 interface Placed {
   node: GenealogyNode
   x: number
   y: number
+  w: number
+  h: number
   depth: number
   hasChildren: boolean
   hiddenCount: number
@@ -46,7 +67,7 @@ function GenealogyTree({
   onEditText,
   onDelete,
   onToggleCollapse,
-  onEditEdgeLabel,
+  onSetEdgeLabel,
   onOpenCharacter
 }: {
   g: GenealogyT
@@ -57,13 +78,29 @@ function GenealogyTree({
   onEditText: (node: GenealogyNode, title: string) => void
   onDelete: (node: GenealogyNode) => void
   onToggleCollapse: (node: GenealogyNode) => void
-  onEditEdgeLabel: (node: GenealogyNode) => void
+  onSetEdgeLabel: (node: GenealogyNode, value: string) => void
   onOpenCharacter: (characterId: string) => void
 }): React.JSX.Element {
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
   const cancelEditRef = React.useRef(false)
   const openCharacterTimerRef = React.useRef<number | null>(null)
+
+  // инлайн-редактор подписи связи (как на доске, без всплывающего окна)
+  const [editEdgeId, setEditEdgeId] = React.useState<string | null>(null)
+  const [edgeDraft, setEdgeDraft] = React.useState('')
+  const cancelEdgeRef = React.useRef(false)
+  const startEdge = (node: GenealogyNode): void => {
+    cancelEdgeRef.current = false
+    setEdgeDraft(node.edgeLabel ?? '')
+    setEditEdgeId(node.id)
+  }
+  const finishEdge = (node: GenealogyNode): void => {
+    if (editEdgeId !== node.id) return
+    if (!cancelEdgeRef.current) onSetEdgeLabel(node, edgeDraft.trim())
+    cancelEdgeRef.current = false
+    setEditEdgeId(null)
+  }
 
   const startTextEdit = (node: GenealogyNode): void => {
     if (openCharacterTimerRef.current != null) {
@@ -110,17 +147,26 @@ function GenealogyTree({
   const { nodes, links, width, height } = React.useMemo(() => {
     const placed: Placed[] = []
     const links: Link[] = []
-    let leaf = 0
     let maxDepth = 0
     const countDescendants = (id: string): number => {
       const kids = childrenOf(id)
       return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
     }
+    const labelOf = (node: GenealogyNode): { text: string; hasDot: boolean } => {
+      const ch = node.characterId ? characterById(node.characterId) : undefined
+      return { text: ch?.name || node.title || '', hasDot: !!ch }
+    }
 
-    // предпроход: самая длинная подпись на каждом уровне (учитываем свёрнутость)
+    // 1) предпроход: размеры блоков, ширина колонок, длина подписей по уровням
+    const sizeMap = new Map<string, { w: number; h: number }>()
+    const colW: number[] = []
     const labelWByDepth: number[] = []
     const scan = (node: GenealogyNode, depth: number): void => {
       maxDepth = Math.max(maxDepth, depth)
+      const lbl = labelOf(node)
+      const s = nodeSize(lbl.text, lbl.hasDot)
+      sizeMap.set(node.id, s)
+      colW[depth] = Math.max(colW[depth] ?? 0, s.w)
       if (node.edgeLabel) {
         labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
       }
@@ -129,30 +175,33 @@ function GenealogyTree({
     }
     childrenOf(null).forEach((n) => scan(n, 0))
 
-    // x-координаты колонок: зазор растягивается под подпись уровня
+    // 2) x-координаты колонок: ширина колонки + зазор под подпись уровня
     const colX: number[] = [0]
     for (let d = 1; d <= maxDepth; d++) {
       const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
-      const gap = labelW > 0 ? Math.max(BASE_GAP, STUB + labelW + LABEL_PAD) : BASE_GAP
-      colX[d] = colX[d - 1] + NODE_W + gap
+      const lead = labelW > 0 ? labelW + LABEL_PAD : LEAD_MIN
+      colX[d] = colX[d - 1] + (colW[d - 1] ?? NODE_MIN_W) + STUB + lead
     }
 
+    // 3) раскладка: вертикальный курсор по фактической высоте блоков
+    let cursor = 0
     const layout = (node: GenealogyNode, depth: number): number => {
+      const s = sizeMap.get(node.id) ?? nodeSize('', false)
       const allKids = childrenOf(node.id)
       const hasChildren = allKids.length > 0
       const kids = node.collapsed ? [] : allKids
       const x = colX[depth]
       let y: number
       if (kids.length === 0) {
-        y = leaf * ROW_H + ROW_H / 2
-        leaf++
+        y = cursor + s.h / 2
+        cursor += s.h + ROW_GAP
       } else {
         const childYs = kids.map((kid) => layout(kid, depth + 1))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
+        const x1 = x + s.w
+        const midX = x1 + STUB
+        const x2 = colX[depth + 1]
         kids.forEach((kid, idx) => {
-          const x1 = x + NODE_W
-          const x2 = colX[depth + 1]
-          const midX = x1 + STUB
           links.push({
             x1,
             y1: y,
@@ -169,6 +218,8 @@ function GenealogyTree({
         node,
         x,
         y,
+        w: s.w,
+        h: s.h,
         depth,
         hasChildren,
         hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0
@@ -179,10 +230,10 @@ function GenealogyTree({
     return {
       nodes: placed,
       links,
-      width: colX[maxDepth] + NODE_W + 28,
-      height: Math.max(leaf, 1) * ROW_H + 20
+      width: colX[maxDepth] + (colW[maxDepth] ?? NODE_MIN_W) + 28,
+      height: Math.max(cursor, NODE_MIN_H) + 12
     }
-  }, [g, childrenOf])
+  }, [g, childrenOf, characterById])
 
   return (
     <div className="dendro" style={{ width, height }}>
@@ -198,8 +249,31 @@ function GenealogyTree({
           />
         ))}
       </svg>
-      {links.map((l) =>
-        l.child.edgeLabel ? (
+      {links.map((l) => {
+        if (editEdgeId === l.child.id) {
+          return (
+            <input
+              key={`lbl-${l.child.id}`}
+              className="dendro-edge-input"
+              style={{ left: l.labelX, top: l.labelY, width: clamp(90, edgeDraft.length * 8 + 26, 260) }}
+              value={edgeDraft}
+              autoFocus
+              placeholder="подпись…"
+              onChange={(e) => setEdgeDraft(e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
+              onBlur={() => finishEdge(l.child)}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+                if (e.key === 'Escape') {
+                  cancelEdgeRef.current = true
+                  e.currentTarget.blur()
+                }
+              }}
+            />
+          )
+        }
+        return l.child.edgeLabel ? (
           <button
             key={`lbl-${l.child.id}`}
             className="dendro-edge-label"
@@ -207,14 +281,14 @@ function GenealogyTree({
             title="Изменить подпись связи"
             onClick={(e) => {
               e.stopPropagation()
-              onEditEdgeLabel(l.child)
+              startEdge(l.child)
             }}
           >
             {l.child.edgeLabel}
           </button>
         ) : null
-      )}
-      {nodes.map(({ node, x, y, depth, hasChildren, hiddenCount }) => {
+      })}
+      {nodes.map(({ node, x, y, w, h, depth, hasChildren, hiddenCount }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
         const isEditing = editingId === node.id
@@ -224,7 +298,7 @@ function GenealogyTree({
             className={`dendro-node genealogy-node ${depth === 0 ? 'dendro-node--root' : ''} ${
               node.collapsed ? 'dendro-node--collapsed' : ''
             }`}
-            style={{ left: x, top: y - NODE_H / 2, width: NODE_W, minHeight: NODE_H }}
+            style={{ left: x, top: y - h / 2, width: w, minHeight: h }}
             onDoubleClick={(e) => {
               e.stopPropagation()
               startTextEdit(node)
@@ -254,7 +328,7 @@ function GenealogyTree({
             >
               {ch && <span className="genealogy-dot" style={{ background: ch.color ?? '#7aa2f7' }} />}
               {label ? (
-                <span className="truncate">{label}</span>
+                <span className="genealogy-node-name">{label}</span>
               ) : (
                 <span className="dendro-node-placeholder">Персонаж или текст…</span>
               )}
@@ -278,7 +352,7 @@ function GenealogyTree({
                 <Plus size={13} />
               </button>
               {depth > 0 && (
-                <button title="Подписать связь с родителем" onClick={(e) => { e.stopPropagation(); onEditEdgeLabel(node) }}>
+                <button title="Подписать связь с родителем" onClick={(e) => { e.stopPropagation(); startEdge(node) }}>
                   <Tag size={12} />
                 </button>
               )}
@@ -394,9 +468,8 @@ export function Genealogy(): React.JSX.Element {
   const toggleCollapse = (node: GenealogyNode): void => {
     void updateNode(node, { collapsed: !node.collapsed })
   }
-  const editEdgeLabel = async (node: GenealogyNode): Promise<void> => {
-    const edgeLabel = await promptText({ title: 'Подпись связи', initial: node.edgeLabel ?? '' })
-    if (edgeLabel != null) void updateNode(node, { edgeLabel })
+  const setEdgeLabel = (node: GenealogyNode, edgeLabel: string): void => {
+    void updateNode(node, { edgeLabel })
   }
   const openCharacter = (characterId: string): void => {
     const c = project.characters.find((x) => x.id === characterId)
@@ -455,7 +528,7 @@ export function Genealogy(): React.JSX.Element {
                 onEditText={editNodeText}
                 onDelete={(node) => void deleteNode(node)}
                 onToggleCollapse={toggleCollapse}
-                onEditEdgeLabel={(node) => void editEdgeLabel(node)}
+                onSetEdgeLabel={setEdgeLabel}
                 onOpenCharacter={openCharacter}
               />
             </ZoomPan>

@@ -4,50 +4,63 @@ import { measureTextWidth } from '../../shared/measureText'
 
 /**
  * Древовидная диаграмма (tree diagram): дерево слева-направо с локтевыми
- * соединителями и прямоугольными узлами. Узлы можно сворачивать (потомки
- * скрываются, но хранятся внутри) и подписывать связи между блоками.
- *
- * Расстояние между уровнями растягивается под самую длинную подпись на этом
- * уровне — поэтому подписи всегда лежат горизонтально на линии и ничего не
- * перекрывают.
+ * соединителями. Блоки авто-растягиваются под полный текст (ширина и высота),
+ * узлы можно сворачивать (потомки скрываются, но хранятся), а связи —
+ * подписывать прямо на месте (инлайн, как на доске).
  */
 export interface DendroNode {
   id: string
   parentId?: string | null
   title: string
   note?: string
-  /** Узел свёрнут — потомки скрыты, но хранятся. */
   collapsed?: boolean
-  /** Подпись на связи от родителя к этому узлу. */
   edgeLabel?: string
 }
 
 interface DendrogramProps {
-  /** Узлы верхнего уровня (корни). */
   events: DendroNode[]
   childrenOf: (parentId: string) => DendroNode[]
   onEdit: (event: DendroNode) => void
   onAddChild: (event: DendroNode) => void
   onDelete: (event: DendroNode) => void
-  /** Свернуть/развернуть узел (скрыть потомков, сохранив их). */
   onToggleCollapse?: (event: DendroNode) => void
-  /** Подписать связь «родитель → этот узел». */
-  onEditEdgeLabel?: (event: DendroNode) => void
+  /** Сохранить подпись связи «родитель → этот узел» (инлайн-редактор). */
+  onSetEdgeLabel?: (event: DendroNode, value: string) => void
 }
 
-const NODE_W = 210
-const NODE_H = 68
-const ROW_H = 92
-const BASE_GAP = 90 // зазор между уровнями, когда подписей нет
+// блок авто-размера: ширина растёт под текст до максимума, дальше — перенос строк
+const NODE_MIN_W = 150
+const NODE_MAX_W = 340
+const NODE_MIN_H = 56
+const NODE_PAD_X = 30 // суммарные горизонтальные поля внутри блока
+const NODE_PAD_Y = 26
+const LINE_H = 18
+const NODE_FONT = '600 13.5px Inter, system-ui, sans-serif'
+
+const ROW_GAP = 26 // вертикальный зазор между блоками
 const STUB = 26 // вывод от родителя до вертикальной «шины»
-const LABEL_PAD = 24 // воздух вокруг подписи на линии
-const LABEL_MAX = 230 // потолок ширины колонки под длинную подпись
+const LEAD_MIN = 42 // мин. горизонтальный заход к ребёнку
+const LABEL_PAD = 24
+const LABEL_MAX = 230
 const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
+
+const clamp = (min: number, v: number, max: number): number => Math.max(min, Math.min(v, max))
+
+function nodeSize(text: string): { w: number; h: number } {
+  const t = text || 'Название…'
+  const textW = measureTextWidth(t, NODE_FONT)
+  const w = clamp(NODE_MIN_W, textW + NODE_PAD_X, NODE_MAX_W)
+  const lines = Math.max(1, Math.ceil(textW / (w - NODE_PAD_X)))
+  const h = Math.max(NODE_MIN_H, lines * LINE_H + NODE_PAD_Y)
+  return { w, h }
+}
 
 interface Placed {
   event: DendroNode
   x: number
   y: number
+  w: number
+  h: number
   depth: number
   hasChildren: boolean
   hiddenCount: number
@@ -70,24 +83,43 @@ export function Dendrogram({
   onAddChild,
   onDelete,
   onToggleCollapse,
-  onEditEdgeLabel
+  onSetEdgeLabel
 }: DendrogramProps): React.JSX.Element {
+  const [editEdgeId, setEditEdgeId] = React.useState<string | null>(null)
+  const [edgeDraft, setEdgeDraft] = React.useState('')
+  const cancelEdge = React.useRef(false)
+
+  const startEdge = (node: DendroNode): void => {
+    cancelEdge.current = false
+    setEdgeDraft(node.edgeLabel ?? '')
+    setEditEdgeId(node.id)
+  }
+  const finishEdge = (node: DendroNode): void => {
+    if (editEdgeId !== node.id) return
+    if (!cancelEdge.current) onSetEdgeLabel?.(node, edgeDraft.trim())
+    cancelEdge.current = false
+    setEditEdgeId(null)
+  }
+
   const { nodes, links, width, height } = React.useMemo(() => {
     const nodes: Placed[] = []
     const links: Link[] = []
-    let leaf = 0
     let maxDepth = 0
 
-    // всего потомков в поддереве (для бейджа на свёрнутом узле)
     const countDescendants = (id: string): number => {
       const kids = childrenOf(id)
       return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
     }
 
-    // 1) предпроход: самая длинная подпись на каждом уровне (учитываем свёрнутость)
+    // 1) предпроход: размеры блоков, ширина колонок, длина подписей по уровням
+    const sizeMap = new Map<string, { w: number; h: number }>()
+    const colW: number[] = []
     const labelWByDepth: number[] = []
     const scan = (node: DendroNode, depth: number): void => {
       maxDepth = Math.max(maxDepth, depth)
+      const s = nodeSize(node.title)
+      sizeMap.set(node.id, s)
+      colW[depth] = Math.max(colW[depth] ?? 0, s.w)
       if (node.edgeLabel) {
         labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
       }
@@ -96,57 +128,61 @@ export function Dendrogram({
     }
     events.forEach((event) => scan(event, 0))
 
-    // 2) x-координаты колонок: зазор растягивается под подпись уровня
+    // 2) x-координаты колонок: ширина колонки + зазор под подпись уровня
     const colX: number[] = [0]
     for (let d = 1; d <= maxDepth; d++) {
       const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
-      const gap = labelW > 0 ? Math.max(BASE_GAP, STUB + labelW + LABEL_PAD) : BASE_GAP
-      colX[d] = colX[d - 1] + NODE_W + gap
+      const lead = labelW > 0 ? labelW + LABEL_PAD : LEAD_MIN
+      colX[d] = colX[d - 1] + (colW[d - 1] ?? NODE_MIN_W) + STUB + lead
     }
 
-    // 3) раскладка: лист получает свой ряд, родитель центрируется по детям
-    const layout = (event: DendroNode, depth: number): number => {
-      const allKids = childrenOf(event.id)
+    // 3) раскладка: вертикальный курсор по фактической высоте блоков
+    let cursor = 0
+    const layout = (node: DendroNode, depth: number): number => {
+      const s = sizeMap.get(node.id) ?? nodeSize(node.title)
+      const allKids = childrenOf(node.id)
       const hasChildren = allKids.length > 0
-      const kids = event.collapsed ? [] : allKids
+      const kids = node.collapsed ? [] : allKids
       const x = colX[depth]
       let y: number
       if (kids.length === 0) {
-        y = leaf * ROW_H + ROW_H / 2
-        leaf++
+        y = cursor + s.h / 2
+        cursor += s.h + ROW_GAP
       } else {
         const childYs = kids.map((kid) => layout(kid, depth + 1))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
+        const x1 = x + s.w
+        const midX = x1 + STUB
+        const x2 = colX[depth + 1]
         kids.forEach((kid, idx) => {
-          const x1 = x + NODE_W
-          const x2 = colX[depth + 1]
-          const midX = x1 + STUB // вертикальная «шина» рядом с родителем
           links.push({
             x1,
             y1: y,
             x2,
             y2: childYs[idx],
             midX,
-            labelX: (midX + x2) / 2, // по центру длинного захода к ребёнку
+            labelX: (midX + x2) / 2,
             labelY: childYs[idx],
             child: kid
           })
         })
       }
       nodes.push({
-        event,
+        event: node,
         x,
         y,
+        w: s.w,
+        h: s.h,
         depth,
         hasChildren,
-        hiddenCount: event.collapsed && hasChildren ? countDescendants(event.id) : 0
+        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0
       })
       return y
     }
-
     events.forEach((event) => layout(event, 0))
-    const width = colX[maxDepth] + NODE_W + 28
-    const height = Math.max(leaf, 1) * ROW_H + 20
+
+    const width = colX[maxDepth] + (colW[maxDepth] ?? NODE_MIN_W) + 28
+    const height = Math.max(cursor, NODE_MIN_H) + 12
     return { nodes, links, width, height }
   }, [events, childrenOf])
 
@@ -165,26 +201,50 @@ export function Dendrogram({
             />
           ))}
         </svg>
-        {links.map((l) =>
-          l.child.edgeLabel ? (
+        {links.map((l) => {
+          const editing = editEdgeId === l.child.id
+          if (editing) {
+            return (
+              <input
+                key={`lbl-${l.child.id}`}
+                className="dendro-edge-input"
+                style={{ left: l.labelX, top: l.labelY, width: clamp(90, edgeDraft.length * 8 + 26, 260) }}
+                value={edgeDraft}
+                autoFocus
+                placeholder="подпись…"
+                onChange={(e) => setEdgeDraft(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+                onBlur={() => finishEdge(l.child)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur()
+                  if (e.key === 'Escape') {
+                    cancelEdge.current = true
+                    e.currentTarget.blur()
+                  }
+                }}
+              />
+            )
+          }
+          return l.child.edgeLabel ? (
             <button
               key={`lbl-${l.child.id}`}
               className="dendro-edge-label"
               style={{ left: l.labelX, top: l.labelY }}
               title="Изменить подпись связи"
-              onClick={() => onEditEdgeLabel?.(l.child)}
+              onClick={() => startEdge(l.child)}
             >
               {l.child.edgeLabel}
             </button>
           ) : null
-        )}
-        {nodes.map(({ event, x, y, depth, hasChildren, hiddenCount }) => (
+        })}
+        {nodes.map(({ event, x, y, w, h, depth, hasChildren, hiddenCount }) => (
           <div
             key={event.id}
             className={`dendro-node ${depth === 0 ? 'dendro-node--root' : ''} ${
               event.collapsed ? 'dendro-node--collapsed' : ''
             }`}
-            style={{ left: x, top: y - NODE_H / 2, width: NODE_W, minHeight: NODE_H }}
+            style={{ left: x, top: y - h / 2, width: w, minHeight: h }}
             title={event.note || undefined}
             onDoubleClick={() => onEdit(event)}
           >
@@ -214,12 +274,12 @@ export function Dendrogram({
               >
                 <Plus size={13} />
               </button>
-              {depth > 0 && onEditEdgeLabel && (
+              {depth > 0 && onSetEdgeLabel && (
                 <button
                   title="Подписать связь с родителем"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onEditEdgeLabel(event)
+                    startEdge(event)
                   }}
                 >
                   <Tag size={12} />
