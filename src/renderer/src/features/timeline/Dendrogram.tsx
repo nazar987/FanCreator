@@ -78,6 +78,7 @@ interface Link {
   labelX: number
   labelY: number
   child: DendroNode
+  color?: string
 }
 
 export function Dendrogram({
@@ -161,6 +162,7 @@ export function Dendrogram({
         const midX = x1 + STUB
         const x2 = colX[depth + 1]
         kids.forEach((kid, idx) => {
+          const childColor = kid.color || color
           links.push({
             x1,
             y1: y,
@@ -169,7 +171,8 @@ export function Dendrogram({
             midX,
             labelX: (midX + x2) / 2,
             labelY: childYs[idx],
-            child: kid
+            child: kid,
+            color: childColor
           })
         })
       }
@@ -202,8 +205,9 @@ export function Dendrogram({
               key={i}
               d={`M ${l.x1} ${l.y1} H ${l.midX} V ${l.y2} H ${l.x2}`}
               fill="none"
-              stroke="var(--stroke-strong)"
-              strokeWidth={1.5}
+              stroke={l.color || 'var(--stroke-strong)'}
+              strokeWidth={l.color ? 2 : 1.5}
+              opacity={l.color ? 0.78 : undefined}
               shapeRendering="crispEdges"
             />
           ))}
@@ -237,7 +241,7 @@ export function Dendrogram({
             <button
               key={`lbl-${l.child.id}`}
               className="dendro-edge-label"
-              style={{ left: l.labelX, top: l.labelY }}
+              style={{ left: l.labelX, top: l.labelY, color: l.color }}
               title="Изменить подпись связи"
               onClick={() => startEdge(l.child)}
             >
@@ -249,8 +253,8 @@ export function Dendrogram({
           const nodeStyle: React.CSSProperties = { left: x, top: y - h / 2, width: w, minHeight: h }
           if (color) {
             nodeStyle.borderColor = color
-            nodeStyle.boxShadow = `0 0 0 1px ${color} inset, var(--shadow-sm)`
-            nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 18%, transparent), var(--surface-2, var(--panel-solid)))`
+            nodeStyle.boxShadow = `0 0 0 2px ${color} inset, 0 18px 42px -30px ${color}`
+            nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 38%, var(--surface-2, var(--panel-solid))), color-mix(in srgb, ${color} 22%, var(--surface-2, var(--panel-solid))))`
           }
 
           return (
