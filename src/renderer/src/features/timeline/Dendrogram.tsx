@@ -1,6 +1,7 @@
 import React from 'react'
-import { Plus, Trash2, Tag, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Tag, ChevronRight, ChevronDown, Palette } from 'lucide-react'
 import { measureTextWidth } from '../../shared/measureText'
+import { openColorPicker } from '../../shared/ui/ColorPalette'
 
 /**
  * Древовидная диаграмма (tree diagram): дерево слева-направо с локтевыми
@@ -15,6 +16,7 @@ export interface DendroNode {
   note?: string
   collapsed?: boolean
   edgeLabel?: string
+  color?: string
 }
 
 interface DendrogramProps {
@@ -26,6 +28,7 @@ interface DendrogramProps {
   onToggleCollapse?: (event: DendroNode) => void
   /** Сохранить подпись связи «родитель → этот узел» (инлайн-редактор). */
   onSetEdgeLabel?: (event: DendroNode, value: string) => void
+  onSetColor?: (event: DendroNode, color: string) => void
 }
 
 // блок авто-размера: ширина растёт под текст до максимума, дальше — перенос строк
@@ -64,6 +67,7 @@ interface Placed {
   depth: number
   hasChildren: boolean
   hiddenCount: number
+  color?: string
 }
 interface Link {
   x1: number
@@ -83,7 +87,8 @@ export function Dendrogram({
   onAddChild,
   onDelete,
   onToggleCollapse,
-  onSetEdgeLabel
+  onSetEdgeLabel,
+  onSetColor
 }: DendrogramProps): React.JSX.Element {
   const [editEdgeId, setEditEdgeId] = React.useState<string | null>(null)
   const [edgeDraft, setEdgeDraft] = React.useState('')
@@ -138,8 +143,9 @@ export function Dendrogram({
 
     // 3) раскладка: вертикальный курсор по фактической высоте блоков
     let cursor = 0
-    const layout = (node: DendroNode, depth: number): number => {
+    const layout = (node: DendroNode, depth: number, inheritedColor?: string): number => {
       const s = sizeMap.get(node.id) ?? nodeSize(node.title)
+      const color = node.color || inheritedColor
       const allKids = childrenOf(node.id)
       const hasChildren = allKids.length > 0
       const kids = node.collapsed ? [] : allKids
@@ -149,7 +155,7 @@ export function Dendrogram({
         y = cursor + s.h / 2
         cursor += s.h + ROW_GAP
       } else {
-        const childYs = kids.map((kid) => layout(kid, depth + 1))
+        const childYs = kids.map((kid) => layout(kid, depth + 1, color))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
         const x1 = x + s.w
         const midX = x1 + STUB
@@ -175,7 +181,8 @@ export function Dendrogram({
         h: s.h,
         depth,
         hasChildren,
-        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0
+        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0,
+        color
       })
       return y
     }
@@ -238,13 +245,21 @@ export function Dendrogram({
             </button>
           ) : null
         })}
-        {nodes.map(({ event, x, y, w, h, depth, hasChildren, hiddenCount }) => (
-          <div
+        {nodes.map(({ event, x, y, w, h, depth, hasChildren, hiddenCount, color }) => {
+          const nodeStyle: React.CSSProperties = { left: x, top: y - h / 2, width: w, minHeight: h }
+          if (color) {
+            nodeStyle.borderColor = color
+            nodeStyle.boxShadow = `0 0 0 1px ${color} inset, var(--shadow-sm)`
+            nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 18%, transparent), var(--surface-2, var(--panel-solid)))`
+          }
+
+          return (
+            <div
             key={event.id}
             className={`dendro-node ${depth === 0 ? 'dendro-node--root' : ''} ${
               event.collapsed ? 'dendro-node--collapsed' : ''
             }`}
-            style={{ left: x, top: y - h / 2, width: w, minHeight: h }}
+            style={nodeStyle}
             title={event.note || undefined}
             onDoubleClick={() => onEdit(event)}
           >
@@ -285,6 +300,23 @@ export function Dendrogram({
                   <Tag size={12} />
                 </button>
               )}
+              {onSetColor && (
+                <button
+                  title="Цвет узла"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openColorPicker({
+                      value: color,
+                      title: 'Цвет узла',
+                      onChange: (c) => onSetColor(event, c),
+                      onClear: () => onSetColor(event, ''),
+                      clearLabel: 'Как у родителя'
+                    })
+                  }}
+                >
+                  <Palette size={12} />
+                </button>
+              )}
               <button
                 title="Переименовать"
                 className="dendro-node-edit"
@@ -305,8 +337,9 @@ export function Dendrogram({
                 <Trash2 size={13} />
               </button>
             </div>
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

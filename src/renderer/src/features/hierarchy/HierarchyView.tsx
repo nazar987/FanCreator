@@ -25,7 +25,8 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
     title: n.title,
     note: '',
     collapsed: n.collapsed,
-    edgeLabel: n.edgeLabel
+    edgeLabel: n.edgeLabel,
+    color: n.color
   })
   const childrenOf = (parentId: string | null): DendroNode[] =>
     h.nodes.filter((n) => (n.parentId ?? null) === (parentId ?? null)).map(asEvent)
@@ -61,6 +62,9 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
       await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { edgeLabel } })
     )
   }
+  const setColor = async (ev: DendroNode, color: string): Promise<void> => {
+    applyProject(await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { color } }))
+  }
 
   return (
     <div className="timeline timeline--canvas" data-tour="hierarchy">
@@ -86,6 +90,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
               onDelete={(ev) => void deleteNode(ev)}
               onToggleCollapse={(ev) => void toggleCollapse(ev)}
               onSetEdgeLabel={(ev, value) => void setEdgeLabel(ev, value)}
+              onSetColor={(ev, color) => void setColor(ev, color)}
             />
           </ZoomPan>
         )}

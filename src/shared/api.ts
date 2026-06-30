@@ -187,7 +187,7 @@ export interface FanCreatorApi {
       projectId: string
       hierarchyId: string
       nodeId: string
-      patch: Partial<Pick<HierarchyNode, 'title' | 'edgeLabel' | 'collapsed'>>
+      patch: Partial<Pick<HierarchyNode, 'title' | 'edgeLabel' | 'collapsed' | 'color'>>
     }): Promise<Project | null>
     delete(input: { projectId: string; hierarchyId: string; nodeId: string }): Promise<Project | null>
     reorder(input: {
