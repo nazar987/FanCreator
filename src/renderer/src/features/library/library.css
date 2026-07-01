@@ -788,3 +788,97 @@
   border-color: var(--stroke-strong);
   box-shadow: var(--shadow-lg), 0 0 24px -18px var(--accent-glow);
 }
+
+/* ============================================================
+   Premium pass (2.1.1) — «дороже» и воздушнее: амбиентное свечение,
+   стеклянные метрики, акцентные секции, глубже карточки
+   ============================================================ */
+
+/* Амбиентное свечение фона рабочей библиотеки (как на стартовом экране) */
+.shelf.library-workspace { position: relative; }
+.shelf-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 42% at 12% -8%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 66%),
+    radial-gradient(46% 40% at 108% -4%, color-mix(in srgb, var(--accent-2, var(--accent)) 13%, transparent), transparent 70%);
+}
+.shelf .shelf-inner { position: relative; z-index: 1; }
+
+/* Заголовок библиотеки — крупнее и «дороже» */
+.library-header .home-title {
+  font-size: clamp(28px, 2.6vw, 33px);
+  letter-spacing: -0.6px;
+  line-height: 1.06;
+}
+.library-header .home-sub {
+  color: var(--text-faint);
+  letter-spacing: 0.2px;
+}
+
+/* Метрики проекта — стеклянные карточки с акцентной кромкой сверху */
+.library-summary > div {
+  position: relative;
+  overflow: hidden;
+  padding: 15px 18px 14px;
+  border-color: color-mix(in srgb, var(--accent) 14%, var(--stroke));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--panel-solid)), var(--panel-solid));
+  box-shadow: var(--shadow-sm), inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent);
+  transition: transform var(--t-med), border-color var(--t-med), box-shadow var(--t-med);
+}
+.library-summary > div::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 82%);
+  opacity: 0.72;
+}
+.library-summary > div:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--stroke));
+  box-shadow: var(--shadow-md), 0 0 26px -20px var(--accent-glow);
+}
+.library-summary strong { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+.library-summary span { text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+
+/* Секции — «eyebrow»-заголовки с тонкой линией и акцентным счётчиком */
+.library-section h2,
+.library-section-head h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+/* счётчик секции уходит вправо, акцентный «pill» */
+.library-section-head { gap: 10px; }
+.library-section-head > span {
+  margin-left: auto;
+  background: var(--accent-soft);
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
+  font-weight: 700;
+}
+
+/* Карточки историй — мягкая градиентная поверхность и акцентная кромка на ховере */
+.library-story-card {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 5%, var(--panel-solid)), var(--panel-solid));
+  border-color: color-mix(in srgb, var(--accent) 10%, var(--stroke));
+}
+.library-story-card:hover { border-color: color-mix(in srgb, var(--accent) 32%, var(--stroke-strong)); }
+.library-story-stat {
+  background: color-mix(in srgb, var(--panel-2) 70%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 10%, var(--stroke));
+}
+.library-story-progress span {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2, var(--accent)));
+}
+
+/* Папки и материалы — тонкий градиент, чтобы поверхности «дышали» */
+.library-folder-card {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 5%, var(--panel)), var(--panel));
+}
+.library-material-card {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 4%, var(--panel-2)), var(--panel-2));
+}

@@ -276,6 +276,7 @@ export function Shelf(): React.JSX.Element {
         if (current) writeShelfMemory(current.id, { scrollTop: event.currentTarget.scrollTop })
       }}
     >
+      <div className="shelf-glow" aria-hidden />
       <div className="shelf-inner">
         <header className="library-header">
           <div>

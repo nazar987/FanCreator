@@ -138,3 +138,53 @@
   color: var(--text-faint);
   font-size: 11px;
 }
+
+/* ---------- Premium pass (2.1.1): «дороже» и объёмнее ---------- */
+.continue-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 28px;
+  background:
+    radial-gradient(720px 260px at -6% -25%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 66%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 20%, var(--surface-2, var(--panel-solid))), var(--surface-2, var(--panel-solid)));
+  box-shadow: var(--shadow-md), inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent);
+}
+/* мягкий блик сверху — ощущение «стекла/премиум» */
+.continue-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, #fff 7%, transparent), transparent 42%);
+}
+.continue-hero > * { position: relative; z-index: 1; }
+.continue-hero-title {
+  font-size: clamp(1.2rem, 1.9vw, 1.5rem);
+  letter-spacing: -0.3px;
+}
+.continue-eyebrow { letter-spacing: 0.7px; }
+
+/* Метрики письма — акцентная кромка сверху, крупная цифра */
+.continue-stats > div {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--surface-2, var(--panel-solid))), var(--surface-2, var(--panel-solid)));
+  border-color: color-mix(in srgb, var(--accent) 13%, var(--stroke));
+  transition: transform var(--t-med), border-color var(--t-med), box-shadow var(--t-med);
+}
+.continue-stats > div::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 82%);
+  opacity: 0.7;
+}
+.continue-stats > div:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--stroke));
+  box-shadow: var(--shadow-sm), 0 0 22px -18px var(--accent-glow);
+}
+.continue-stats strong { font-variant-numeric: tabular-nums; letter-spacing: -0.4px; }
+.continue-stats span { text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
