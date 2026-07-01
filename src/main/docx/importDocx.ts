@@ -161,13 +161,21 @@ export async function importDocxToHtml(buffer: Buffer, saveImage: SaveDocxImage)
     // пропускаем абзацы, вложенные в другой <w:p> не бывает; но <w:p> в таблицах
     // обрабатываем как обычные абзацы (таблицы — упрощённо)
     const pPr = child(p, 'w:pPr')
+    // стиль абзаца: заголовки (Heading1..3 / Заголовок 1..3) импортируем как <h1..3>,
+    // без красной строки — иначе заголовок приходил обычным абзацем с отступом
+    const styleVal = pPr ? attr(child(pPr, 'w:pStyle'), 'w:val') : ''
+    const headingLevel = ((): number => {
+      const m = /(?:heading|Заголовок)\s*([1-3])/i.exec(styleVal || '')
+      return m ? parseInt(m[1], 10) : 0
+    })()
     const pStyles: string[] = []
     if (pPr) {
       const jc = attr(child(pPr, 'w:jc'), 'w:val')
       if (jc) pStyles.push(`text-align: ${jc === 'both' ? 'justify' : jc}`)
       const ind = child(pPr, 'w:ind')
       const firstLine = twipsToPx(attr(ind, 'w:firstLine'))
-      if (firstLine > 1) pStyles.push(`text-indent: ${(firstLine / 16).toFixed(2)}em`)
+      // заголовкам красную строку не даём (в редакторе они без абзацного отступа)
+      if (firstLine > 1 && !headingLevel) pStyles.push(`text-indent: ${(firstLine / 16).toFixed(2)}em`)
       const spacing = child(pPr, 'w:spacing')
       const lineVal = attr(spacing, 'w:line')
       const lineRule = attr(spacing, 'w:lineRule')
@@ -209,8 +217,9 @@ export async function importDocxToHtml(buffer: Buffer, saveImage: SaveDocxImage)
     }
     const inner = parts.join('')
     const styleAttr = pStyles.length ? ` style="${pStyles.join('; ')}"` : ''
-    // пустой абзац — просто <p></p> (одна пустая строка). <br> внутри давал ДВЕ строки.
-    out.push(`<p${styleAttr}>${inner}</p>`)
+    // заголовок → <h1..3>; обычный абзац → <p>. Пустой абзац — <p></p> (одна строка).
+    const tagName = headingLevel ? `h${headingLevel}` : 'p'
+    out.push(`<${tagName}${styleAttr}>${inner}</${tagName}>`)
   }
   return out.join('')
 }

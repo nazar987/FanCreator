@@ -266,6 +266,13 @@
   font-weight: 600;
   line-height: 1.2;
 }
+/* заголовки без красной строки (даже если импорт/вставка принесли text-indent):
+   в em он масштабировался по крупному шрифту и заголовки «ступенчато уезжали» */
+.fc-prose h1,
+.fc-prose h2,
+.fc-prose h3 {
+  text-indent: 0;
+}
 .fc-prose a {
   color: #2563cc;
   text-decoration: underline;

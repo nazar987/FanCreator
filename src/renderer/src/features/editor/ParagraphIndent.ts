@@ -2,8 +2,13 @@ import { Extension } from '@tiptap/core'
 
 /**
  * ParagraphIndent — отступ первой строки («красная строка», как в Word).
- * Tab увеличивает отступ абзаца/заголовка, Shift+Tab — уменьшает.
+ * Tab увеличивает отступ абзаца, Shift+Tab — уменьшает.
  * В списках Tab отдаём стандартному поведению (вложенность пунктов).
+ *
+ * ЗАГОЛОВКИ красную строку НЕ получают: text-indent в em масштабируется по шрифту,
+ * поэтому у крупных заголовков отступ выходил во много раз больше, чем у текста, и
+ * разные уровни «ступенчато уезжали». Заголовки типографически идут без абзацного
+ * отступа (тип блока в types — только 'paragraph').
  */
 
 const STEP = 2.5 // em на один уровень (≈ красная строка)
@@ -22,7 +27,7 @@ export const ParagraphIndent = Extension.create({
   name: 'paragraphIndent',
 
   addOptions() {
-    return { types: ['paragraph', 'heading'] }
+    return { types: ['paragraph'] }
   },
 
   addGlobalAttributes() {
