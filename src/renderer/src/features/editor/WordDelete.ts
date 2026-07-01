@@ -22,6 +22,56 @@ type Dispatch = ((tr: Transaction) => void) | undefined
 const isWordChar = (ch: string): boolean => /[\p{L}\p{N}_]/u.test(ch)
 const isSpace = (ch: string): boolean => /\s/.test(ch)
 
+/** Длина первого графемного кластера в позициях документа (emoji/суррогаты = 2). */
+function forwardGraphemeSize(text: string): number {
+  if (!text) return 1
+  try {
+    const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    const first = seg.segment(text)[Symbol.iterator]().next().value as { segment: string } | undefined
+    return first ? first.segment.length : 1
+  } catch {
+    const cp = text.codePointAt(0)
+    return cp && cp > 0xffff ? 2 : 1
+  }
+}
+
+/**
+ * Delete «как в Word». Штатный keymap TipTap для Delete делает `deleteCurrentNode`
+ * (удаляет целый узел — отсюда «стёрлось слово/абзац»), а расширение списков вешает
+ * на Delete `joinItemForward`/lift (в нумерации это выглядит как «создался пункт»).
+ * Перехватываем сами:
+ *  • есть выделение — удаляем его;
+ *  • курсор в середине строки — удаляем РОВНО один символ вперёд;
+ *  • конец блока — обычное присоединение следующего блока / выбор атома
+ *    (без deleteCurrentNode и списочной магии).
+ */
+function forwardDelete(editor: Editor): boolean {
+  const { state } = editor
+  const sel = state.selection
+  if (!sel.empty) {
+    editor.commands.deleteSelection()
+    return true
+  }
+  const { $from } = sel
+  const parent = $from.parent
+  if (parent.isTextblock && $from.parentOffset < parent.content.size) {
+    const text = parent.textBetween(
+      $from.parentOffset,
+      Math.min($from.parentOffset + 8, parent.content.size),
+      '￼',
+      '￼'
+    )
+    const size = forwardGraphemeSize(text)
+    editor.view.dispatch(state.tr.delete($from.pos, $from.pos + size).scrollIntoView())
+    return true
+  }
+  // конец блока: обычное присоединение следующего блока / выбор атома (напр. картинки).
+  // ВСЕГДА возвращаем true — чтобы core не выполнил свой deleteCurrentNode, который и
+  // «стирал слово/абзац» и удалял картинку на пустой строке ниже.
+  if (!editor.commands.joinForward()) editor.commands.selectNodeForward()
+  return true
+}
+
 /**
  * Текстовый блок без инлайновых атомов? Только тогда смещение в тексте
  * совпадает один-к-одному со смещением в позициях документа.
@@ -121,6 +171,8 @@ export const WordDelete = Extension.create({
   priority: 1000,
   addKeyboardShortcuts() {
     return {
+      // Delete «как в Word» (перехватываем у core/списков — см. forwardDelete)
+      Delete: () => forwardDelete(this.editor),
       'Mod-Delete': () => deleteWordForward(this.editor.state, this.editor.view.dispatch),
       'Mod-Backspace': () => deleteWordBackward(this.editor.state, this.editor.view.dispatch),
       // Enter в ПУСТОМ пункте списка — делаем пустую строку без номера, нумерация
