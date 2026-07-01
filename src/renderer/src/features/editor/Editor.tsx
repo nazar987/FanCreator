@@ -1,5 +1,8 @@
 import React from 'react'
 import { useEditor, EditorContent, type Content } from '@tiptap/react'
+import { TextSelection } from '@tiptap/pm/state'
+import type { EditorView } from '@tiptap/pm/view'
+import type { ResolvedPos } from '@tiptap/pm/model'
 import { useStore } from '../../store/store'
 import { buildExtensions } from './extensions'
 import { wikiLinkGuardKey } from './EditorExtras'
@@ -12,6 +15,29 @@ import type { Chapter, Story } from '@shared/types'
 interface EditorProps {
   storyId: string
   chapterId: string
+}
+
+/**
+ * S-H5: у точки (x,y) ищем ближайшую РЕАЛЬНУЮ строку текста. Нужно, когда курсор
+ * попал в межстраничный зазор — там `posAtCoords` промахивается и резолвит
+ * позицию 0 (виджет пагинации заякорен в начале документа), из-за чего выделение
+ * улетало на все предыдущие страницы. Пробуем точки вверх и вниз от (x,y) и
+ * берём позицию, чьи координаты реально совпадают с пробой.
+ */
+function nearestTextPos(view: EditorView, x: number, y: number): number | null {
+  for (let step = 0; step <= 200; step += 8) {
+    for (const dy of step === 0 ? [0] : [step, -step]) {
+      const probe = view.posAtCoords({ left: x, top: y + dy })
+      if (!probe) continue
+      try {
+        const c = view.coordsAtPos(probe.pos)
+        if (Math.abs(c.top - (y + dy)) < 24) return probe.pos
+      } catch {
+        /* позиция без координат — пропускаем */
+      }
+    }
+  }
+  return null
 }
 
 /**
@@ -220,6 +246,11 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   // S-F2: контрольная точка прокрутки — открываем главу там, где остановились
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const scrollSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  // S-H5: последняя позиция указателя + флаг активной протяжки — чтобы чинить
+  // «промах» выделения в межстраничный зазор во время протяжки мышью
+  // (createSelectionBetween). Флаг не даёт трогать выделение с клавиатуры.
+  const pointerRef = React.useRef<{ x: number; y: number } | null>(null)
+  const draggingRef = React.useRef(false)
   const projectId = current?.id ?? ''
 
   const persistImage = React.useCallback(
@@ -307,8 +338,41 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           return html
         }
       },
+      // S-H5: корректируем выделение мышью ещё во время протяжки. ProseMirror
+      // берёт «голову» через posAtCoords; в межстраничном зазоре она резолвится в
+      // позицию 0 → выделение хватает все предыдущие страницы. Если голова далеко
+      // от указателя по вертикали — пересчитываем по ближайшей реальной строке.
+      createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {
+        const p = pointerRef.current
+        if (!p || !draggingRef.current) return null // только протяжка мышью, не клавиатура
+        try {
+          const headCoords = view.coordsAtPos($head.pos)
+          if (Math.abs(headCoords.top - p.y) < 60) return null // норм — не трогаем
+        } catch {
+          return null
+        }
+        const fixed = nearestTextPos(view, p.x, p.y)
+        if (fixed == null || fixed === $head.pos) return null
+        return TextSelection.create(view.state.doc, $anchor.pos, fixed)
+      },
       // S-G: наведение/клик по вики-ссылке (делегирование событий)
       handleDOMEvents: {
+        mousedown: (_view, event) => {
+          draggingRef.current = true
+          pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
+          return false
+        },
+        mousemove: (_view, event) => {
+          if ((event as MouseEvent).buttons & 1)
+            pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
+          return false
+        },
+        mouseup: (_view, event) => {
+          pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
+          // сбрасываем флаг после того, как PM финализирует выделение
+          setTimeout(() => (draggingRef.current = false), 0)
+          return false
+        },
         mouseover: (_view, event) => {
           const el = (event.target as HTMLElement).closest('.fc-wikilink') as HTMLElement | null
           if (!el) return false
@@ -818,37 +882,6 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     openContextMenu(e, [{ type: 'label', label: 'Вики-ссылка на…' }, ...items])
   }
 
-  // S-H5: после выделения мышью «голова» могла улететь в начало документа, если
-  // курсор зашёл в межстраничный зазор (там координата промахивается мимо текста
-  // и резолвится к позиции 0 — виджет пагинации заякорен там). CSS pointer-events
-  // не спасает: posAtCoords всё равно даёт 0. Поэтому на mouseUp, если голова
-  // выделения оказалась НАМНОГО выше точки отпускания (промах в зазор),
-  // пересчитываем её по ближайшей реальной строке у указателя.
-  const onEditorMouseUp = (e: React.MouseEvent): void => {
-    if (!editor) return
-    const sel = editor.state.selection
-    if (sel.empty) return
-    try {
-      const headCoords = editor.view.coordsAtPos(sel.head)
-      // голова не сильно выше курсора → нормальное выделение, не трогаем
-      if (e.clientY - headCoords.top < 80) return
-      let fixed: number | null = null
-      for (let dy = 0; dy <= 160 && fixed === null; dy += 8) {
-        const probe = editor.view.posAtCoords({ left: e.clientX, top: e.clientY + dy })
-        if (!probe) continue
-        const c = editor.view.coordsAtPos(probe.pos)
-        if (Math.abs(c.top - (e.clientY + dy)) < 28) fixed = probe.pos
-      }
-      if (fixed === null) return
-      const from = Math.min(sel.anchor, fixed)
-      const to = Math.max(sel.anchor, fixed)
-      if (from === sel.from && to === sel.to) return
-      editor.chain().setTextSelection({ from, to }).run()
-    } catch {
-      /* координаты недоступны — пропускаем */
-    }
-  }
-
   // S-H9: правый клик по ссылке — «Открыть» / «Убрать ссылку (оставить текст)»
   const onEditorContextMenu = (e: React.MouseEvent): void => {
     if (!editor) return
@@ -1114,7 +1147,6 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           className={`editor-scroll${ready ? '' : ' editor-scroll--loading'}`}
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
-          onMouseUp={onEditorMouseUp}
           onContextMenu={onEditorContextMenu}
           onMouseDown={(e) => {
             // Клик по «столу»/обёртке вне самого текста не должен снимать фокус с
