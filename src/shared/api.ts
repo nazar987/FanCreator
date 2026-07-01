@@ -214,7 +214,9 @@ export interface FanCreatorApi {
       projectId: string
       genealogyId: string
       nodeId: string
-      patch: Partial<Pick<GenealogyNode, 'characterId' | 'title' | 'parentId' | 'order' | 'edgeLabel' | 'collapsed'>>
+      patch: Partial<
+        Pick<GenealogyNode, 'characterId' | 'title' | 'parentId' | 'order' | 'edgeLabel' | 'collapsed' | 'color'>
+      >
     }): Promise<Project | null>
     delete(input: { projectId: string; genealogyId: string; nodeId: string }): Promise<Project | null>
   }

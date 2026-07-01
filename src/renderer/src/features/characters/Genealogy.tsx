@@ -1,10 +1,11 @@
 import React from 'react'
-import { Plus, Trash2, GitBranchPlus, Pencil, Tag, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, GitBranchPlus, Pencil, Tag, ChevronRight, ChevronDown, Palette } from 'lucide-react'
 import type { Genealogy as GenealogyT, GenealogyNode } from '@shared/types'
 import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
 import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { openColorPicker } from '../../shared/ui/ColorPalette'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
 import { measureTextWidth } from '../../shared/measureText'
 
@@ -45,6 +46,7 @@ interface Placed {
   depth: number
   hasChildren: boolean
   hiddenCount: number
+  color?: string
 }
 interface Link {
   x1: number
@@ -55,6 +57,7 @@ interface Link {
   labelX: number
   labelY: number
   child: GenealogyNode
+  color?: string
 }
 
 /** Дерево родословной (сверху-вниз по поколениям, слева-направо как дендрограмма). */
@@ -68,6 +71,7 @@ function GenealogyTree({
   onDelete,
   onToggleCollapse,
   onSetEdgeLabel,
+  onSetColor,
   onOpenCharacter
 }: {
   g: GenealogyT
@@ -79,6 +83,7 @@ function GenealogyTree({
   onDelete: (node: GenealogyNode) => void
   onToggleCollapse: (node: GenealogyNode) => void
   onSetEdgeLabel: (node: GenealogyNode, value: string) => void
+  onSetColor: (node: GenealogyNode, color: string) => void
   onOpenCharacter: (characterId: string) => void
 }): React.JSX.Element {
   const [editingId, setEditingId] = React.useState<string | null>(null)
@@ -183,10 +188,12 @@ function GenealogyTree({
       colX[d] = colX[d - 1] + (colW[d - 1] ?? NODE_MIN_W) + STUB + lead
     }
 
-    // 3) раскладка: вертикальный курсор по фактической высоте блоков
+    // 3) раскладка: вертикальный курсор по фактической высоте блоков.
+    // Цвет наследуется от ближайшего предка (node.color || inheritedColor).
     let cursor = 0
-    const layout = (node: GenealogyNode, depth: number): number => {
+    const layout = (node: GenealogyNode, depth: number, inheritedColor?: string): number => {
       const s = sizeMap.get(node.id) ?? nodeSize('', false)
+      const color = node.color || inheritedColor
       const allKids = childrenOf(node.id)
       const hasChildren = allKids.length > 0
       const kids = node.collapsed ? [] : allKids
@@ -196,7 +203,7 @@ function GenealogyTree({
         y = cursor + s.h / 2
         cursor += s.h + ROW_GAP
       } else {
-        const childYs = kids.map((kid) => layout(kid, depth + 1))
+        const childYs = kids.map((kid) => layout(kid, depth + 1, color))
         y = (childYs[0] + childYs[childYs.length - 1]) / 2
         const x1 = x + s.w
         const midX = x1 + STUB
@@ -210,7 +217,8 @@ function GenealogyTree({
             midX,
             labelX: (midX + x2) / 2,
             labelY: childYs[idx],
-            child: kid
+            child: kid,
+            color: kid.color || color
           })
         })
       }
@@ -222,7 +230,8 @@ function GenealogyTree({
         h: s.h,
         depth,
         hasChildren,
-        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0
+        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0,
+        color
       })
       return y
     }
@@ -243,8 +252,9 @@ function GenealogyTree({
             key={i}
             d={`M ${l.x1} ${l.y1} H ${l.midX} V ${l.y2} H ${l.x2}`}
             fill="none"
-            stroke="var(--stroke-strong)"
-            strokeWidth={1.5}
+            stroke={l.color || 'var(--stroke-strong)'}
+            strokeWidth={l.color ? 2 : 1.5}
+            opacity={l.color ? 0.78 : undefined}
             shapeRendering="crispEdges"
           />
         ))}
@@ -277,7 +287,7 @@ function GenealogyTree({
           <button
             key={`lbl-${l.child.id}`}
             className="dendro-edge-label"
-            style={{ left: l.labelX, top: l.labelY }}
+            style={{ left: l.labelX, top: l.labelY, color: l.color }}
             title="Изменить подпись связи"
             onClick={(e) => {
               e.stopPropagation()
@@ -288,17 +298,23 @@ function GenealogyTree({
           </button>
         ) : null
       })}
-      {nodes.map(({ node, x, y, w, h, depth, hasChildren, hiddenCount }) => {
+      {nodes.map(({ node, x, y, w, h, depth, hasChildren, hiddenCount, color }) => {
         const ch = node.characterId ? characterById(node.characterId) : undefined
         const label = ch?.name || node.title || ''
         const isEditing = editingId === node.id
+        const nodeStyle: React.CSSProperties = { left: x, top: y - h / 2, width: w, minHeight: h }
+        if (color) {
+          nodeStyle.borderColor = color
+          nodeStyle.boxShadow = `0 0 0 2px ${color} inset, 0 18px 42px -30px ${color}`
+          nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 38%, var(--surface-2, var(--panel-solid))), color-mix(in srgb, ${color} 22%, var(--surface-2, var(--panel-solid))))`
+        }
         return (
           <div
             key={node.id}
             className={`dendro-node genealogy-node ${depth === 0 ? 'dendro-node--root' : ''} ${
               node.collapsed ? 'dendro-node--collapsed' : ''
             }`}
-            style={{ left: x, top: y - h / 2, width: w, minHeight: h }}
+            style={nodeStyle}
             onDoubleClick={(e) => {
               e.stopPropagation()
               startTextEdit(node)
@@ -356,6 +372,21 @@ function GenealogyTree({
                   <Tag size={12} />
                 </button>
               )}
+              <button
+                title="Цвет узла"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openColorPicker({
+                    value: color,
+                    title: 'Цвет узла',
+                    onChange: (c) => onSetColor(node, c),
+                    onClear: () => onSetColor(node, ''),
+                    clearLabel: 'Как у родителя'
+                  })
+                }}
+              >
+                <Palette size={12} />
+              </button>
               <button title="Изменить" onClick={(e) => { e.stopPropagation(); onEditNode(node, e) }}>
                 <Pencil size={12} />
               </button>
@@ -471,6 +502,9 @@ export function Genealogy(): React.JSX.Element {
   const setEdgeLabel = (node: GenealogyNode, edgeLabel: string): void => {
     void updateNode(node, { edgeLabel })
   }
+  const setColor = (node: GenealogyNode, color: string): void => {
+    void updateNode(node, { color })
+  }
   const openCharacter = (characterId: string): void => {
     const c = project.characters.find((x) => x.id === characterId)
     if (c) openTab({ id: `character:${c.id}`, kind: 'character', title: c.name || 'Без имени', characterId: c.id })
@@ -529,6 +563,7 @@ export function Genealogy(): React.JSX.Element {
                 onDelete={(node) => void deleteNode(node)}
                 onToggleCollapse={toggleCollapse}
                 onSetEdgeLabel={setEdgeLabel}
+                onSetColor={setColor}
                 onOpenCharacter={openCharacter}
               />
             </ZoomPan>
