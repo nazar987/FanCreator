@@ -65,6 +65,17 @@ function forwardDelete(editor: Editor): boolean {
     editor.view.dispatch(state.tr.delete($from.pos, $from.pos + size).scrollIntoView())
     return true
   }
+  // Конец последнего пункта списка: НИЧЕГО не делаем. Иначе joinForward тянет
+  // абзац, идущий ПОСЛЕ списка, и ProseMirror заворачивает его в новый пункт
+  // (появлялся «4-й» пункт). Внутри списка (есть следующий пункт) — обычное слияние.
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type.name === 'listItem') {
+      const blockIsLast = $from.index(d) === $from.node(d).childCount - 1
+      const itemIsLast = $from.index(d - 1) === $from.node(d - 1).childCount - 1
+      if (blockIsLast && itemIsLast) return true // конец последнего пункта → no-op
+      break
+    }
+  }
   // конец блока: обычное присоединение следующего блока / выбор атома (напр. картинки).
   // ВСЕГДА возвращаем true — чтобы core не выполнил свой deleteCurrentNode, который и
   // «стирал слово/абзац» и удалял картинку на пустой строке ниже.
