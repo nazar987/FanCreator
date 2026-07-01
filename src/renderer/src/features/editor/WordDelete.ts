@@ -65,30 +65,34 @@ function forwardDelete(editor: Editor): boolean {
     editor.view.dispatch(state.tr.delete($from.pos, $from.pos + size).scrollIntoView())
     return true
   }
-  // Конец ПОСЛЕДНЕГО пункта списка: joinForward тут заворачивал абзац после списка
-  // в новый пункт (появлялся «4-й»). Сливаем следующий блок НАПРЯМУЮ (tr.delete),
-  // без заворачивания: пустая строка под списком убирается, текст подтягивается.
-  for (let d = $from.depth; d > 0; d--) {
-    if ($from.node(d).type.name === 'listItem') {
-      const blockIsLast = $from.index(d) === $from.node(d).childCount - 1
-      const itemIsLast = $from.index(d - 1) === $from.node(d - 1).childCount - 1
-      if (blockIsLast && itemIsLast) {
-        const afterList = $from.after(d - 1)
-        const next = state.doc.nodeAt(afterList)
-        if (next && next.isTextblock) {
-          // границу «конец пункта → начало следующего абзаца» удаляем — абзац
-          // вливается в текущий пункт (ol сохраняет свои пункты 1..N)
-          editor.view.dispatch(state.tr.delete($from.pos, afterList + 1).scrollIntoView())
-        }
-        return true // атом (картинка) или конец документа — не трогаем
-      }
-      break
+  // Конец блока. Находим начало содержимого СЛЕДУЮЩЕГО текстового блока и удаляем
+  // границу между ними НАПРЯМУЮ (tr.delete) — это просто сливает два абзаца/пункта
+  // и, в отличие от joinForward/списочного Delete, НИКОГДА не заворачивает контент в
+  // новый пункт (из-за чего появлялся лишний «4.»). Впереди картинка — выбираем её;
+  // впереди ничего (конец документа) — no-op. Всегда true, чтобы core не сделал
+  // свой разрушительный deleteCurrentNode.
+  const from = $from.pos
+  const doc = state.doc
+  let target: number | null = null
+  let atom = false
+  doc.nodesBetween(from, doc.content.size, (node, pos) => {
+    if (target !== null || atom) return false
+    if (pos < from) return true // предок текущего блока — заходим глубже
+    if (node.isTextblock) {
+      target = pos + 1 // позиция внутри следующего блока (начало его содержимого)
+      return false
     }
+    if (node.isLeaf && !node.isText) {
+      atom = true // блок-атом впереди (картинка)
+      return false
+    }
+    return true // контейнер (список/пункт) — заходим внутрь
+  })
+  if (target !== null) {
+    editor.view.dispatch(state.tr.delete(from, target).scrollIntoView())
+    return true
   }
-  // конец блока: обычное присоединение следующего блока / выбор атома (напр. картинки).
-  // ВСЕГДА возвращаем true — чтобы core не выполнил свой deleteCurrentNode, который и
-  // «стирал слово/абзац» и удалял картинку на пустой строке ниже.
-  if (!editor.commands.joinForward()) editor.commands.selectNodeForward()
+  if (atom) editor.commands.selectNodeForward()
   return true
 }
 
