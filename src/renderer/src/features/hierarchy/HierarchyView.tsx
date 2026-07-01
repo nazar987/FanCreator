@@ -2,7 +2,7 @@ import React from 'react'
 import { GitBranchPlus } from 'lucide-react'
 import { useStore } from '../../store/store'
 import { Button } from '../../shared/ui/components'
-import { promptText, confirmDialog } from '../../shared/ui/dialogs'
+import { confirmDialog } from '../../shared/ui/dialogs'
 import { ZoomPan } from '../../shared/ui/ZoomPan'
 import type { HierarchyNode } from '@shared/types'
 import { Dendrogram, type DendroNode } from '../timeline/Dendrogram'
@@ -38,10 +38,9 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
       await window.api.hierarchyNodes.add({ projectId, hierarchyId, parentId: parentId ?? null, title: '' })
     )
   }
-  const editNode = async (ev: DendroNode): Promise<void> => {
-    const title = await promptText({ title: 'Узел дерева', initial: ev.title })
-    if (title && title !== ev.title)
-      applyProject(await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { title } }))
+  const setTitle = async (ev: DendroNode, title: string): Promise<void> => {
+    if (title === ev.title) return
+    applyProject(await window.api.hierarchyNodes.update({ projectId, hierarchyId, nodeId: ev.id, patch: { title } }))
   }
   const deleteNode = async (ev: DendroNode): Promise<void> => {
     if (!(await confirmDialog({ title: 'Удалить узел и его потомков?', danger: true }))) return
@@ -85,7 +84,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
             <Dendrogram
               events={top}
               childrenOf={childrenOf}
-              onEdit={(ev) => void editNode(ev)}
+              onSetTitle={(ev, title) => void setTitle(ev, title)}
               onAddChild={(ev) => void addNode(ev.id)}
               onDelete={(ev) => void deleteNode(ev)}
               onToggleCollapse={(ev) => void toggleCollapse(ev)}

@@ -22,7 +22,8 @@ export interface DendroNode {
 interface DendrogramProps {
   events: DendroNode[]
   childrenOf: (parentId: string) => DendroNode[]
-  onEdit: (event: DendroNode) => void
+  /** Сохранить название узла (инлайн-редактор, как на доске). */
+  onSetTitle: (event: DendroNode, title: string) => void
   onAddChild: (event: DendroNode) => void
   onDelete: (event: DendroNode) => void
   onToggleCollapse?: (event: DendroNode) => void
@@ -84,7 +85,7 @@ interface Link {
 export function Dendrogram({
   events,
   childrenOf,
-  onEdit,
+  onSetTitle,
   onAddChild,
   onDelete,
   onToggleCollapse,
@@ -105,6 +106,22 @@ export function Dendrogram({
     if (!cancelEdge.current) onSetEdgeLabel?.(node, edgeDraft.trim())
     cancelEdge.current = false
     setEditEdgeId(null)
+  }
+
+  // инлайн-редактор НАЗВАНИЯ узла (как на доске, без всплывающего окна)
+  const [editId, setEditId] = React.useState<string | null>(null)
+  const [titleDraft, setTitleDraft] = React.useState('')
+  const cancelTitle = React.useRef(false)
+  const startEdit = (node: DendroNode): void => {
+    cancelTitle.current = false
+    setTitleDraft(node.title ?? '')
+    setEditId(node.id)
+  }
+  const finishEdit = (node: DendroNode): void => {
+    if (editId !== node.id) return
+    if (!cancelTitle.current) onSetTitle(node, titleDraft.trim())
+    cancelTitle.current = false
+    setEditId(null)
   }
 
   const { nodes, links, width, height } = React.useMemo(() => {
@@ -265,11 +282,35 @@ export function Dendrogram({
             }`}
             style={nodeStyle}
             title={event.note || undefined}
-            onDoubleClick={() => onEdit(event)}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              startEdit(event)
+            }}
           >
-            <div className="dendro-node-text">
-              {event.title || <span className="dendro-node-placeholder">Название…</span>}
-            </div>
+            {editId === event.id ? (
+              <input
+                className="dendro-node-input"
+                value={titleDraft}
+                autoFocus
+                placeholder="Название…"
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+                onBlur={() => finishEdit(event)}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur()
+                  if (e.key === 'Escape') {
+                    cancelTitle.current = true
+                    e.currentTarget.blur()
+                  }
+                }}
+              />
+            ) : (
+              <div className="dendro-node-text">
+                {event.title || <span className="dendro-node-placeholder">Название…</span>}
+              </div>
+            )}
             {hasChildren && onToggleCollapse && (
               <button
                 className="dendro-node-collapse"
@@ -326,7 +367,7 @@ export function Dendrogram({
                 className="dendro-node-edit"
                 onClick={(e) => {
                   e.stopPropagation()
-                  onEdit(event)
+                  startEdit(event)
                 }}
               >
                 ✎

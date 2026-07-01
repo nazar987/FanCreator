@@ -304,6 +304,21 @@
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+/* инлайн-редактор названия узла (как на доске, без всплывающего окна) */
+.dendro-node-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 54%, var(--stroke));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-2) 82%, transparent);
+  color: var(--text);
+  font: 600 13.5px var(--font-ui);
+  line-height: 1.25;
+  padding: 6px 8px;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 .dendro-node-actions {
   position: absolute;
   top: -11px;
