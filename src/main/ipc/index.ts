@@ -58,6 +58,15 @@ export function registerIpc(): void {
     return Promise.resolve()
   })
 
+  // проверка орфографии: замена слова с ошибкой / добавление в словарь
+  // (варианты исправления приходят в renderer событием spell:context из main/index.ts)
+  ipcMain.handle('spell:replace', (e, suggestion: string) => {
+    if (typeof suggestion === 'string' && suggestion) e.sender.replaceMisspelling(suggestion)
+  })
+  ipcMain.handle('spell:add', (e, word: string) => {
+    if (typeof word === 'string' && word) e.sender.session.addWordToSpellCheckerDictionary(word)
+  })
+
   // ---------- Projects ----------
   ipcMain.handle('projects:list', () => listProjects())
   ipcMain.handle('projects:get', (_e, projectId: string) => readProject(projectId))

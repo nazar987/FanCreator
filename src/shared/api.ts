@@ -259,6 +259,17 @@ export interface FanCreatorApi {
     /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
     openExternal(url: string): Promise<void>
   }
+  spelling: {
+    /** Заменить слово с ошибкой (под последним правым кликом) на вариант. */
+    replace(suggestion: string): Promise<void>
+    /** Добавить слово в пользовательский словарь. */
+    addToDictionary(word: string): Promise<void>
+    /**
+     * Подписка на данные орфографии: main шлёт их на каждый правый клик по
+     * редактируемому полю (слово с ошибкой + варианты). Возвращает отписку.
+     */
+    onContext(cb: (data: SpellContext) => void): () => void
+  }
   updates: {
     /** Проверить обновления вручную (в проде). */
     check(): void
@@ -267,6 +278,16 @@ export interface FanCreatorApi {
     /** Подписка на статус обновления. Возвращает функцию отписки. */
     onStatus(cb: (status: UpdateStatus) => void): () => void
   }
+}
+
+/** Данные для контекстного меню орфографии (правый клик по редактируемому полю). */
+export interface SpellContext {
+  x: number
+  y: number
+  /** Слово с ошибкой под курсором ('' — ошибки нет). */
+  word: string
+  /** Варианты исправления из словаря. */
+  suggestions: string[]
 }
 
 /** Статус авто-обновления приложения (S-H). */

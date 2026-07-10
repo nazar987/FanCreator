@@ -119,6 +119,15 @@ const api: FanCreatorApi = {
   shell: {
     openExternal: (url) => invoke('shell:openExternal', url)
   },
+  spelling: {
+    replace: (suggestion) => invoke('spell:replace', suggestion),
+    addToDictionary: (word) => invoke('spell:add', word),
+    onContext: (cb) => {
+      const handler = (_e: unknown, data: Parameters<typeof cb>[0]): void => cb(data)
+      ipcRenderer.on('spell:context', handler as never)
+      return () => ipcRenderer.removeListener('spell:context', handler as never)
+    }
+  },
   updates: {
     check: () => ipcRenderer.send('updates:check'),
     install: () => ipcRenderer.send('updates:install'),

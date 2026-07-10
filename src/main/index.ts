@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, net, screen, Menu, MenuItem } from 'electron'
+import { app, BrowserWindow, protocol, net, screen, Menu } from 'electron'
 import path from 'path'
 import { pathToFileURL } from 'url'
 import Store from 'electron-store'
@@ -65,27 +65,18 @@ function createMainWindow(): BrowserWindow {
   } catch {
     // некоторые языки могут быть недоступны — не валим запуск
   }
-  // контекстное меню с вариантами исправления для слова с ошибкой
+  // Исправления орфографии показывает RENDERER своим контекстным меню: шлём ему
+  // данные, а он объединяет их с пунктами редактора (например, «Продолжить
+  // нумерацию…» в списке). Раньше нативный popup и кастомное меню конфликтовали —
+  // в пунктах списка исправление слова не работало (п.11 фидбэка v2.1.1).
   win.webContents.on('context-menu', (_e, params) => {
-    if (!params.misspelledWord) return
-    const menu = new Menu()
-    for (const suggestion of params.dictionarySuggestions) {
-      menu.append(
-        new MenuItem({
-          label: suggestion,
-          click: () => win.webContents.replaceMisspelling(suggestion)
-        })
-      )
-    }
-    if (params.dictionarySuggestions.length) menu.append(new MenuItem({ type: 'separator' }))
-    menu.append(
-      new MenuItem({
-        label: 'Добавить в словарь',
-        click: () =>
-          win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord)
-      })
-    )
-    menu.popup()
+    if (!params.isEditable) return
+    win.webContents.send('spell:context', {
+      x: params.x,
+      y: params.y,
+      word: params.misspelledWord || '',
+      suggestions: params.dictionarySuggestions || []
+    })
   })
 
   const save = (): void => {

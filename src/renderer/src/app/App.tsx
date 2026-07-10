@@ -2,6 +2,7 @@ import React from 'react'
 import { useStore } from '../store/store'
 import { DialogHost } from '../shared/ui/dialogs'
 import { ContextMenuHost } from '../shared/ui/ContextMenu'
+import { initSpellMenu } from '../shared/ui/SpellMenu'
 import { CommandPalette } from '../shared/ui/CommandPalette'
 import { ColorPickerHost } from '../shared/ui/ColorPalette'
 import { Sidebar } from './Sidebar'
@@ -20,6 +21,9 @@ import { WhatsNew } from '../features/updates/WhatsNew'
 
 export function App(): React.JSX.Element {
   const { current, tabs, activeTabId } = useStore()
+
+  // единое меню орфографии (исправления слова приходят из main по IPC)
+  React.useEffect(() => initSpellMenu(), [])
 
   const active = tabs.find((t) => t.id === activeTabId) ?? tabs[0]
 

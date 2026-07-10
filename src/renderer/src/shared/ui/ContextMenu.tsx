@@ -26,6 +26,11 @@ export function openContextMenu(e: React.MouseEvent, items: MenuItem[]): void {
   openExternal?.({ x: e.clientX, y: e.clientY, items })
 }
 
+/** Открыть контекстное меню по координатам (например, из IPC-события орфографии). */
+export function openContextMenuAt(x: number, y: number, items: MenuItem[]): void {
+  openExternal?.({ x, y, items })
+}
+
 export function ContextMenuHost(): React.JSX.Element | null {
   const [state, setState] = React.useState<MenuState | null>(null)
   const [submenu, setSubmenu] = React.useState<{ items: MenuItem[]; x: number; y: number } | null>(null)
