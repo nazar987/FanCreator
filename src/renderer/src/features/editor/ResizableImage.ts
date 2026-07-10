@@ -101,7 +101,9 @@ export const ResizableImage = Image.extend({
         e.preventDefault()
         e.stopPropagation()
         if (current.attrs.floating) {
-          persist({ ...current.attrs, floating: false })
+          // сбрасываем и координаты: иначе при повторном включении «перед текстом»
+          // картинка прыгала на старое место и накрывала соседнюю (п.14)
+          persist({ ...current.attrs, floating: false, x: 0, y: 0 })
           return
         }
         // Включаем floating, сохранив текущее визуальное положение, чтобы картинка не «прыгнула».

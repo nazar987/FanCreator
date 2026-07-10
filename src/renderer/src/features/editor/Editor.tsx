@@ -9,6 +9,7 @@ import { wikiLinkGuardKey } from './EditorExtras'
 import { Toolbar } from './Toolbar'
 import { FindReplace } from './FindReplace'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { setSpellMenuExtras } from '../../shared/ui/SpellMenu'
 import { promptText } from '../../shared/ui/dialogs'
 import type { Chapter, Story } from '@shared/types'
 
@@ -25,7 +26,9 @@ interface EditorProps {
  * берём позицию, чьи координаты реально совпадают с пробой.
  */
 function nearestTextPos(view: EditorView, x: number, y: number): number | null {
-  for (let step = 0; step <= 200; step += 8) {
+  // диапазон поиска больше межстраничного «пирога» (зазор 44 + поля 80+80 ≈ 204px),
+  // иначе из середины зазора не находилась ни одна реальная строка
+  for (let step = 0; step <= 320; step += 8) {
     for (const dy of step === 0 ? [0] : [step, -step]) {
       const probe = view.posAtCoords({ left: x, top: y + dy })
       if (!probe) continue
@@ -106,6 +109,34 @@ function downscaleDataUrl(dataUrl: string, maxDim = 1600): Promise<string> {
     img.onerror = () => resolve(dataUrl)
     img.src = dataUrl
   })
+}
+
+/**
+ * Вставка картинки, не «съедающая» строку (п.12 фидбэка v2.1.1):
+ *  • в ПУСТОМ абзаце (свежий пункт списка) картинка встаёт ПЕРЕД ним — абзац
+ *    остаётся, пункт не исчезает и есть куда писать текст;
+ *  • иначе — обычная замена выделения; если за картинкой в её блоке ничего нет
+ *    (конец пункта/документа), добавляем пустой абзац после.
+ */
+function insertImageKeepingRoom(view: EditorView, url: string): void {
+  const { state } = view
+  const image = state.schema.nodes.image.create({ src: url })
+  const paragraph = state.schema.nodes.paragraph
+  const { selection } = state
+  const $from = selection.$from
+  const parent = $from.parent
+
+  if (selection.empty && parent.isTextblock && parent.content.size === 0 && $from.depth > 0) {
+    view.dispatch(state.tr.insert($from.before(), image))
+    return
+  }
+
+  view.dispatch(state.tr.replaceSelectionWith(image))
+  // если картинка оказалась последней в родителе — добавить абзац после неё
+  const $pos = view.state.selection.$from
+  if ($pos.nodeBefore?.type.name === 'image' && !$pos.nodeAfter && paragraph) {
+    view.dispatch(view.state.tr.insert($pos.pos, paragraph.create()))
+  }
 }
 
 /** Преобразует сохранённый контент главы в начальное содержимое редактора. */
@@ -250,6 +281,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
   // «промах» выделения в межстраничный зазор во время протяжки мышью
   // (createSelectionBetween). Флаг не даёт трогать выделение с клавиатуры.
   const pointerRef = React.useRef<{ x: number; y: number } | null>(null)
+  // точка mousedown: если ЯКОРЬ выделения улетел (нажали в межстраничном зазоре —
+  // posAtCoords резолвит 0), чиним его по этой точке, а не по текущему указателю
+  const downRef = React.useRef<{ x: number; y: number } | null>(null)
   const draggingRef = React.useRef(false)
   const projectId = current?.id ?? ''
 
@@ -345,21 +379,49 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {
         const p = pointerRef.current
         if (!p || !draggingRef.current) return null // только протяжка мышью, не клавиатура
+        let anchorPos = $anchor.pos
+        let headPos = $head.pos
+        let changed = false
+        // якорь: mousedown попал в зазор → PM зарезолвил 0 и выделение хватало всё
+        const d = downRef.current
+        if (d) {
+          try {
+            const ac = view.coordsAtPos($anchor.pos)
+            if (Math.abs(ac.top - d.y) >= 60) {
+              const fixedA = nearestTextPos(view, d.x, d.y)
+              if (fixedA != null && fixedA !== anchorPos) {
+                anchorPos = fixedA
+                changed = true
+              }
+            }
+          } catch {
+            /* позиция без координат — оставляем как есть */
+          }
+        }
+        // голова: указатель в зазоре во время протяжки
         try {
           const headCoords = view.coordsAtPos($head.pos)
-          if (Math.abs(headCoords.top - p.y) < 60) return null // норм — не трогаем
+          if (Math.abs(headCoords.top - p.y) >= 60) {
+            const fixedH = nearestTextPos(view, p.x, p.y)
+            if (fixedH != null && fixedH !== headPos) {
+              headPos = fixedH
+              changed = true
+            }
+          }
         } catch {
-          return null
+          if (!changed) return null
         }
-        const fixed = nearestTextPos(view, p.x, p.y)
-        if (fixed == null || fixed === $head.pos) return null
-        return TextSelection.create(view.state.doc, $anchor.pos, fixed)
+        if (!changed) return null
+        return TextSelection.create(view.state.doc, anchorPos, headPos)
       },
       // S-G: наведение/клик по вики-ссылке (делегирование событий)
       handleDOMEvents: {
         mousedown: (_view, event) => {
           draggingRef.current = true
           pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
+          // Shift+клик расширяет выделение от старого якоря — точку нажатия
+          // за якорь не принимаем (иначе коррекция сама ломала бы выделение)
+          downRef.current = (event as MouseEvent).shiftKey ? null : pointerRef.current
           return false
         },
         mousemove: (_view, event) => {
@@ -445,8 +507,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         reader.onload = async () => {
           const url = await persistImage(reader.result as string)
           if (!url) return
-          const node = view.state.schema.nodes.image.create({ src: url })
-          view.dispatch(view.state.tr.replaceSelectionWith(node))
+          insertImageKeepingRoom(view, url) // п.12: пункт списка не исчезает
         }
         reader.readAsDataURL(file)
         return true
@@ -792,7 +853,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     const reader = new FileReader()
     reader.onload = async () => {
       const url = await persistImage(reader.result as string)
-      if (url) editor.chain().focus().setImage({ src: url }).run()
+      if (!url) return
+      editor.commands.focus()
+      insertImageKeepingRoom(editor.view, url) // п.12: как при вставке из буфера
     }
     reader.readAsDataURL(file)
   }
@@ -1014,7 +1077,9 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       }
     }
     if (olAttrs) {
-      e.preventDefault()
+      // НЕ preventDefault и НЕ открываем меню сами: пункты списка регистрируем
+      // для единого меню орфографии — main пришлёт spell:context (исправления
+      // слова с ашибкой), и меню соберётся одно: исправления + нумерация (п.11).
       const attrs = olAttrs
       const setOl = (patch: Record<string, unknown>): void => {
         editor
@@ -1027,7 +1092,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           .run()
       }
       const cur = (attrs.listStartManual as number) || 1
-      openContextMenu(e, [
+      setSpellMenuExtras([
         {
           // сквозная связь: список продолжает нумерацию предыдущего и пересчитывается сам
           label: attrs.listContinue ? '✓ Продолжать предыдущий список' : 'Продолжить нумерацию предыдущего',

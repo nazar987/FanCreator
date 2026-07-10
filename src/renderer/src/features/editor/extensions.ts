@@ -1,4 +1,5 @@
 import StarterKit from '@tiptap/starter-kit'
+import { ListItem } from '@tiptap/extension-list-item'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { FontFamily } from '@tiptap/extension-font-family'
 import { Color } from '@tiptap/extension-color'
@@ -53,8 +54,12 @@ export function buildExtensions(opts: {
     // чтобы избежать дублирования марок.
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
-      link: { openOnClick: false, autolink: true }
+      link: { openOnClick: false, autolink: true },
+      // свой listItem ниже: в пункте списка разрешён и заголовок (п.5 фидбэка —
+      // «1. глава» заголовком с работающей нумерацией)
+      listItem: false
     }),
+    ListItem.extend({ content: '(paragraph | heading) block*' }),
     TextStyle,
     // включаем блоки, чтобы шрифт сохранялся при вставке из Word/Google Docs (#3),
     // где font-family часто задан на абзаце, а не только на span

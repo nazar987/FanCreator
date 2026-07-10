@@ -5,14 +5,27 @@ import { Extension } from '@tiptap/core'
  * Tab увеличивает отступ абзаца, Shift+Tab — уменьшает.
  * В списках Tab отдаём стандартному поведению (вложенность пунктов).
  *
- * ЗАГОЛОВКИ красную строку НЕ получают: text-indent в em масштабируется по шрифту,
- * поэтому у крупных заголовков отступ выходил во много раз больше, чем у текста, и
- * разные уровни «ступенчато уезжали». Заголовки типографически идут без абзацного
- * отступа (тип блока в types — только 'paragraph').
+ * Отступ рендерится в ФИКСИРОВАННЫХ px (как в Word — 1,25 см независимо от
+ * шрифта). Раньше был em: он масштабировался по размеру шрифта, поэтому у
+ * абзацев с разными размерами (и особенно у заголовков) отступы получались
+ * разной ширины и «ступенчато уезжали». Теперь красная строка одинакова везде,
+ * и заголовки снова её поддерживают.
  */
 
-const STEP = 2.5 // em на один уровень (≈ красная строка)
+const STEP_PX = 40 // px на один уровень (= прежним 2.5em при базовых 16px)
+const LEGACY_STEP_EM = 2.5
 const MAX = 6
+
+/** Значение text-indent из HTML → уровень отступа (поддержка старых em-документов). */
+function parseIndent(raw: string): number {
+  const v = parseFloat(raw)
+  if (!v) return 0
+  let px = v
+  if (raw.includes('em')) px = (v / LEGACY_STEP_EM) * STEP_PX
+  else if (raw.includes('pt')) px = (v * 96) / 72
+  else if (raw.includes('cm')) px = v * 37.8
+  return Math.max(0, Math.min(MAX, Math.round(px / STEP_PX)))
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -27,7 +40,7 @@ export const ParagraphIndent = Extension.create({
   name: 'paragraphIndent',
 
   addOptions() {
-    return { types: ['paragraph'] }
+    return { types: ['paragraph', 'heading'] }
   },
 
   addGlobalAttributes() {
@@ -37,12 +50,9 @@ export const ParagraphIndent = Extension.create({
         attributes: {
           indent: {
             default: 0,
-            parseHTML: (el) => {
-              const ti = parseFloat((el as HTMLElement).style.textIndent || '0')
-              return ti ? Math.round(ti / STEP) : 0
-            },
+            parseHTML: (el) => parseIndent((el as HTMLElement).style.textIndent || '0'),
             renderHTML: (attrs) =>
-              attrs.indent ? { style: `text-indent: ${attrs.indent * STEP}em` } : {}
+              attrs.indent ? { style: `text-indent: ${attrs.indent * STEP_PX}px` } : {}
           }
         }
       }

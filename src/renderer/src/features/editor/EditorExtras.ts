@@ -89,10 +89,21 @@ export const OrderedListStart = Extension.create({
           if (!ol) return null
           let tr = null as null | typeof newState.tr
           let running = 1
+          // п.13 (v2.1.1): список, отделённый от предыдущего ТОЛЬКО картинками,
+          // продолжает нумерацию сам — не нужно «протыкивать» вручную.
+          let sawList = false
+          let gapHasImage = false
+          let gapOnlyImages = true
           newState.doc.forEach((node, offset) => {
-            if (node.type !== ol) return
+            if (node.type !== ol) {
+              if (node.type.name === 'image') gapHasImage = true
+              else if (node.type.name !== 'pageBreak') gapOnlyImages = false
+              return
+            }
             const manual = (node.attrs.listStartManual as number | null) || 1
-            const desired = node.attrs.listContinue ? running : manual
+            const autoContinue =
+              sawList && gapHasImage && gapOnlyImages && !node.attrs.listContinue && !node.attrs.listStartManual
+            const desired = node.attrs.listContinue || autoContinue ? running : manual
             if ((node.attrs.listStart || 1) !== desired) {
               if (!tr) tr = newState.tr
               tr.setNodeMarkup(offset, undefined, { ...node.attrs, listStart: desired > 1 ? desired : null })
@@ -100,6 +111,9 @@ export const OrderedListStart = Extension.create({
             // считаем только нумерованные пункты (без «пустых без номера»)
             const numbered = node.content.content.filter((li) => !li.attrs.unnumbered).length
             running = desired + numbered
+            sawList = true
+            gapHasImage = false
+            gapOnlyImages = true
           })
           return tr
         }

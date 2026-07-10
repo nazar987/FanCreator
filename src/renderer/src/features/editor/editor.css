@@ -266,8 +266,9 @@
   font-weight: 600;
   line-height: 1.2;
 }
-/* заголовки без красной строки (даже если импорт/вставка принесли text-indent):
-   в em он масштабировался по крупному шрифту и заголовки «ступенчато уезжали» */
+/* Страховка от «мусорного» text-indent из импорта/вставки. Красная строка,
+   поставленная пользователем, — это ИНЛАЙНОВЫЙ стиль от ParagraphIndent (px),
+   он сильнее этого правила, поэтому заголовки с красной строкой работают. */
 .fc-prose h1,
 .fc-prose h2,
 .fc-prose h3 {
@@ -328,16 +329,23 @@
      раньше отрицательный text-indent выбрасывал номер вправо; теперь indent'а нет,
      номер остаётся слева.
    Цена: перенос строк идёт под номер (без «висячего» отступа) — зато стабильно. */
-.fc-prose ol > li > p:first-of-type::before {
+/* Номер получает ПЕРВЫЙ текстовый блок пункта — абзац ИЛИ заголовок (п.5:
+   «1. глава» заголовком). :first-of-type здесь нельзя (он «первый среди своего
+   тега», h2 после p тоже был бы first-of-type) — поэтому ставим номер на все
+   текстовые блоки и гасим его у тех, перед кем уже был текстовый блок (гаситель
+   ниже специфичнее: (0,1,5) против (0,1,4)). */
+.fc-prose ol > li > :is(p, h1, h2, h3)::before {
   content: counters(fc-ol, '.') '.\00a0';
   white-space: nowrap;
+}
+.fc-prose ol > li > :is(p, h1, h2, h3) ~ :is(p, h1, h2, h3)::before {
+  content: none;
 }
 .fc-prose ol > li[data-unnumbered='true'] {
   counter-increment: none;
 }
-.fc-prose ol > li[data-unnumbered='true'] > p:first-of-type::before {
-  content: '';
-  display: none;
+.fc-prose ol > li[data-unnumbered='true'] > :is(p, h1, h2, h3)::before {
+  content: none;
 }
 .fc-prose ul > li[data-unnumbered='true']::marker {
   content: '';
