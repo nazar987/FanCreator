@@ -38,10 +38,10 @@ const NODE_MAX_W = 340
 const NODE_MIN_H = 56
 const NODE_PAD_X = 30 // суммарные горизонтальные поля внутри блока
 const NODE_PAD_Y = 26
-const LINE_H = 18
 const NODE_FONT = '600 13.5px Inter, system-ui, sans-serif'
 
 const ROW_GAP = 26 // вертикальный зазор между блоками
+const ROOT_GAP = 34 // доп. воздух между независимыми деревьями (корнями)
 const STUB = 26 // вывод от родителя до вертикальной «шины»
 const LEAD_MIN = 42 // мин. горизонтальный заход к ребёнку
 const LABEL_PAD = 24
@@ -50,12 +50,39 @@ const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
 
 const clamp = (min: number, v: number, max: number): number => Math.max(min, Math.min(v, max))
 
+/**
+ * Высоту текста меряем РЕАЛЬНОЙ вёрсткой (скрытый div с теми же стилями, что
+ * .dendro-node-text): прежняя оценка «ширина ÷ строки» промахивалась на переносах
+ * длинных слов, и блоки с большим текстом наезжали на соседей снизу.
+ */
+let measurer: HTMLDivElement | null = null
+function measureTextHeight(text: string, width: number): number {
+  if (!measurer) {
+    measurer = document.createElement('div')
+    const s = measurer.style
+    s.position = 'absolute'
+    s.left = '-99999px'
+    s.top = '0'
+    s.visibility = 'hidden'
+    s.font = NODE_FONT
+    s.lineHeight = '1.3'
+    s.whiteSpace = 'pre-wrap'
+    s.overflowWrap = 'anywhere'
+    s.wordBreak = 'break-word'
+    s.textAlign = 'center'
+    document.body.appendChild(measurer)
+  }
+  measurer.style.width = `${width}px`
+  measurer.textContent = text
+  return measurer.offsetHeight
+}
+
 function nodeSize(text: string): { w: number; h: number } {
   const t = text || 'Название…'
-  const textW = measureTextWidth(t, NODE_FONT)
+  // ширина — по самой длинной СТРОКЕ (текст узла может быть многострочным)
+  const textW = Math.max(...t.split('\n').map((line) => measureTextWidth(line, NODE_FONT)))
   const w = clamp(NODE_MIN_W, textW + NODE_PAD_X, NODE_MAX_W)
-  const lines = Math.max(1, Math.ceil(textW / (w - NODE_PAD_X)))
-  const h = Math.max(NODE_MIN_H, lines * LINE_H + NODE_PAD_Y)
+  const h = Math.max(NODE_MIN_H, measureTextHeight(t, w - NODE_PAD_X) + NODE_PAD_Y)
   return { w, h }
 }
 
@@ -127,88 +154,96 @@ export function Dendrogram({
   const { nodes, links, width, height } = React.useMemo(() => {
     const nodes: Placed[] = []
     const links: Link[] = []
-    let maxDepth = 0
+    let cursor = 0
+    let width = 0
 
     const countDescendants = (id: string): number => {
       const kids = childrenOf(id)
       return kids.reduce((sum, kid) => sum + 1 + countDescendants(kid.id), 0)
     }
 
-    // 1) предпроход: размеры блоков, ширина колонок, длина подписей по уровням
-    const sizeMap = new Map<string, { w: number; h: number }>()
-    const colW: number[] = []
-    const labelWByDepth: number[] = []
-    const scan = (node: DendroNode, depth: number): void => {
-      maxDepth = Math.max(maxDepth, depth)
-      const s = nodeSize(node.title)
-      sizeMap.set(node.id, s)
-      colW[depth] = Math.max(colW[depth] ?? 0, s.w)
-      if (node.edgeLabel) {
-        labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
+    // Каждый корень раскладывается НЕЗАВИСИМО: свои ширины колонок и зазоры под
+    // подписи. Иначе длинный текст в одном дереве раздвигал колонки всех
+    // остальных деревьев на листе (фидбэк: «удлиняю белую ячейку — уезжают и жёлтые»).
+    for (const root of events) {
+      let maxDepth = 0
+      const sizeMap = new Map<string, { w: number; h: number }>()
+      const colW: number[] = []
+      const labelWByDepth: number[] = []
+
+      // 1) предпроход: размеры блоков, ширина колонок, длина подписей по уровням
+      const scan = (node: DendroNode, depth: number): void => {
+        maxDepth = Math.max(maxDepth, depth)
+        const s = nodeSize(node.title)
+        sizeMap.set(node.id, s)
+        colW[depth] = Math.max(colW[depth] ?? 0, s.w)
+        if (node.edgeLabel) {
+          labelWByDepth[depth] = Math.max(labelWByDepth[depth] ?? 0, measureTextWidth(node.edgeLabel, LABEL_FONT))
+        }
+        if (node.collapsed) return
+        childrenOf(node.id).forEach((kid) => scan(kid, depth + 1))
       }
-      if (node.collapsed) return
-      childrenOf(node.id).forEach((kid) => scan(kid, depth + 1))
-    }
-    events.forEach((event) => scan(event, 0))
+      scan(root, 0)
 
-    // 2) x-координаты колонок: ширина колонки + зазор под подпись уровня
-    const colX: number[] = [0]
-    for (let d = 1; d <= maxDepth; d++) {
-      const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
-      const lead = labelW > 0 ? labelW + LABEL_PAD : LEAD_MIN
-      colX[d] = colX[d - 1] + (colW[d - 1] ?? NODE_MIN_W) + STUB + lead
-    }
+      // 2) x-координаты колонок: ширина колонки + зазор под подпись уровня
+      const colX: number[] = [0]
+      for (let d = 1; d <= maxDepth; d++) {
+        const labelW = Math.min(labelWByDepth[d] ?? 0, LABEL_MAX)
+        const lead = labelW > 0 ? labelW + LABEL_PAD : LEAD_MIN
+        colX[d] = colX[d - 1] + (colW[d - 1] ?? NODE_MIN_W) + STUB + lead
+      }
 
-    // 3) раскладка: вертикальный курсор по фактической высоте блоков
-    let cursor = 0
-    const layout = (node: DendroNode, depth: number, inheritedColor?: string): number => {
-      const s = sizeMap.get(node.id) ?? nodeSize(node.title)
-      const color = node.color || inheritedColor
-      const allKids = childrenOf(node.id)
-      const hasChildren = allKids.length > 0
-      const kids = node.collapsed ? [] : allKids
-      const x = colX[depth]
-      let y: number
-      if (kids.length === 0) {
-        y = cursor + s.h / 2
-        cursor += s.h + ROW_GAP
-      } else {
-        const childYs = kids.map((kid) => layout(kid, depth + 1, color))
-        y = (childYs[0] + childYs[childYs.length - 1]) / 2
-        const x1 = x + s.w
-        const midX = x1 + STUB
-        const x2 = colX[depth + 1]
-        kids.forEach((kid, idx) => {
-          const childColor = kid.color || color
-          links.push({
-            x1,
-            y1: y,
-            x2,
-            y2: childYs[idx],
-            midX,
-            labelX: (midX + x2) / 2,
-            labelY: childYs[idx],
-            child: kid,
-            color: childColor
+      // 3) раскладка: вертикальный курсор по фактической высоте блоков
+      const layout = (node: DendroNode, depth: number, inheritedColor?: string): number => {
+        const s = sizeMap.get(node.id) ?? nodeSize(node.title)
+        const color = node.color || inheritedColor
+        const allKids = childrenOf(node.id)
+        const hasChildren = allKids.length > 0
+        const kids = node.collapsed ? [] : allKids
+        const x = colX[depth]
+        let y: number
+        if (kids.length === 0) {
+          y = cursor + s.h / 2
+          cursor += s.h + ROW_GAP
+        } else {
+          const childYs = kids.map((kid) => layout(kid, depth + 1, color))
+          y = (childYs[0] + childYs[childYs.length - 1]) / 2
+          const x1 = x + s.w
+          const midX = x1 + STUB
+          const x2 = colX[depth + 1]
+          kids.forEach((kid, idx) => {
+            const childColor = kid.color || color
+            links.push({
+              x1,
+              y1: y,
+              x2,
+              y2: childYs[idx],
+              midX,
+              labelX: (midX + x2) / 2,
+              labelY: childYs[idx],
+              child: kid,
+              color: childColor
+            })
           })
+        }
+        nodes.push({
+          event: node,
+          x,
+          y,
+          w: s.w,
+          h: s.h,
+          depth,
+          hasChildren,
+          hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0,
+          color
         })
+        return y
       }
-      nodes.push({
-        event: node,
-        x,
-        y,
-        w: s.w,
-        h: s.h,
-        depth,
-        hasChildren,
-        hiddenCount: node.collapsed && hasChildren ? countDescendants(node.id) : 0,
-        color
-      })
-      return y
+      layout(root, 0)
+      cursor += ROOT_GAP // воздух между деревьями
+      width = Math.max(width, colX[maxDepth] + (colW[maxDepth] ?? NODE_MIN_W) + 28)
     }
-    events.forEach((event) => layout(event, 0))
 
-    const width = colX[maxDepth] + (colW[maxDepth] ?? NODE_MIN_W) + 28
     const height = Math.max(cursor, NODE_MIN_H) + 12
     return { nodes, links, width, height }
   }, [events, childrenOf])
@@ -288,18 +323,31 @@ export function Dendrogram({
             }}
           >
             {editId === event.id ? (
-              <input
+              // многострочный ввод (как в стикерах на доске): Enter — новая строка,
+              // Ctrl+Enter — сохранить, Esc — отмена, клик вне — сохранить
+              <textarea
                 className="dendro-node-input"
                 value={titleDraft}
                 autoFocus
+                rows={1}
                 placeholder="Название…"
-                onChange={(e) => setTitleDraft(e.target.value)}
+                ref={(el) => {
+                  if (!el) return
+                  el.style.height = 'auto'
+                  el.style.height = `${el.scrollHeight}px`
+                }}
+                onChange={(e) => {
+                  setTitleDraft(e.target.value)
+                  e.currentTarget.style.height = 'auto'
+                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
+                }}
                 onFocus={(e) => e.currentTarget.select()}
                 onBlur={() => finishEdit(event)}
                 onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') e.currentTarget.blur()
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) e.currentTarget.blur()
                   if (e.key === 'Escape') {
                     cancelTitle.current = true
                     e.currentTarget.blur()
