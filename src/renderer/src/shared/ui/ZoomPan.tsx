@@ -1,4 +1,37 @@
 import React from 'react'
+import { Home } from 'lucide-react'
+
+const DEFAULT_PAN = { x: 24, y: 24 }
+
+interface ZoomPanState {
+  x: number
+  y: number
+  zoom: number
+}
+
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+
+const readStoredState = (storageKey: string | undefined): ZoomPanState | null => {
+  if (!storageKey) return null
+  try {
+    const raw = window.localStorage.getItem(storageKey)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<ZoomPanState>
+    if (!isFiniteNumber(parsed.x) || !isFiniteNumber(parsed.y) || !isFiniteNumber(parsed.zoom)) return null
+    return { x: parsed.x, y: parsed.y, zoom: parsed.zoom }
+  } catch {
+    return null
+  }
+}
+
+const writeStoredState = (storageKey: string | undefined, state: ZoomPanState): void => {
+  if (!storageKey) return
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(state))
+  } catch {
+    // Хранилище может быть недоступно; в этом случае ZoomPan просто работает без памяти позиции.
+  }
+}
 
 /**
  * ZoomPan — масштабирование (Ctrl+колесо, к курсору) и панорамирование (перетас-
@@ -8,22 +41,52 @@ import React from 'react'
  */
 export function ZoomPan({
   children,
-  className = ''
+  className = '',
+  storageKey
 }: {
   children: React.ReactNode
   className?: string
+  storageKey?: string
 }): React.JSX.Element {
-  const [zoom, setZoom] = React.useState(1)
-  const [pan, setPan] = React.useState({ x: 24, y: 24 })
+  const initialState = React.useMemo(() => readStoredState(storageKey), [storageKey])
+  const [zoom, setZoom] = React.useState(initialState?.zoom ?? 1)
+  const [pan, setPan] = React.useState({ x: initialState?.x ?? DEFAULT_PAN.x, y: initialState?.y ?? DEFAULT_PAN.y })
   const wrapRef = React.useRef<HTMLDivElement>(null)
   const zoomRef = React.useRef(zoom)
   zoomRef.current = zoom
   const panRef = React.useRef(pan)
   panRef.current = pan
   const drag = React.useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null)
+  const didMountRef = React.useRef(false)
 
   const MIN = 0.3
   const MAX = 2.5
+
+  React.useEffect(() => {
+    const stored = readStoredState(storageKey)
+    setZoom(stored?.zoom ?? 1)
+    setPan({ x: stored?.x ?? DEFAULT_PAN.x, y: stored?.y ?? DEFAULT_PAN.y })
+    didMountRef.current = false
+  }, [storageKey])
+
+  React.useEffect(() => {
+    if (!storageKey) return
+    if (!didMountRef.current) {
+      didMountRef.current = true
+      return
+    }
+    const timer = window.setTimeout(() => {
+      writeStoredState(storageKey, { x: pan.x, y: pan.y, zoom })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [pan.x, pan.y, storageKey, zoom])
+
+  React.useEffect(
+    () => () => {
+      writeStoredState(storageKey, { x: panRef.current.x, y: panRef.current.y, zoom: zoomRef.current })
+    },
+    [storageKey]
+  )
 
   const onWheel = (e: React.WheelEvent): void => {
     if (!e.ctrlKey) return
@@ -69,7 +132,7 @@ export function ZoomPan({
   const step = (d: number): void => setZoom((z) => Math.min(MAX, Math.max(MIN, +(z + d).toFixed(2))))
   const reset = (): void => {
     setZoom(1)
-    setPan({ x: 24, y: 24 })
+    setPan(DEFAULT_PAN)
   }
 
   return (
@@ -81,6 +144,9 @@ export function ZoomPan({
         {children}
       </div>
       <div className="zoompan-controls">
+        <button title="В начало листа" onClick={reset}>
+          <Home size={13} />
+        </button>
         <button title="Уменьшить" onClick={() => step(-0.1)}>
           −
         </button>

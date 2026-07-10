@@ -552,7 +552,7 @@ export function Genealogy(): React.JSX.Element {
           {active.nodes.length === 0 ? (
             <div className="genealogy-empty dim">Пустое древо. Нажмите «Добавить корень».</div>
           ) : (
-            <ZoomPan className="genealogy-canvas">
+            <ZoomPan className="genealogy-canvas" storageKey={`fancreator.zoompan.${project.id}.${active.id}`}>
               <GenealogyTree
                 g={active}
                 childrenOf={childrenOf}

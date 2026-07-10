@@ -80,7 +80,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
         {h.nodes.length === 0 ? (
           <div className="timeline-empty dim">Дерево пустое. Нажмите «Добавить корень».</div>
         ) : (
-          <ZoomPan>
+          <ZoomPan storageKey={`fancreator.zoompan.${projectId}.${hierarchyId}`}>
             <Dendrogram
               events={top}
               childrenOf={childrenOf}

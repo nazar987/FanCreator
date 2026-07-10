@@ -484,7 +484,7 @@ export function Timeline({ timelineId }: { timelineId: string }): React.JSX.Elem
             <div className="timeline-list">{renderEventGroup(null, 0)}</div>
           </DragDropContext>
         ) : (
-          <ZoomPan>
+          <ZoomPan storageKey={`fancreator.zoompan.${current.id}.${timelineId}`}>
             <Fishbone
               title={timeline.title}
               events={topEvents}
