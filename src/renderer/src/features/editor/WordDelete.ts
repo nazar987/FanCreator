@@ -1,6 +1,7 @@
 import { Extension } from '@tiptap/core'
 import type { Editor } from '@tiptap/core'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
+import { canSplit } from '@tiptap/pm/transform'
 
 /**
  * WordDelete — поведение клавиш удаления «как в Word» (фидбэк про Delete).
@@ -201,7 +202,30 @@ export const WordDelete = Extension.create({
       'Mod-Backspace': () => deleteWordBackward(this.editor.state, this.editor.view.dispatch),
       // Enter в ПУСТОМ пункте списка — делаем пустую строку без номера, нумерация
       // ниже продолжается. В непустом пункте отдаём стандартному splitListItem.
-      Enter: () => blankOutEmptyListItem(this.editor),
+      Enter: () => {
+        if (blankOutEmptyListItem(this.editor)) return true
+        // Enter в пункте, где курсор НЕ в первом блоке (после картинки): штатные
+        // splitListItem/liftEmptyBlock выбрасывали строку ИЗ списка и клеили её к
+        // следующему абзацу (фидбэк v2.1.2 «вакханалия с нумерацией»). Режем пункт
+        // сами: хвост уходит в НОВЫЙ пункт со следующим номером, как в Word.
+        const { editor } = this
+        const { state } = editor
+        const { selection } = state
+        if (!selection.empty) return false
+        const listItem = state.schema.nodes.listItem
+        if (!listItem) return false
+        const { $from } = selection
+        for (let d = $from.depth; d > 0; d--) {
+          if ($from.node(d).type === listItem) {
+            if ($from.index(d) === 0) return false // первый блок — штатное поведение ок
+            const depthDiff = $from.depth - d + 1
+            if (!canSplit(state.doc, $from.pos, depthDiff)) return false
+            editor.view.dispatch(state.tr.split($from.pos, depthDiff).scrollIntoView())
+            return true
+          }
+        }
+        return false
+      },
       Backspace: () => {
         const { editor } = this
         const { selection, schema } = editor.state
@@ -209,6 +233,17 @@ export const WordDelete = Extension.create({
         if (!selection.empty || !listItem) return false
         const { $from } = selection
         if ($from.parentOffset !== 0) return false
+        // Курсор в начале блока, ПЕРЕД которым стоит картинка (в т.ч. внутри пункта
+        // списка) — выделяем её, как Word (повторный Backspace удалит). Раньше
+        // управление уходило списочному Backspace, и вместо картинки «стирался
+        // номер пункта, даже если там есть текст» (фидбэк v2.1.2).
+        if ($from.depth > 0) {
+          const $block = editor.state.doc.resolve($from.before())
+          const prev = $block.nodeBefore
+          if (prev && prev.isLeaf && !prev.isText) {
+            return editor.commands.selectNodeBackward()
+          }
+        }
         for (let d = $from.depth; d > 0; d--) {
           if ($from.node(d).type === listItem) {
             if ($from.index(d) !== 0) return false

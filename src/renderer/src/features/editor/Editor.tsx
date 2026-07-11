@@ -131,6 +131,29 @@ function insertImageKeepingRoom(view: EditorView, url: string): void {
     return
   }
 
+  // Внутри пункта списка вставляем ЯВНО после текущего абзаца: replaceSelectionWith
+  // в конце пункта «выносил» картинку за пределы списка, разрезая нумерацию
+  // (фидбэк v2.1.2). Курсор — в абзац после картинки, чтобы сразу писать дальше.
+  let inListItem = false
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type.name === 'listItem') {
+      inListItem = true
+      break
+    }
+  }
+  if (selection.empty && inListItem && parent.isTextblock) {
+    const after = $from.after()
+    let tr = state.tr.insert(after, image)
+    const posAfterImage = after + image.nodeSize
+    const $img = tr.doc.resolve(posAfterImage)
+    if ((!$img.nodeAfter || !$img.nodeAfter.isTextblock) && paragraph) {
+      tr = tr.insert(posAfterImage, paragraph.create())
+    }
+    tr = tr.setSelection(TextSelection.create(tr.doc, posAfterImage + 1))
+    view.dispatch(tr.scrollIntoView())
+    return
+  }
+
   view.dispatch(state.tr.replaceSelectionWith(image))
   // если картинка оказалась последней в родителе — добавить абзац после неё
   const $pos = view.state.selection.$from
@@ -261,6 +284,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     setZoomLayerHeight((prev) => (prev != null && Math.abs(prev - h) < 1 ? prev : h))
   }, [])
   const [saved, setSaved] = React.useState(true)
+  // цвет листа (фидбэк v2.1.2: «пастельные, слегка сероватый/желтоватый, ночной») —
+  // глобальная настройка, живёт в localStorage
+  const [paper, setPaper] = React.useState<string>(() => {
+    try {
+      return localStorage.getItem('fancreator.paper') || 'white'
+    } catch {
+      return 'white'
+    }
+  })
+  const changePaper = (value: string): void => {
+    setPaper(value)
+    try {
+      localStorage.setItem('fancreator.paper', value)
+    } catch {
+      /* ignore */
+    }
+  }
   // S-P: оглавление главы (заголовки H1–H3)
   const [tocOpen, setTocOpen] = React.useState(false)
   const [toc, setToc] = React.useState<{ level: number; text: string; pos: number }[]>([])
@@ -1210,6 +1250,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         <div
           ref={scrollRef}
           className={`editor-scroll${ready ? '' : ' editor-scroll--loading'}`}
+          data-paper={paper === 'white' ? undefined : paper}
           style={{ ['--page-zoom' as string]: zoom }}
           onScroll={handleScroll}
           onContextMenu={onEditorContextMenu}
@@ -1262,6 +1303,18 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
             +
           </button>
         </span>
+        <span className="editor-status-sep">·</span>
+        <select
+          className="editor-paper-select"
+          title="Цвет листа"
+          value={paper}
+          onChange={(e) => changePaper(e.target.value)}
+        >
+          <option value="white">Лист: белый</option>
+          <option value="sepia">Лист: сепия</option>
+          <option value="gray">Лист: серый</option>
+          <option value="dark">Лист: тёмный</option>
+        </select>
         <span className="editor-status-sep">·</span>
         <span className="faint">{saved ? 'Сохранено' : 'Сохранение…'}</span>
       </div>
