@@ -23,6 +23,7 @@
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.9",
     "html-to-docx": "^1.8.0",
+    "jszip": "^3.10.1",
     "mammoth": "^1.11.0"
   },
   "devDependencies": {
