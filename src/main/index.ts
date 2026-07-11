@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, net, screen, Menu } from 'electron'
+import { app, BrowserWindow, protocol, net, screen, Menu, nativeTheme } from 'electron'
 import path from 'path'
 import { pathToFileURL } from 'url'
 import Store from 'electron-store'
@@ -21,6 +21,10 @@ function createMainWindow(): BrowserWindow {
   // Полностью убираем меню Electron (иначе по Alt всплывает верхняя менюшка) —
   // autoHideMenuBar только прятал его, но Alt всё равно показывал.
   Menu.setApplicationMenu(null)
+
+  // Все темы приложения тёмные — системная БЕЛАЯ полоса заголовка Windows
+  // выбивалась из интерфейса. Тёмная тема Chromium красит titlebar в тёмный.
+  nativeTheme.themeSource = 'dark'
 
   const store = new Store<{ bounds?: Electron.Rectangle }>({ name: 'window-state' })
   const defaults = { width: 1280, height: 840 }

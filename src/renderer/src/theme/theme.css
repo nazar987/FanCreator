@@ -289,6 +289,12 @@ textarea:focus-visible,
   outline: none;
 }
 
+/* Выделение текста в интерфейсе — фирменный акцент вместо системного синего
+   (на листе редактора своё, «вордовское» — см. editor.css) */
+::selection {
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
 /* Скроллбары */
 *::-webkit-scrollbar {
   width: 10px;
