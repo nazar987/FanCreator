@@ -281,14 +281,14 @@
   background: var(--surface-2, var(--panel-solid));
   border: 1.5px solid var(--stroke-strong);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   cursor: default;
   text-align: center;
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 .dendro-node:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 .dendro-node--root {
   border-color: var(--accent);

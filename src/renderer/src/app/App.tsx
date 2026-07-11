@@ -73,7 +73,7 @@ export function App(): React.JSX.Element {
         <Home />
       ) : (
         <>
-          {sidebarOpen && <Sidebar onClose={() => setSidebarOpen(false)} />}
+          {sidebarOpen && <Sidebar />}
           {sidebarOpen && (
             <button
               className="sidebar-backdrop"

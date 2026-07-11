@@ -305,7 +305,7 @@ function GenealogyTree({
         const nodeStyle: React.CSSProperties = { left: x, top: y - h / 2, width: w, minHeight: h }
         if (color) {
           nodeStyle.borderColor = color
-          nodeStyle.boxShadow = `0 0 0 2px ${color} inset, 0 18px 42px -30px ${color}`
+          nodeStyle.boxShadow = `0 0 0 2px ${color} inset`
           nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 38%, var(--surface-2, var(--panel-solid))), color-mix(in srgb, ${color} 22%, var(--surface-2, var(--panel-solid))))`
         }
         return (
