@@ -1,5 +1,6 @@
 import { app, BrowserWindow, protocol, net, screen, Menu, nativeTheme } from 'electron'
 import path from 'path'
+import { existsSync } from 'fs'
 import { pathToFileURL } from 'url'
 import Store from 'electron-store'
 import { initStore, resolveAssetUrl } from './store/store'
@@ -44,6 +45,11 @@ function createMainWindow(): BrowserWindow {
     if (!visible) bounds = undefined
   }
 
+  // Иконка окна: в dev Electron показывает свой логотип — подставляем наш.
+  // В собранном приложении иконка и так берётся из exe (resources при упаковке
+  // не копируются рядом, поэтому existsSync-страховка).
+  const iconPath = path.join(__dirname, '../../resources/icon.ico')
+
   const win = new BrowserWindow({
     ...defaults,
     ...bounds,
@@ -52,6 +58,7 @@ function createMainWindow(): BrowserWindow {
     backgroundColor: '#0e0e14',
     show: false,
     autoHideMenuBar: true,
+    ...(existsSync(iconPath) ? { icon: iconPath } : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
