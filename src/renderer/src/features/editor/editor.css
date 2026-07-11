@@ -227,6 +227,21 @@
   color: #6ea8ff;
 }
 
+/* Выделение текста на листе — мягкое «вордовское» синее вместо резкого
+   системного; на тёмном листе — посветлее, чтобы читалось. */
+.fc-prose ::selection {
+  background: rgba(84, 128, 255, 0.3);
+}
+.editor-scroll[data-paper='dark'] .fc-prose ::selection {
+  background: rgba(126, 158, 255, 0.42);
+}
+/* При выделении ЯЧЕЕК таблицы (CellSelection) ProseMirror растягивает скрытое
+   нативное выделение и прячет его классом ProseMirror-hideselection — наши
+   правила ::selection не должны его проявлять (иначе «заливался весь лист»). */
+.fc-prose.ProseMirror-hideselection ::selection {
+  background: transparent !important;
+}
+
 /* лист A4: ProseMirror получает класс .fc-prose (+ rm-with-pagination) */
 .fc-prose {
   position: relative; /* система координат для плавающих картинок «перед текстом» (S-4) */
@@ -609,6 +624,9 @@
   padding: 6px 9px;
   vertical-align: top;
   min-width: 40px;
+  /* якорь для .selectedCell::after (inset:0): без relative подсветка выделенной
+     ЯЧЕЙКИ растягивалась от .fc-prose и заливала ВЕСЬ лист */
+  position: relative;
 }
 .fc-prose th {
   background: rgba(0, 0, 0, 0.05);

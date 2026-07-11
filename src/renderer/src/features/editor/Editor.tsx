@@ -1,6 +1,7 @@
 import React from 'react'
 import { useEditor, EditorContent, type Content } from '@tiptap/react'
 import { TextSelection } from '@tiptap/pm/state'
+import { CellSelection } from '@tiptap/pm/tables'
 import type { EditorView } from '@tiptap/pm/view'
 import type { ResolvedPos } from '@tiptap/pm/model'
 import { useStore } from '../../store/store'
@@ -8,8 +9,9 @@ import { buildExtensions } from './extensions'
 import { wikiLinkGuardKey } from './EditorExtras'
 import { Toolbar } from './Toolbar'
 import { FindReplace } from './FindReplace'
-import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { setSpellMenuExtras } from '../../shared/ui/SpellMenu'
+import { tableMenuItems } from './tableMenu'
 import { promptText } from '../../shared/ui/dialogs'
 import type { Chapter, Story } from '@shared/types'
 
@@ -419,6 +421,11 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
       createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {
         const p = pointerRef.current
         if (!p || !draggingRef.current) return null // только протяжка мышью, не клавиатура
+        // структурные позиции (между строками/ячейками таблицы) не трогаем:
+        // это cell-drag prosemirror-tables, наша TextSelection там невалидна.
+        // Позиция 0 (промах в межстраничный зазор) — depth 0, под guard не попадает.
+        const structural = (pos: ResolvedPos): boolean => !pos.parent.isTextblock && pos.depth > 0
+        if (structural($anchor) || structural($head)) return null
         let anchorPos = $anchor.pos
         let headPos = $head.pos
         let changed = false
@@ -452,11 +459,23 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           if (!changed) return null
         }
         if (!changed) return null
-        return TextSelection.create(view.state.doc, anchorPos, headPos)
+        // between (а не create): сам сдвигает концы к ближайшим валидным
+        // текстовым позициям — не бросает TextSelection в структурные места
+        return TextSelection.between(
+          view.state.doc.resolve(anchorPos),
+          view.state.doc.resolve(headPos)
+        )
       },
       // S-G: наведение/клик по вики-ссылке (делегирование событий)
       handleDOMEvents: {
-        mousedown: (_view, event) => {
+        mousedown: (view, event) => {
+          // ПКМ не сбрасывает выделение ЯЧЕЕК (как в Word): иначе к моменту
+          // открытия меню таблицы «Объединить ячейки» уже нечего объединять.
+          // preventDefault обязателен — без него БРАУЗЕР сам переставляет каретку.
+          if ((event as MouseEvent).button === 2 && view.state.selection instanceof CellSelection) {
+            event.preventDefault()
+            return true
+          }
           draggingRef.current = true
           pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
           // Shift+клик расширяет выделение от старого якоря — точку нажатия
@@ -471,8 +490,10 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         },
         mouseup: (_view, event) => {
           pointerRef.current = { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY }
-          // сбрасываем флаг после того, как PM финализирует выделение
-          setTimeout(() => (draggingRef.current = false), 0)
+          // Сбрасываем флаг НЕ сразу: финализация выделения из DOM (domObserver)
+          // может прийти на следующий кадр после mouseup — если отключить коррекцию
+          // мгновенно, «промах» в зазор успевал проскочить без правки (S-H5 v4).
+          setTimeout(() => (draggingRef.current = false), 150)
           return false
         },
         mouseover: (_view, event) => {
@@ -1116,10 +1137,11 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
         break
       }
     }
+    // НЕ preventDefault и НЕ открываем меню сами: пункты редактора регистрируем
+    // для единого меню орфографии — main пришлёт spell:context (исправления
+    // слова с ашибкой), и меню соберётся одно: исправления + пункты ниже (п.11).
+    const extras: MenuItem[] = []
     if (olAttrs) {
-      // НЕ preventDefault и НЕ открываем меню сами: пункты списка регистрируем
-      // для единого меню орфографии — main пришлёт spell:context (исправления
-      // слова с ашибкой), и меню соберётся одно: исправления + нумерация (п.11).
       const attrs = olAttrs
       const setOl = (patch: Record<string, unknown>): void => {
         editor
@@ -1132,7 +1154,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           .run()
       }
       const cur = (attrs.listStartManual as number) || 1
-      setSpellMenuExtras([
+      extras.push(
         {
           // сквозная связь: список продолжает нумерацию предыдущего и пересчитывается сам
           label: attrs.listContinue ? '✓ Продолжать предыдущий список' : 'Продолжить нумерацию предыдущего',
@@ -1147,8 +1169,14 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
             setOl({ listContinue: false, listStartManual: n > 1 ? n : null })
           }
         }
-      ])
+      )
     }
+    // курсор в таблице — операции «как в Word» (S-Q1)
+    if (editor.isActive('table')) {
+      if (extras.length) extras.push({ type: 'sep' })
+      extras.push(...tableMenuItems(editor))
+    }
+    if (extras.length) setSpellMenuExtras(extras)
   }
 
   const renderWikiPreview = (kind: string, refId: string): React.JSX.Element | null => {

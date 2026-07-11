@@ -23,8 +23,6 @@ import {
   Search,
   Highlighter,
   Baseline,
-  RowsIcon,
-  Columns3,
   Trash2,
   FileDown,
   FileUp,
@@ -38,6 +36,8 @@ import {
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
+import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { tableMenuItems } from './tableMenu'
 
 interface ToolbarProps {
   editor: Editor
@@ -449,28 +449,19 @@ export function Toolbar({
         <Globe size={17} />
       </Btn>
 
-      {/* Таблицы — п.6 */}
+      {/* Таблицы 2.0 (S-Q1): вне таблицы кнопка вставляет 3×3, внутри — открывает
+          меню операций (строки/столбцы/объединение/заголовки), как в Word.
+          Те же операции доступны по правому клику внутри таблицы. */}
       <Btn
-        title="Вставить таблицу"
-        onClick={() =>
-          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-        }
+        title={editor.isActive('table') ? 'Операции с таблицей' : 'Вставить таблицу'}
+        active={editor.isActive('table')}
+        onClick={(e) => {
+          if (editor.isActive('table')) openContextMenu(e, tableMenuItems(editor))
+          else editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+        }}
       >
         <TableIcon size={17} />
       </Btn>
-      {editor.isActive('table') && (
-        <>
-          <Btn title="Добавить строку" onClick={() => editor.chain().focus().addRowAfter().run()}>
-            <RowsIcon size={17} />
-          </Btn>
-          <Btn title="Добавить столбец" onClick={() => editor.chain().focus().addColumnAfter().run()}>
-            <Columns3 size={17} />
-          </Btn>
-          <Btn title="Удалить таблицу" onClick={() => editor.chain().focus().deleteTable().run()}>
-            <Trash2 size={17} />
-          </Btn>
-        </>
-      )}
       <Sep />
 
       <Btn title="Оглавление главы" active={tocActive} onClick={onToggleToc}>
