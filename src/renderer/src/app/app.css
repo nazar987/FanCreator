@@ -20,6 +20,9 @@
   border-right: 1px solid var(--stroke);
   height: 100%;
 }
+.sidebar-backdrop {
+  display: none;
+}
 .sidebar-head {
   padding: 18px 18px 12px;
   display: flex;
@@ -204,6 +207,27 @@
   align-items: center;
   gap: 4px;
 }
+.tabbar-sidebar-toggle {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.tabbar-sidebar-toggle:hover,
+.tabbar-sidebar-toggle:focus-visible {
+  border-color: var(--stroke);
+  background: var(--panel-2);
+  color: var(--text);
+  outline: none;
+}
 .tab {
   flex: 0 0 auto;
   display: flex;
@@ -310,8 +334,39 @@
   .tab { max-width: 180px; padding-right: 8px; padding-left: 10px; }
 }
 
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 41;
+    width: min(312px, calc(100vw - 44px));
+    box-shadow: var(--shadow-lg);
+    animation: sidebar-drawer-in 180ms var(--ease) both;
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(0, 0, 0, 0.42);
+    animation: sidebar-backdrop-in 160ms ease both;
+  }
+}
+
+@keyframes sidebar-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes sidebar-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 720px) {
-  .sidebar { width: 210px; }
+  .sidebar { width: min(292px, calc(100vw - 36px)); }
   .brand { font-size: var(--fs-body); }
   .tree-section-title { padding-right: 4px; padding-left: 4px; }
   .tree-row { gap: 5px; font-size: var(--fs-meta); }

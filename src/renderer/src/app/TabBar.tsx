@@ -10,7 +10,9 @@ import {
   LayoutGrid,
   Waypoints,
   Network,
-  CircleHelp
+  CircleHelp,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -19,7 +21,12 @@ import { promptText, promptStory } from '../shared/ui/dialogs'
 import { startHelpTour } from '../features/help/HelpTour'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 
-export function TabBar(): React.JSX.Element {
+interface TabBarProps {
+  sidebarOpen: boolean
+  onToggleSidebar: () => void
+}
+
+export function TabBar({ sidebarOpen, onToggleSidebar }: TabBarProps): React.JSX.Element {
   const { tabs, activeTabId, setActiveTab, closeTab, reorderTabs, openTab, current, applyProject } = useStore()
 
   const onDragEnd = (result: DropResult): void => {
@@ -125,6 +132,15 @@ export function TabBar(): React.JSX.Element {
 
   return (
     <div className="tabbar">
+      <button
+        className="tabbar-sidebar-toggle"
+        onClick={onToggleSidebar}
+        title={`${sidebarOpen ? 'Скрыть' : 'Показать'} боковую панель (Ctrl+B)`}
+        aria-label={sidebarOpen ? 'Скрыть боковую панель' : 'Показать боковую панель'}
+        aria-pressed={sidebarOpen}
+      >
+        {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+      </button>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="workspace-tabs" direction="horizontal">
           {(dropProvided) => (

@@ -19,11 +19,51 @@ import { HelpTour } from '../features/help/HelpTour'
 import { UpdateBanner } from '../features/updates/UpdateBanner'
 import { WhatsNew } from '../features/updates/WhatsNew'
 
+const SIDEBAR_STORAGE_KEY = 'fancreator.sidebarOpen'
+
+function initialSidebarOpen(): boolean {
+  try {
+    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY)
+    if (stored !== null) return stored === 'true'
+  } catch {
+    // localStorage недоступен — используем размер окна
+  }
+  return !window.matchMedia('(max-width: 900px)').matches
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    Boolean(target.closest('input, textarea, select, [contenteditable="true"], .ProseMirror'))
+  )
+}
+
 export function App(): React.JSX.Element {
   const { current, tabs, activeTabId } = useStore()
+  const [sidebarOpen, setSidebarOpen] = React.useState(initialSidebarOpen)
 
   // единое меню орфографии (исправления слова приходят из main по IPC)
   React.useEffect(() => initSpellMenu(), [])
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarOpen))
+    } catch {
+      // localStorage недоступен — состояние сохранится только до перезапуска
+    }
+  }, [sidebarOpen])
+
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!current || !(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return
+      if (event.key.toLowerCase() !== 'b' || isEditableTarget(event.target)) return
+      if (document.querySelector('.modal-overlay, .cmdk-overlay')) return
+      event.preventDefault()
+      setSidebarOpen((open) => !open)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [current])
 
   const active = tabs.find((t) => t.id === activeTabId) ?? tabs[0]
 
@@ -33,9 +73,19 @@ export function App(): React.JSX.Element {
         <Home />
       ) : (
         <>
-          <Sidebar />
+          {sidebarOpen && <Sidebar onClose={() => setSidebarOpen(false)} />}
+          {sidebarOpen && (
+            <button
+              className="sidebar-backdrop"
+              aria-label="Закрыть боковую панель"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
           <div className="main">
-            <TabBar />
+            <TabBar
+              sidebarOpen={sidebarOpen}
+              onToggleSidebar={() => setSidebarOpen((open) => !open)}
+            />
             <div className="tab-content">
               {active?.kind === 'shelf' && <Shelf key={current.id} />}
               {active?.kind === 'characters' && <Characters key={current.id} />}

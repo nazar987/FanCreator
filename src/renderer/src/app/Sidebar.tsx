@@ -27,7 +27,8 @@ import {
   UserRound,
   UserPlus,
   Trees,
-  Network
+  Network,
+  PanelLeftClose
 } from 'lucide-react'
 import {
   DragDropContext,
@@ -46,7 +47,7 @@ import { StoryProperties } from '../features/library/StoryProperties'
 import { TrashView } from '../features/library/TrashView'
 import { openColorPicker } from '../shared/ui/ColorPalette'
 
-export function Sidebar(): React.JSX.Element {
+export function Sidebar({ onClose }: { onClose: () => void }): React.JSX.Element {
   const {
     current,
     closeProject,
@@ -1377,6 +1378,15 @@ export function Sidebar(): React.JSX.Element {
           <button className="btn btn--ghost btn--sm" onClick={closeProject}>
             <ArrowLeft size={16} /> Все проекты
           </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
+            title="Скрыть боковую панель (Ctrl+B)"
+            onClick={onClose}
+          >
+            <PanelLeftClose size={16} />
+          </Button>
         </div>
         <div className="brand">
           <span className="brand-mark">
