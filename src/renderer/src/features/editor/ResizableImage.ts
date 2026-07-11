@@ -10,7 +10,13 @@ import type { Node as ProseNode } from '@tiptap/pm/model'
  *  • floating         — режим «перед текстом»: position:absolute, картинка летает
  *                       поверх текста, текст под ней не сдвигается;
  *  • x, y             — координаты картинки в пикселях относительно области редактора
- *                       (имеют смысл только при floating).
+ *                       (имеют смысл только при floating);
+ *  • wrap ('inline')  — «в ряд»: картинка становится inline-block, и несколько
+ *                       картинок стоят бок о бок (слева-направо), а не столбиком
+ *                       (фидбэк v2.1.2 «две картинки слева-справа, сравнить
+ *                       до/после»). float использовать НЕЛЬЗЯ: он выпадает из
+ *                       потока и ломает расчёт страниц пагинатора (проверено —
+ *                       картинка «улетала» за пределы листа).
  */
 export const ResizableImage = Image.extend({
   addAttributes() {
@@ -20,6 +26,11 @@ export const ResizableImage = Image.extend({
         default: null,
         parseHTML: (el) => (el as HTMLElement).style.width || el.getAttribute('width') || null,
         renderHTML: (attrs) => (attrs.width ? { style: `width: ${attrs.width}` } : {})
+      },
+      wrap: {
+        default: null,
+        parseHTML: (el) => ((el as HTMLElement).getAttribute('data-wrap') ? 'inline' : null),
+        renderHTML: (attrs) => (attrs.wrap ? { 'data-wrap': 'inline' } : {})
       },
       floating: {
         default: false,
@@ -57,6 +68,11 @@ export const ResizableImage = Image.extend({
       floatBtn.className = 'fc-img-float'
       floatBtn.type = 'button'
 
+      // «в ряд»: картинки рядом друг с другом (вкл/выкл по клику)
+      const wrapBtn = document.createElement('button')
+      wrapBtn.className = 'fc-img-wrap-btn'
+      wrapBtn.type = 'button'
+
       // Сохранить атрибуты ноды в документ.
       const persist = (attrs: Record<string, unknown>): void => {
         if (typeof getPos !== 'function') return
@@ -77,6 +93,16 @@ export const ResizableImage = Image.extend({
         img.alt = n.attrs.alt || ''
         img.style.width = (n.attrs.width as string) || ''
 
+        // «в ряд» (в режиме «перед текстом» не действует)
+        const wrapMode = n.attrs.floating ? null : ((n.attrs.wrap as string) || null)
+        wrap.classList.toggle('fc-img-wrap--inline', wrapMode === 'inline')
+        wrapBtn.textContent = wrapMode === 'inline' ? '◫' : '▣'
+        wrapBtn.title =
+          wrapMode === 'inline'
+            ? 'Картинка «в ряду»: соседние картинки в ряду стоят бок о бок. Нажмите — снова отдельной строкой'
+            : 'Поставить в ряд: картинки в ряду встают рядом друг с другом (слева-направо)'
+        wrapBtn.style.display = n.attrs.floating ? 'none' : ''
+
         if (n.attrs.floating) {
           wrap.classList.add('fc-img-wrap--floating')
           wrap.style.left = `${n.attrs.x ?? 0}px`
@@ -84,16 +110,28 @@ export const ResizableImage = Image.extend({
           wrap.style.marginLeft = '0'
           wrap.style.marginRight = '0'
           img.style.cursor = 'move'
-          floatBtn.title = 'Вернуть картинку в текст'
+          floatBtn.title = 'Вернуть в текст: картинка снова встанет в строку и будет двигать текст'
         } else {
           wrap.classList.remove('fc-img-wrap--floating')
           wrap.style.left = ''
           wrap.style.top = ''
           img.style.cursor = ''
-          applyAlign(n.attrs.textAlign as string)
-          floatBtn.title = 'Перед текстом (свободно перемещать)'
+          if (!wrapMode) applyAlign(n.attrs.textAlign as string)
+          else {
+            wrap.style.marginLeft = ''
+            wrap.style.marginRight = ''
+          }
+          floatBtn.title = 'Перед текстом: открепить картинку и свободно двигать её мышью поверх текста'
         }
       }
+
+      // ----- Переключение «в ряд» -----
+      wrapBtn.addEventListener('mousedown', (e) => e.preventDefault())
+      wrapBtn.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        persist({ ...current.attrs, wrap: current.attrs.wrap ? null : 'inline' })
+      })
 
       // ----- Переключение режима «перед текстом» -----
       floatBtn.addEventListener('mousedown', (e) => e.preventDefault())
@@ -150,8 +188,11 @@ export const ResizableImage = Image.extend({
         e.stopPropagation()
         const startX = e.clientX
         const startW = img.offsetWidth
+        // не даём растянуть шире текстовой колонки: «случайно увеличила во весь
+        // лист» больше не запирает картинку — ручка всегда остаётся на листе
+        const maxW = wrap.parentElement?.clientWidth || 634
         const onMove = (m: PointerEvent): void => {
-          const next = Math.max(60, startW + (m.clientX - startX))
+          const next = Math.min(maxW, Math.max(60, startW + (m.clientX - startX)))
           img.style.width = `${next}px`
         }
         const onUp = (): void => {
@@ -163,7 +204,7 @@ export const ResizableImage = Image.extend({
         window.addEventListener('pointerup', onUp)
       })
 
-      wrap.append(img, handle, floatBtn)
+      wrap.append(img, handle, floatBtn, wrapBtn)
       render(node)
 
       return {
@@ -177,3 +218,4 @@ export const ResizableImage = Image.extend({
     }
   }
 })
+

@@ -90,7 +90,8 @@ const toPt = (size?: string | null): string | undefined => {
   const pt = size.trim().endsWith('px') ? (n * 72) / 96 : n
   return `${Math.round(pt)}pt`
 }
-const LINE_HEIGHTS = ['1', '1.15', '1.4', '1.7', '2', '2.5']
+// как в Word: одинарный, 1.15, полуторный, двойной (+ промежуточные; 1.7 — дефолт листа)
+const LINE_HEIGHTS = ['1', '1.15', '1.4', '1.5', '1.7', '2', '2.5']
 function Btn({
   active,
   onClick,
