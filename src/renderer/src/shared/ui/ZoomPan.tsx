@@ -33,6 +33,10 @@ const writeStoredState = (storageKey: string | undefined, state: ZoomPanState): 
   }
 }
 
+const isInteractiveTarget = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  Boolean(target.closest('button,input,textarea,select,a,[contenteditable="true"]'))
+
 /**
  * ZoomPan — масштабирование (Ctrl+колесо, к курсору) и панорамирование (перетас-
  * кивание фона) содержимого, как на доске. Клики по вложенным элементам работают:
@@ -56,7 +60,16 @@ export function ZoomPan({
   zoomRef.current = zoom
   const panRef = React.useRef(pan)
   panRef.current = pan
-  const drag = React.useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null)
+  const drag = React.useRef<{
+    pointerId: number
+    target: HTMLDivElement
+    x: number
+    y: number
+    px: number
+    py: number
+    moved: boolean
+    captured: boolean
+  } | null>(null)
   const didMountRef = React.useRef(false)
 
   const MIN = 0.3
@@ -104,30 +117,63 @@ export function ZoomPan({
     setZoom(nz)
   }
 
-  const onMouseDown = (e: React.MouseEvent): void => {
+  const clearDrag = React.useCallback((): void => {
+    const d = drag.current
+    if (d?.captured && d.target.hasPointerCapture(d.pointerId)) {
+      try {
+        d.target.releasePointerCapture(d.pointerId)
+      } catch {
+        // Pointer capture can already be released by the browser.
+      }
+    }
+    drag.current = null
+    document.body.classList.remove('zoompan-dragging')
+  }, [])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>): void => {
     if (e.button !== 0) return
-    drag.current = { x: e.clientX, y: e.clientY, px: panRef.current.x, py: panRef.current.y, moved: false }
+    if (isInteractiveTarget(e.target)) return
+    e.preventDefault()
+    drag.current = {
+      pointerId: e.pointerId,
+      target: e.currentTarget,
+      x: e.clientX,
+      y: e.clientY,
+      px: panRef.current.x,
+      py: panRef.current.y,
+      moved: false,
+      captured: false
+    }
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+      drag.current.captured = true
+    } catch {
+      // Some environments can deny pointer capture; window blur/pointercancel still clear the drag.
+    }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const d = drag.current
+    if (!d || d.pointerId !== e.pointerId) return
+    const dx = e.clientX - d.x
+    const dy = e.clientY - d.y
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) > 3) {
+      d.moved = true
+      document.body.classList.add('zoompan-dragging')
+    }
+    if (d.moved) {
+      e.preventDefault()
+      setPan({ x: d.px + dx, y: d.py + dy })
+    }
   }
 
   React.useEffect(() => {
-    const move = (e: MouseEvent): void => {
-      const d = drag.current
-      if (!d) return
-      const dx = e.clientX - d.x
-      const dy = e.clientY - d.y
-      if (!d.moved && Math.abs(dx) + Math.abs(dy) > 3) d.moved = true
-      if (d.moved) setPan({ x: d.px + dx, y: d.py + dy })
-    }
-    const up = (): void => {
-      drag.current = null
-    }
-    window.addEventListener('mousemove', move)
-    window.addEventListener('mouseup', up)
+    window.addEventListener('blur', clearDrag)
     return () => {
-      window.removeEventListener('mousemove', move)
-      window.removeEventListener('mouseup', up)
+      window.removeEventListener('blur', clearDrag)
+      clearDrag()
     }
-  }, [])
+  }, [clearDrag])
 
   const step = (d: number): void => setZoom((z) => Math.min(MAX, Math.max(MIN, +(z + d).toFixed(2))))
   const reset = (): void => {
@@ -136,7 +182,16 @@ export function ZoomPan({
   }
 
   return (
-    <div ref={wrapRef} className={`zoompan ${className}`} onWheel={onWheel} onMouseDown={onMouseDown}>
+    <div
+      ref={wrapRef}
+      className={`zoompan ${className}`}
+      onWheel={onWheel}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={clearDrag}
+      onPointerCancel={clearDrag}
+      onLostPointerCapture={clearDrag}
+    >
       <div
         className="zoompan-inner"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}

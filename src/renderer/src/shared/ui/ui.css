@@ -2,6 +2,11 @@
    UI-kit FanCreator — лёгкие компоненты на CSS-переменных
    ============================================================ */
 
+body.zoompan-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ---------- Авто-растущее текстовое поле ---------- */
 .auto-textarea {
   resize: none;
