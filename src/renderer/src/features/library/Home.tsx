@@ -1,8 +1,17 @@
 import React from 'react'
-import { Plus, Sparkles, Trash2, Pencil, FolderOpen, CircleHelp } from 'lucide-react'
+import {
+  Plus,
+  Sparkles,
+  Trash2,
+  Pencil,
+  FolderOpen,
+  CircleHelp,
+  ArchiveRestore,
+  PackageOpen
+} from 'lucide-react'
 import { useStore } from '../../store/store'
 import { Button, Card, Hashtags } from '../../shared/ui/components'
-import { promptText, confirmDialog } from '../../shared/ui/dialogs'
+import { promptText, confirmDialog, messageDialog } from '../../shared/ui/dialogs'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { ThemeSwitcher } from '../../app/ThemeSwitcher'
 import { CoverArt } from './CoverArt'
@@ -62,9 +71,37 @@ export function Home(): React.JSX.Element {
     await refreshProjects()
   }
 
+  const exportBackup = async (p: ProjectSummary): Promise<void> => {
+    const result = await window.api.projects.exportBackup({ projectId: p.id })
+    if (result.status === 'success') {
+      await messageDialog({
+        title: 'Резервная копия создана',
+        message: `Проект «${p.title}» сохранён вместе с изображениями.`
+      })
+    } else if (result.status === 'error') {
+      await messageDialog({ title: 'Не удалось создать копию', message: result.message })
+    }
+  }
+
+  const importBackup = async (): Promise<void> => {
+    const result = await window.api.projects.importBackup()
+    if (result.status === 'error') {
+      await messageDialog({ title: 'Не удалось восстановить проект', message: result.message })
+      return
+    }
+    if (result.status !== 'success' || !result.project) return
+    await refreshProjects()
+    openProject(result.project.id)
+  }
+
   const menu = (p: ProjectSummary): MenuItem[] => [
     { label: 'Открыть', icon: <FolderOpen size={15} />, onClick: () => openProject(p.id) },
     { label: 'Переименовать', icon: <Pencil size={15} />, onClick: () => renameProject(p) },
+    {
+      label: 'Создать резервную копию',
+      icon: <PackageOpen size={15} />,
+      onClick: () => exportBackup(p)
+    },
     { type: 'sep' },
     { label: 'Удалить', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteProject(p) }
   ]
@@ -98,6 +135,9 @@ export function Home(): React.JSX.Element {
             <ThemeSwitcher />
             <Button variant="soft" icon title="Помощь" onClick={startHelpTour}>
               <CircleHelp size={17} />
+            </Button>
+            <Button variant="soft" onClick={importBackup}>
+              <ArchiveRestore size={17} /> Восстановить
             </Button>
             <Button variant="primary" onClick={createProject}>
               <Plus size={17} /> Новый проект

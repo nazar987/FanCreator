@@ -37,6 +37,8 @@ export interface FanCreatorApi {
       isDataUrl?: boolean
     }): Promise<Project | null>
     pickCover(input: { projectId: string }): Promise<Project | null>
+    exportBackup(input: { projectId: string }): Promise<ProjectBackupResult>
+    importBackup(): Promise<ProjectBackupResult>
   }
   folders: {
     add(input: { projectId: string; title: string; parentId?: string | null }): Promise<Project | null>
@@ -279,6 +281,11 @@ export interface FanCreatorApi {
     onStatus(cb: (status: UpdateStatus) => void): () => void
   }
 }
+
+export type ProjectBackupResult =
+  | { status: 'success'; project?: Project }
+  | { status: 'cancelled' }
+  | { status: 'error'; message: string }
 
 /** Данные для контекстного меню орфографии (правый клик по редактируемому полю). */
 export interface SpellContext {

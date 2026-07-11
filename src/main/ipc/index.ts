@@ -4,6 +4,8 @@ import path from 'path'
 import mammoth from 'mammoth'
 import { importDocxToHtml } from '../docx/importDocx'
 import HTMLtoDOCX from 'html-to-docx'
+import { backupFileName, exportProjectBackup, importProjectBackup } from '../store/backup'
+import type { ProjectBackupResult } from '@shared/api'
 import type {
   Project,
   Story,
@@ -125,6 +127,49 @@ export function registerIpc(): void {
     return mutate(projectId, (p) => {
       p.coverPath = assetUrl(projectId, fileName)
     })
+  })
+
+  ipcMain.handle(
+    'projects:exportBackup',
+    async (_e, { projectId }: { projectId: string }): Promise<ProjectBackupResult> => {
+      const project = await readProject(projectId)
+      if (!project) return { status: 'error', message: 'Проект не найден.' }
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: 'Создать резервную копию',
+        defaultPath: backupFileName(project.title),
+        filters: [{ name: 'Резервная копия FanCreator', extensions: ['fancreator'] }]
+      })
+      if (canceled || !filePath) return { status: 'cancelled' }
+      try {
+        const destination = filePath.toLowerCase().endsWith('.fancreator')
+          ? filePath
+          : `${filePath}.fancreator`
+        await exportProjectBackup(projectId, destination)
+        return { status: 'success' }
+      } catch (error) {
+        return {
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Не удалось создать резервную копию.'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle('projects:importBackup', async (): Promise<ProjectBackupResult> => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Восстановить проект из копии',
+      filters: [{ name: 'Резервная копия FanCreator', extensions: ['fancreator'] }],
+      properties: ['openFile']
+    })
+    if (canceled || !filePaths[0]) return { status: 'cancelled' }
+    try {
+      return { status: 'success', project: await importProjectBackup(filePaths[0]) }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Не удалось восстановить проект.'
+      }
+    }
   })
 
   // ---------- Stories ----------

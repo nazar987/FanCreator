@@ -11,7 +11,9 @@ const api: FanCreatorApi = {
     update: (input) => invoke('projects:update', input),
     delete: (projectId) => invoke('projects:delete', projectId),
     setCover: (input) => invoke('projects:setCover', input),
-    pickCover: (input) => invoke('projects:pickCover', input)
+    pickCover: (input) => invoke('projects:pickCover', input),
+    exportBackup: (input) => invoke('projects:exportBackup', input),
+    importBackup: () => invoke('projects:importBackup')
   },
   folders: {
     add: (input) => invoke('folders:add', input),

@@ -16,6 +16,11 @@ interface ConfirmOptions {
   confirmLabel?: string
   danger?: boolean
 }
+interface MessageOptions {
+  title: string
+  message?: React.ReactNode
+  confirmLabel?: string
+}
 interface StoryPromptOptions {
   title: string
   placeholder?: string
@@ -30,6 +35,7 @@ export interface StoryPromptResult {
 type DialogState =
   | { kind: 'prompt'; opts: PromptOptions; resolve: (v: string | null) => void }
   | { kind: 'confirm'; opts: ConfirmOptions; resolve: (v: boolean) => void }
+  | { kind: 'message'; opts: MessageOptions; resolve: () => void }
   | { kind: 'story'; opts: StoryPromptOptions; resolve: (v: StoryPromptResult | null) => void }
   | null
 
@@ -44,6 +50,12 @@ export function promptText(opts: PromptOptions): Promise<string | null> {
 export function confirmDialog(opts: ConfirmOptions): Promise<boolean> {
   return new Promise((resolve) => {
     setStateExternal?.({ kind: 'confirm', opts, resolve })
+  })
+}
+
+export function messageDialog(opts: MessageOptions): Promise<void> {
+  return new Promise((resolve) => {
+    setStateExternal?.({ kind: 'message', opts, resolve })
   })
 }
 
@@ -97,6 +109,7 @@ export function DialogHost(): React.JSX.Element | null {
   const onKey = (e: React.KeyboardEvent): void => {
     if (e.key === 'Escape') {
       if (state.kind === 'confirm') state.resolve(false)
+      else if (state.kind === 'message') state.resolve()
       else state.resolve(null)
       close()
     }
@@ -190,7 +203,7 @@ export function DialogHost(): React.JSX.Element | null {
               </Button>
             </div>
           </>
-        ) : (
+        ) : state.kind === 'confirm' ? (
           <>
             {(state.opts as ConfirmOptions).message && (
               <div className="dim" style={{ fontSize: 14, lineHeight: 1.5 }}>
@@ -215,6 +228,25 @@ export function DialogHost(): React.JSX.Element | null {
                 }}
               >
                 {state.opts.confirmLabel ?? 'Подтвердить'}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {state.opts.message && (
+              <div className="dim" style={{ fontSize: 14, lineHeight: 1.5 }}>
+                {state.opts.message}
+              </div>
+            )}
+            <div className="modal-actions">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  state.resolve()
+                  close()
+                }}
+              >
+                {state.opts.confirmLabel ?? 'Понятно'}
               </Button>
             </div>
           </>
