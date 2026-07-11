@@ -50,6 +50,21 @@ const LABEL_FONT = '600 11px Inter, system-ui, sans-serif'
 
 const clamp = (min: number, v: number, max: number): number => Math.max(min, Math.min(v, max))
 
+/** Найти узел по id во всём дереве (events — только корни). */
+function findInTree(
+  roots: DendroNode[],
+  childrenOf: (parentId: string) => DendroNode[],
+  id: string
+): DendroNode | null {
+  const stack = [...roots]
+  while (stack.length) {
+    const n = stack.pop()!
+    if (n.id === id) return n
+    stack.push(...childrenOf(n.id))
+  }
+  return null
+}
+
 /**
  * Высоту текста меряем РЕАЛЬНОЙ вёрсткой (скрытый div с теми же стилями, что
  * .dendro-node-text): прежняя оценка «ширина ÷ строки» промахивалась на переносах
@@ -151,11 +166,32 @@ export function Dendrogram({
     setEditId(null)
   }
 
+  // Черновик НЕ теряется при переключении вкладки: blur при размонтировании React
+  // не шлёт, поэтому сохраняем сами в cleanup-эффекте (фидбэк: «написала текст,
+  // сразу переключила вкладку — всё исчезло»).
+  const editingRef = React.useRef<{ node: DendroNode; draft: string } | null>(null)
+  const editingNode = editId ? (events.find((e) => e.id === editId) ?? findInTree(events, childrenOf, editId)) : null
+  editingRef.current = editingNode ? { node: editingNode, draft: titleDraft } : null
+  const onSetTitleRef = React.useRef(onSetTitle)
+  onSetTitleRef.current = onSetTitle
+  React.useEffect(
+    () => () => {
+      const e = editingRef.current
+      if (e && e.draft.trim() !== (e.node.title ?? '').trim()) onSetTitleRef.current(e.node, e.draft.trim())
+    },
+    []
+  )
+
   const { nodes, links, width, height } = React.useMemo(() => {
     const nodes: Placed[] = []
     const links: Link[] = []
     let cursor = 0
     let width = 0
+
+    // Во время набора раскладка считается от ЧЕРНОВИКА редактируемого узла:
+    // ячейка растёт по ширине и высоте прямо при вводе, соседи раздвигаются
+    // (раньше textarea вылезала поверх нижних узлов до сохранения).
+    const titleOf = (node: DendroNode): string => (node.id === editId ? titleDraft : node.title)
 
     const countDescendants = (id: string): number => {
       const kids = childrenOf(id)
@@ -174,7 +210,7 @@ export function Dendrogram({
       // 1) предпроход: размеры блоков, ширина колонок, длина подписей по уровням
       const scan = (node: DendroNode, depth: number): void => {
         maxDepth = Math.max(maxDepth, depth)
-        const s = nodeSize(node.title)
+        const s = nodeSize(titleOf(node))
         sizeMap.set(node.id, s)
         colW[depth] = Math.max(colW[depth] ?? 0, s.w)
         if (node.edgeLabel) {
@@ -195,7 +231,7 @@ export function Dendrogram({
 
       // 3) раскладка: вертикальный курсор по фактической высоте блоков
       const layout = (node: DendroNode, depth: number, inheritedColor?: string): number => {
-        const s = sizeMap.get(node.id) ?? nodeSize(node.title)
+        const s = sizeMap.get(node.id) ?? nodeSize(titleOf(node))
         const color = node.color || inheritedColor
         const allKids = childrenOf(node.id)
         const hasChildren = allKids.length > 0
@@ -246,7 +282,7 @@ export function Dendrogram({
 
     const height = Math.max(cursor, NODE_MIN_H) + 12
     return { nodes, links, width, height }
-  }, [events, childrenOf])
+  }, [events, childrenOf, editId, titleDraft])
 
   return (
     <div className="dendro-scroll">
@@ -305,7 +341,9 @@ export function Dendrogram({
           const nodeStyle: React.CSSProperties = { left: x, top: y - h / 2, width: w, minHeight: h }
           if (color) {
             nodeStyle.borderColor = color
-            nodeStyle.boxShadow = `0 0 0 2px ${color} inset, 0 18px 42px -30px ${color}`
+            // только внутренняя обводка: цветная тень-свечение под узлом смотрелась
+            // «странным световым пятном» на тёмном фоне (фидбэк v2.1.2)
+            nodeStyle.boxShadow = `0 0 0 2px ${color} inset`
             nodeStyle.background = `linear-gradient(160deg, color-mix(in srgb, ${color} 38%, var(--surface-2, var(--panel-solid))), color-mix(in srgb, ${color} 22%, var(--surface-2, var(--panel-solid))))`
           }
 
