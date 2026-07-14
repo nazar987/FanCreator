@@ -278,26 +278,37 @@ export function Shelf(): React.JSX.Element {
     >
       <div className="shelf-glow" aria-hidden />
       <div className="shelf-inner">
-        <header className="library-header">
-          <div>
-            <div className="home-title">{current.title}</div>
-            <div className="home-sub">Рабочая библиотека проекта</div>
-          </div>
-          <div className="library-header-actions">
-            <Button variant="soft" onClick={addFolder}>
-              <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
-            </Button>
-            <Button variant="primary" onClick={addStory}>
-              <BookPlus size={17} /> Новая история
-            </Button>
+        {/* Hero в духе игровых библиотек (Steam/PS): размытая обложка проекта
+            фоном, поверх — название и метрики-чипы. Без обложки — градиент темы. */}
+        <header className="library-hero">
+          {current.coverPath && (
+            <div
+              className="library-hero-art"
+              style={{ backgroundImage: `url("${current.coverPath}")` }}
+              aria-hidden
+            />
+          )}
+          <div className="library-hero-scrim" aria-hidden />
+          <div className="library-hero-main">
+            <div className="library-hero-copy">
+              <div className="home-title">{current.title}</div>
+              <div className="home-sub">Рабочая библиотека проекта</div>
+              <div className="library-summary">
+                <div><strong>{activeStories.length}</strong><span>{plural(activeStories.length, 'история', 'истории', 'историй')}</span></div>
+                <div><strong>{folders.length}</strong><span>{plural(folders.length, 'папка', 'папки', 'папок')}</span></div>
+                <div><strong>{totalWords.toLocaleString('ru-RU')}</strong><span>{plural(totalWords, 'слово', 'слова', 'слов')}</span></div>
+              </div>
+            </div>
+            <div className="library-header-actions">
+              <Button variant="soft" onClick={addFolder}>
+                <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
+              </Button>
+              <Button variant="primary" onClick={addStory}>
+                <BookPlus size={17} /> Новая история
+              </Button>
+            </div>
           </div>
         </header>
-
-        <div className="library-summary">
-          <div><strong>{activeStories.length}</strong><span>{plural(activeStories.length, 'история', 'истории', 'историй')}</span></div>
-          <div><strong>{folders.length}</strong><span>{plural(folders.length, 'папка', 'папки', 'папок')}</span></div>
-          <div><strong>{totalWords.toLocaleString('ru-RU')}</strong><span>{plural(totalWords, 'слово', 'слова', 'слов')}</span></div>
-        </div>
 
         {!normalizedQuery && !selectedFolder && <ContinueWriting />}
 
@@ -366,7 +377,11 @@ export function Shelf(): React.JSX.Element {
                 const done = chapters.filter((chapter) => chapter.status === 'done').length
                 const words = chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0)
                 return (
-                  <article className="library-story-card" key={story.id}>
+                  <article
+                    className="library-story-card"
+                    key={story.id}
+                    style={{ ['--story-accent' as string]: story.color ?? 'var(--accent)' }}
+                  >
                     <div className="library-story-cover">
                       <CoverArt title={story.title} coverPath={story.coverPath} color={story.color}
                         onClick={() => openStory(story)} onDropImage={(data) => dropCover(story, data)} onPick={() => pickCover(story)} />
