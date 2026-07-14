@@ -1,0 +1,486 @@
+/* ============================================================
+   FanCreator — Theme Worlds: полноценные визуальные миры.
+
+   Архитектура:
+   1) Палитры миров лежат в theme.css ([data-theme='fantasy'] и т.д.).
+   2) Здесь — слой [data-world]: тот же UX и те же React-компоненты,
+      но своя дизайн-система: текстуры, типографика, формы, рамки,
+      декор, свечения и анимации. Атрибут data-world ставит store.
+   3) Текстуры процедурные (inline-SVG feTurbulence + CSS-градиенты) —
+      без ассетов, зависимостей и сети.
+
+   Правила слоя:
+   — контент редактора (.fc-prose, лист A4) НЕ трогаем — только UI;
+   — обложки-книги Apple Books не трогаем;
+   — всё вешаем на токены или на [data-world='…'], чтобы шесть
+     классических тем не менялись ни на пиксель.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Общая маршрутизация токенов мира в компоненты
+   ------------------------------------------------------------ */
+
+/* Атмосфера: текстура поверх фонового градиента приложения */
+[data-world] body {
+  background-image: var(--tex-app), var(--bg-grad);
+}
+
+/* Панели каркаса: сайдбар и таб-бар получают текстуру мира */
+[data-world] .sidebar,
+[data-world] .tabbar {
+  background-image: var(--tex-panel);
+}
+
+/* Карточки и оверлеи: текстура поверх их фоновой заливки */
+[data-world] .card,
+[data-world] .modal,
+[data-world] .ctx-menu,
+[data-world] .color-palette-panel {
+  background-image: var(--tex-card);
+}
+/* у карточек историй/папок фон — градиент, поэтому слои задаём явно */
+[data-world] .library-story-card {
+  background-image: var(--tex-card),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 5%, var(--panel-solid)), var(--panel-solid));
+}
+[data-world] .library-folder-card {
+  background-image: var(--tex-card),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 5%, var(--panel)), var(--panel));
+}
+[data-world] .library-material-card {
+  background-image: var(--tex-card),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 4%, var(--panel-2)), var(--panel-2));
+}
+
+/* Типографика мира: заголовки и «витрины» UI. Контент редактора не трогаем. */
+[data-world] .brand,
+[data-world] .welcome h1,
+[data-world] .modal h3,
+[data-world] .home-title {
+  font-family: var(--font-display);
+  letter-spacing: var(--display-track);
+  text-transform: var(--display-case);
+}
+[data-world] .tree-section-title,
+[data-world] .ctx-label,
+[data-world] .color-palette-label {
+  font-family: var(--font-display);
+  letter-spacing: calc(0.6px + 0.04em);
+}
+
+/* Геометрия: hero следует форме мира вместо жёстких 22px */
+[data-world] .library-hero {
+  border-radius: calc(var(--r-xl) - 2px);
+}
+
+/* Переход между вселенными: короткая «вуаль» при смене мира */
+[data-world-flip] #root {
+  animation: world-enter 640ms var(--ease) both;
+}
+@keyframes world-enter {
+  0% {
+    opacity: 0.3;
+    filter: blur(9px) saturate(1.55);
+    transform: scale(1.014);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   ⚔️ ФЭНТЕЗИ (Warcraft / Hearthstone)
+   Дерево таверны, золотые рамки, магическое свечение
+   ------------------------------------------------------------ */
+[data-theme='fantasy'] {
+  --font-display: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --display-track: 0.02em;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  /* тёплое дерево: горизонтальные волокна шума */
+  --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011 0.055' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.27 0 0 0 0 0.10 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='280' height='280' filter='url(%23w)'/%3E%3C/svg%3E");
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.90 0 0 0 0 0.76 0 0 0 0 0.46 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23p)'/%3E%3C/svg%3E");
+  --tex-app: radial-gradient(1400px 900px at 50% 120%, transparent 55%, rgba(6, 3, 14, 0.5));
+}
+
+/* золотая кнопка-«артефакт», как в Hearthstone */
+[data-world='fantasy'] .btn--primary {
+  background: linear-gradient(180deg, #f4cf7c, #dda238 54%, #bb8120);
+  border-color: #8a5f14;
+  color: #2b1c05;
+  font-family: var(--font-display);
+  text-shadow: 0 1px 0 rgba(255, 246, 220, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(94, 58, 8, 0.42),
+    0 6px 18px -8px var(--accent-glow);
+}
+[data-world='fantasy'] .btn--primary:hover {
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(94, 58, 8, 0.42),
+    0 10px 26px -8px var(--accent-glow);
+}
+
+/* золотые рамки панелей и карточек */
+[data-world='fantasy'] .card,
+[data-world='fantasy'] .library-story-card,
+[data-world='fantasy'] .library-folder-card {
+  border-color: color-mix(in srgb, #e6b455 22%, var(--stroke));
+  box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(230, 180, 85, 0.08);
+}
+[data-world='fantasy'] .modal,
+[data-world='fantasy'] .library-hero {
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 0 1px rgba(230, 180, 85, 0.22),
+    inset 0 0 0 5px rgba(230, 180, 85, 0.05);
+}
+
+/* заголовки-«артефакты»: золотой градиент по тексту */
+[data-world='fantasy'] .welcome h1,
+[data-world='fantasy'] .home-title {
+  background: linear-gradient(180deg, #f7e2ab, #d9a53f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+/* магическое свечение при наведении на карточки */
+[data-world='fantasy'] .library-story-card:hover {
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 0 1px rgba(230, 180, 85, 0.2),
+    0 18px 44px -18px rgba(143, 109, 240, 0.55);
+}
+
+/* разделители — золотая нить */
+[data-world='fantasy'] .ctx-sep,
+[data-world='fantasy'] .sidebar-foot {
+  border-image: linear-gradient(90deg, transparent, rgba(230, 180, 85, 0.35), transparent) 1;
+}
+[data-world='fantasy'] .ctx-sep {
+  background: linear-gradient(90deg, transparent, rgba(230, 180, 85, 0.35), transparent);
+}
+
+/* ------------------------------------------------------------
+   🕯 ТЁМНОЕ ФЭНТЕЗИ (Dark Souls / Elden Ring)
+   Камень, тусклое золото, пепел; строгие малые радиусы
+   ------------------------------------------------------------ */
+[data-theme='darkfantasy'] {
+  --font-display: Georgia, 'Palatino Linotype', 'Times New Roman', serif;
+  --display-case: uppercase;
+  --display-track: 0.1em;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 9px;
+  --r-xl: 12px;
+  /* шершавый камень */
+  --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' seed='13'/%3E%3CfeColorMatrix values='0 0 0 0 0.52 0 0 0 0 0.48 0 0 0 0 0.42 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23s)'/%3E%3C/svg%3E");
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='4' seed='21'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.04 0 0 0 0 0.03 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23c)'/%3E%3C/svg%3E");
+  /* тяжёлая виньетка по краям экрана */
+  --tex-app: radial-gradient(1200px 800px at 50% 45%, transparent 52%, rgba(2, 1, 0, 0.62));
+}
+
+/* кнопки — потёртый металл со слабым отблеском углей */
+[data-world='darkfantasy'] .btn--primary {
+  background: linear-gradient(180deg, #3a3327, #241f17);
+  border-color: #5c5140;
+  color: #e8d9b4;
+  font-family: var(--font-display);
+  letter-spacing: 0.07em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.1),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 6px 16px -8px rgba(0, 0, 0, 0.65);
+}
+[data-world='darkfantasy'] .btn--primary:hover {
+  border-color: #8a744d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 22px -6px var(--accent-glow);
+}
+
+/* карточки — каменные плиты с виньеткой и двойной тусклой рамкой */
+[data-world='darkfantasy'] .card,
+[data-world='darkfantasy'] .modal,
+[data-world='darkfantasy'] .library-story-card,
+[data-world='darkfantasy'] .library-folder-card {
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 36px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(232, 214, 190, 0.05);
+}
+[data-world='darkfantasy'] .library-hero {
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(200, 178, 122, 0.14);
+}
+
+/* заголовки — тусклое золото, соулс-капитель */
+[data-world='darkfantasy'] .welcome h1,
+[data-world='darkfantasy'] .home-title {
+  color: #cdb98a;
+  font-weight: var(--fw-medium);
+}
+
+/* разделители — гаснущая линия */
+[data-world='darkfantasy'] .ctx-sep {
+  background: linear-gradient(90deg, transparent, rgba(200, 178, 122, 0.3), transparent);
+}
+
+/* ------------------------------------------------------------
+   🏰 СРЕДНЕВЕКОВЬЕ (Kingdom Come: Deliverance)
+   Пергамент, кожа с прошивкой, книжная типографика
+   ------------------------------------------------------------ */
+[data-theme='medieval'] {
+  --font-display: 'Book Antiqua', 'Palatino Linotype', Georgia, serif;
+  --display-track: 0.03em;
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  /* тёмная кожа с волокном */
+  --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.16' numOctaves='3' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.42 0 0 0 0 0.24 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23l)'/%3E%3C/svg%3E");
+  /* мелкое зерно пергамента */
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.83 0 0 0 0 0.62 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+  --tex-app: radial-gradient(1300px 850px at 50% 110%, transparent 55%, rgba(8, 4, 0, 0.5));
+}
+
+/* кнопки — кожаный переплёт с латунной окантовкой */
+[data-world='medieval'] .btn--primary {
+  background: linear-gradient(180deg, #6f5129, #4c351a);
+  border-color: #8a6a35;
+  color: #f4e9cf;
+  font-family: var(--font-display);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 190, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.32),
+    0 6px 16px -8px rgba(0, 0, 0, 0.55);
+}
+[data-world='medieval'] .btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+/* карточки — переплёт с «прошивкой» по периметру */
+[data-world='medieval'] .card,
+[data-world='medieval'] .modal,
+[data-world='medieval'] .library-story-card,
+[data-world='medieval'] .library-folder-card {
+  border-color: color-mix(in srgb, #c99a4b 18%, var(--stroke));
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 4px rgba(244, 222, 176, 0.07);
+}
+[data-world='medieval'] .library-hero {
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 0 4px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 5px rgba(244, 222, 176, 0.09);
+}
+
+/* заголовки — книжная антиква, мягкий мёд */
+[data-world='medieval'] .welcome h1,
+[data-world='medieval'] .home-title {
+  color: #ecd9ac;
+}
+[data-world='medieval'] .library-hero .library-summary span,
+[data-world='medieval'] .library-story-meta {
+  font-style: italic;
+}
+
+/* разделители — латунная нить */
+[data-world='medieval'] .ctx-sep {
+  background: linear-gradient(90deg, transparent, rgba(201, 154, 75, 0.35), transparent);
+}
+
+/* ------------------------------------------------------------
+   🚀 НАУЧНАЯ ФАНТАСТИКА (Mass Effect / Halo)
+   HUD-панели, сетка, срезанные углы, неоновые линии
+   ------------------------------------------------------------ */
+[data-theme='scifi'] {
+  --font-display: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  --display-case: uppercase;
+  --display-track: 0.12em;
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --r-xl: 9px;
+  /* сканлайны панелей */
+  --tex-panel: repeating-linear-gradient(
+    0deg,
+    rgba(155, 225, 255, 0.028) 0 1px,
+    transparent 1px 3px
+  );
+  /* голографическая сетка карточек */
+  --tex-card: repeating-linear-gradient(0deg, rgba(47, 212, 245, 0.04) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgba(47, 212, 245, 0.04) 0 1px, transparent 1px 26px);
+  --tex-app: radial-gradient(1400px 900px at 50% -10%, transparent 55%, rgba(0, 3, 8, 0.5));
+}
+
+/* кнопка — HUD-модуль со срезанными углами (тень через drop-shadow, clip её сохраняет) */
+[data-world='scifi'] .btn--primary {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  border-radius: 0;
+  border: none;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: var(--accent-contrast);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  box-shadow: none;
+  filter: drop-shadow(0 6px 14px rgba(47, 212, 245, 0.28));
+}
+[data-world='scifi'] .btn--primary:hover {
+  filter: drop-shadow(0 8px 20px rgba(47, 212, 245, 0.42)) brightness(1.06);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+/* панели — неоновая кромка */
+[data-world='scifi'] .sidebar {
+  box-shadow: inset -1px 0 0 rgba(47, 212, 245, 0.14);
+}
+[data-world='scifi'] .tabbar {
+  box-shadow: inset 0 -1px 0 rgba(47, 212, 245, 0.12);
+}
+[data-world='scifi'] .card,
+[data-world='scifi'] .modal,
+[data-world='scifi'] .library-story-card,
+[data-world='scifi'] .library-folder-card {
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(155, 225, 255, 0.09);
+}
+[data-world='scifi'] .library-hero {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(155, 225, 255, 0.12),
+    0 0 34px -14px var(--accent-glow);
+}
+
+/* заголовки — свечение дисплея */
+[data-world='scifi'] .welcome h1,
+[data-world='scifi'] .home-title {
+  text-shadow: 0 0 16px var(--accent-glow);
+  font-weight: var(--fw-semibold);
+}
+
+/* чипы и бейджи — прямоугольные HUD-метки */
+[data-world='scifi'] .badge,
+[data-world='scifi'] .tag-chip,
+[data-world='scifi'] .library-hero .library-summary > div {
+  border-radius: 4px;
+}
+
+/* поля ввода — консоль с нижней чертой */
+[data-world='scifi'] .input:focus,
+[data-world='scifi'] .tag-editor:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--stroke));
+  border-bottom-color: var(--accent);
+  box-shadow: 0 6px 18px -12px var(--accent-glow);
+}
+
+/* скроллбар — прямоугольный слайдер */
+[data-world='scifi'] *::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+}
+
+/* ------------------------------------------------------------
+   ⚡ КИБЕРПАНК (Cyberpunk 2077)
+   Кислотный неон, срезы, глитч, моно-метки
+   ------------------------------------------------------------ */
+[data-theme='cyberpunk'] {
+  --font-display: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  --display-case: uppercase;
+  --display-track: 0.07em;
+  --r-sm: 0px;
+  --r-md: 2px;
+  --r-lg: 3px;
+  --r-xl: 5px;
+  /* цифровой шум */
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='31'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 0.9 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* сканлайны на всём */
+  --tex-panel: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 240, 0.02) 0 1px,
+    transparent 1px 3px
+  );
+  --tex-app: repeating-linear-gradient(0deg, rgba(255, 255, 240, 0.016) 0 1px, transparent 1px 4px),
+    radial-gradient(1300px 850px at 50% 110%, transparent 55%, rgba(4, 4, 0, 0.55));
+}
+
+/* кнопка — жёлтый чип со срезом, глитч на ховере */
+[data-world='cyberpunk'] .btn--primary {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  border-radius: 0;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: none;
+  filter: drop-shadow(0 6px 14px rgba(247, 225, 47, 0.25));
+}
+[data-world='cyberpunk'] .btn--primary:hover {
+  filter: drop-shadow(0 8px 18px rgba(247, 225, 47, 0.4)) brightness(1.05);
+  box-shadow: none;
+  text-shadow:
+    1px 0 rgba(0, 229, 255, 0.55),
+    -1px 0 rgba(255, 46, 136, 0.5);
+}
+
+/* панели — жёлтый тех-кант слева, как ярлыки в меню CP2077 */
+[data-world='cyberpunk'] .sidebar {
+  box-shadow: inset -1px 0 0 rgba(247, 225, 47, 0.14);
+}
+[data-world='cyberpunk'] .card,
+[data-world='cyberpunk'] .library-story-card,
+[data-world='cyberpunk'] .library-folder-card,
+[data-world='cyberpunk'] .library-material-card {
+  border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+[data-world='cyberpunk'] .modal {
+  border-top: 2px solid var(--accent);
+}
+[data-world='cyberpunk'] .library-hero {
+  border-left: 3px solid var(--accent);
+  box-shadow: var(--shadow-lg), 0 0 40px -18px var(--accent-glow);
+}
+
+/* заголовки — хроматическая аберрация (лёгкий «глитч») */
+[data-world='cyberpunk'] .welcome h1,
+[data-world='cyberpunk'] .home-title {
+  text-shadow:
+    1.5px 0 rgba(0, 229, 255, 0.35),
+    -1.5px 0 rgba(255, 46, 136, 0.3);
+  font-weight: var(--fw-bold);
+}
+
+/* метки и чипы — моноширинные «коды» */
+[data-world='cyberpunk'] .badge,
+[data-world='cyberpunk'] .hashtag,
+[data-world='cyberpunk'] .tag-chip {
+  font-family: Consolas, 'Cascadia Mono', monospace;
+  border-radius: 2px;
+}
+[data-world='cyberpunk'] .library-hero .library-summary > div {
+  border-radius: 2px;
+}
+
+/* скроллбар — жёсткий прямоугольник */
+[data-world='cyberpunk'] *::-webkit-scrollbar-thumb {
+  border-radius: 0;
+}

@@ -58,6 +58,24 @@
   --glass-surface: color-mix(in srgb, var(--panel-solid) 84%, transparent);
   --glass-surface-strong: color-mix(in srgb, var(--panel-solid) 92%, transparent);
   --glass-backdrop: rgba(4, 5, 10, 0.52);
+
+  /* ------------------------------------------------------------
+     Токен-контракт v2 для тем-миров (worlds.css).
+     Дефолты = текущий стандартный дизайн, поэтому шесть классических
+     тем не меняются ни на пиксель. Миры переопределяют:
+       --font-display   — шрифт заголовков/бренда (контент редактора не трогаем)
+       --display-case   — text-transform заголовков секций
+       --display-track  — letter-spacing заголовков
+       --tex-app        — текстура-атмосфера поверх фона приложения
+       --tex-panel      — текстура сайдбара/таб-бара
+       --tex-card       — текстура карточек/панелей/модалок
+     ------------------------------------------------------------ */
+  --font-display: var(--font-ui);
+  --display-case: none;
+  --display-track: normal;
+  --tex-app: none;
+  --tex-panel: none;
+  --tex-card: none;
 }
 
 /*
@@ -226,6 +244,36 @@
   --accent-glow: rgba(47, 212, 245, 0.34);
   --paper: #eef4f8;
   --paper-text: #14212e;
+}
+
+/* ⚡ Киберпанк (Cyberpunk 2077): кислотный неон на угольном чёрном */
+[data-theme='cyberpunk'] {
+  --surface-0: #0a0a08;
+  --surface-1: #12120d;
+  --surface-2: #191912;
+  --surface-3: #242418;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1100px 600px at 84% -14%, #23230f 0%, transparent 58%),
+    radial-gradient(820px 500px at -10% 112%, rgba(0, 229, 255, 0.07) 0%, transparent 55%),
+    radial-gradient(520px 300px at 60% 116%, rgba(255, 46, 136, 0.06) 0%, transparent 65%),
+    #0a0a08;
+  --panel: rgba(18, 18, 13, 0.78);
+  --panel-solid: var(--surface-2);
+  --panel-2: rgba(36, 36, 24, 0.58);
+  --stroke: rgba(247, 225, 47, 0.09);
+  --stroke-strong: rgba(247, 225, 47, 0.18);
+  --text: #f2f0e2;
+  --text-dim: #a5a288;
+  --text-faint: #6f6d58;
+  --accent: #f7e12f;
+  --accent-hover: #ffef55;
+  --accent-2: #00e5ff;
+  --accent-contrast: #171402;
+  --accent-soft: rgba(247, 225, 47, 0.15);
+  --accent-glow: rgba(247, 225, 47, 0.30);
+  --paper: #f2f2ea;
+  --paper-text: #1c1c14;
 }
 
 [data-theme='blue'] {

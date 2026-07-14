@@ -1,5 +1,5 @@
 import React from 'react'
-import { Sparkles, Swords, Skull, Castle, Rocket, Undo2 } from 'lucide-react'
+import { Sparkles, Swords, Skull, Castle, Rocket, Zap, Undo2 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { openContextMenu } from '../shared/ui/ContextMenu'
 import type { ThemeName } from '@shared/types'
@@ -18,7 +18,8 @@ const WORLDS: { name: ThemeName; icon: React.ReactNode; label: string }[] = [
   { name: 'fantasy', icon: <Swords size={14} />, label: 'Фэнтези — магия и золото' },
   { name: 'darkfantasy', icon: <Skull size={14} />, label: 'Тёмное фэнтези — пепел и угли' },
   { name: 'medieval', icon: <Castle size={14} />, label: 'Средневековье — таверна и свечи' },
-  { name: 'scifi', icon: <Rocket size={14} />, label: 'Научная фантастика — неон и космос' }
+  { name: 'scifi', icon: <Rocket size={14} />, label: 'Научная фантастика — неон и космос' },
+  { name: 'cyberpunk', icon: <Zap size={14} />, label: 'Киберпанк — кислотный неон и глитч' }
 ]
 
 export function ThemeSwitcher(): React.JSX.Element {

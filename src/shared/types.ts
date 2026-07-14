@@ -7,8 +7,9 @@ export type ChapterStatus = 'idea' | 'draft' | 'editing' | 'done'
 
 /**
  * Тема оформления приложения (п.12 пожеланий).
- * Первые шесть — классические акцентные палитры; дальше — «темы-миры»
- * под сеттинги: фэнтези, тёмное фэнтези, средневековье, научная фантастика.
+ * Первые шесть — классические акцентные палитры; дальше — «темы-миры»:
+ * полноценные визуальные вселенные (палитра + текстуры + типографика + формы),
+ * UX и компоненты общие — меняется только оформление (слой [data-world]).
  */
 export type ThemeName =
   | 'dark'
@@ -21,6 +22,16 @@ export type ThemeName =
   | 'darkfantasy'
   | 'medieval'
   | 'scifi'
+  | 'cyberpunk'
+
+/** Темы-миры: для них на <html> ставится data-world и включается слой worlds.css. */
+export const WORLD_THEMES: readonly ThemeName[] = [
+  'fantasy',
+  'darkfantasy',
+  'medieval',
+  'scifi',
+  'cyberpunk'
+]
 
 /** Глава истории — содержит контент редактора (TipTap JSON). */
 export interface Chapter {

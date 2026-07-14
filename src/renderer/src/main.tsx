@@ -18,6 +18,8 @@ import './features/board/board.css'
 import './features/timeline/timeline.css'
 import './features/help/help.css'
 import './features/updates/updates.css'
+// слой тем-миров — последним, чтобы перекрывать компонентные стили
+import './theme/worlds.css'
 import { StoreProvider } from './store/store'
 import { App } from './app/App'
 

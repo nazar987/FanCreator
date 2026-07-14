@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Project, ProjectSummary, ThemeName, Chapter } from '@shared/types'
+import { WORLD_THEMES } from '@shared/types'
 import { confirmDialog } from '../shared/ui/dialogs'
 
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
@@ -111,8 +112,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   const [genealogyTargetId, setGenealogyTargetId] = React.useState<string | null>(null)
   const [genealogyNonce, setGenealogyNonce] = React.useState(0)
 
+  // Тема + мир. data-world включает слой worlds.css (текстуры/типографика/формы),
+  // а короткий data-world-flip проигрывает «вуаль» перехода между вселенными.
+  const firstThemeRef = React.useRef(true)
   React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
+    const el = document.documentElement
+    const prevWorld = el.getAttribute('data-world')
+    const world = WORLD_THEMES.includes(theme) ? theme : null
+    el.setAttribute('data-theme', theme)
+    if (world) el.setAttribute('data-world', world)
+    else el.removeAttribute('data-world')
+    if (firstThemeRef.current) {
+      firstThemeRef.current = false
+      return
+    }
+    if (prevWorld !== world) {
+      el.setAttribute('data-world-flip', '')
+      const t = window.setTimeout(() => el.removeAttribute('data-world-flip'), 700)
+      return () => {
+        window.clearTimeout(t)
+        el.removeAttribute('data-world-flip')
+      }
+    }
+    return undefined
   }, [theme])
 
   // запоминаем открытые вкладки текущего проекта — для восстановления сессии
