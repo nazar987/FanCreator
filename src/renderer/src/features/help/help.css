@@ -55,3 +55,149 @@
   gap: 8px;
   margin-top: 16px;
 }
+
+/* ---------- Справочный центр (детальная «Помощь») ---------- */
+.help-center {
+  display: flex;
+  width: min(860px, calc(100vw - 48px));
+  height: min(600px, calc(100vh - 64px));
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+.help-center-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.help-center-close:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.help-center-nav {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--stroke);
+  background: var(--surface-1, var(--panel));
+}
+.help-center-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px;
+  padding: 0 10px;
+  height: 34px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  background: var(--panel-2);
+  color: var(--text-faint);
+}
+.help-center-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: 500 13px var(--font-ui);
+  outline: none;
+}
+.help-center-topics {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.help-center-topics button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font: 500 13px var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+.help-center-topics button:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.help-center-topics button.is-active {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.help-center-none {
+  padding: 10px;
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+.help-center-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 26px 26px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.help-center-body h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+  color: var(--text);
+}
+.help-center-body h4 {
+  margin: 14px 0 6px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.help-center-body p {
+  margin: 0 0 8px;
+}
+.help-center-body ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+.help-center-body li {
+  margin-bottom: 6px;
+}
+.help-center-body b {
+  color: var(--text);
+}
+.help-kbd {
+  font: 600 11px var(--font-ui);
+  background: var(--panel-2);
+  border: 1px solid var(--stroke-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.help-hotkeys {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.help-hotkeys > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.help-hotkeys span {
+  margin-left: 8px;
+  color: var(--text-dim);
+}

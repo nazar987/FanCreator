@@ -16,6 +16,7 @@ import { Board } from '../features/board/Board'
 import { Timeline } from '../features/timeline/Timeline'
 import { HierarchyView } from '../features/hierarchy/HierarchyView'
 import { HelpTour } from '../features/help/HelpTour'
+import { HelpCenter } from '../features/help/HelpCenter'
 import { UpdateBanner } from '../features/updates/UpdateBanner'
 import { WhatsNew } from '../features/updates/WhatsNew'
 
@@ -118,6 +119,7 @@ export function App(): React.JSX.Element {
       <DialogHost />
       <ContextMenuHost />
       <HelpTour />
+      <HelpCenter />
       <UpdateBanner />
       <WhatsNew />
     </div>

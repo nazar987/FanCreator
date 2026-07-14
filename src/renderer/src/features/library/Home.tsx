@@ -16,6 +16,7 @@ import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { ThemeSwitcher } from '../../app/ThemeSwitcher'
 import { CoverArt } from './CoverArt'
 import { startHelpTour } from '../help/HelpTour'
+import { openHelpCenter } from '../help/HelpCenter'
 import { openWhatsNew } from '../updates/WhatsNew'
 import { plural } from '../../shared/plural'
 import type { ProjectSummary } from '@shared/types'
@@ -133,7 +134,18 @@ export function Home(): React.JSX.Element {
           </div>
           <div className="row">
             <ThemeSwitcher />
-            <Button variant="soft" icon title="Помощь" onClick={startHelpTour}>
+            <Button
+              variant="soft"
+              icon
+              title="Помощь"
+              onClick={(e) =>
+                openContextMenu(e, [
+                  { label: 'Справка по функциям', onClick: openHelpCenter },
+                  { label: 'Экскурсия по интерфейсу', onClick: startHelpTour },
+                  { label: 'Что нового в этой версии', onClick: openWhatsNew }
+                ])
+              }
+            >
               <CircleHelp size={17} />
             </Button>
             <Button variant="soft" onClick={importBackup}>

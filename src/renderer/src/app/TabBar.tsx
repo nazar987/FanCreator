@@ -19,6 +19,8 @@ import { ThemeSwitcher } from './ThemeSwitcher'
 import { openContextMenu, type MenuItem } from '../shared/ui/ContextMenu'
 import { promptText, promptStory } from '../shared/ui/dialogs'
 import { startHelpTour } from '../features/help/HelpTour'
+import { openHelpCenter } from '../features/help/HelpCenter'
+import { openWhatsNew } from '../features/updates/WhatsNew'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 
 interface TabBarProps {
@@ -214,7 +216,13 @@ export function TabBar({ sidebarOpen, onToggleSidebar }: TabBarProps): React.JSX
       <button
         className="tab-close"
         style={{ width: 26, height: 26 }}
-        onClick={startHelpTour}
+        onClick={(e) =>
+          openContextMenu(e, [
+            { label: 'Справка по функциям', onClick: openHelpCenter },
+            { label: 'Экскурсия по интерфейсу', onClick: startHelpTour },
+            { label: 'Что нового в этой версии', onClick: openWhatsNew }
+          ])
+        }
         title="Помощь"
       >
         <CircleHelp size={16} />
