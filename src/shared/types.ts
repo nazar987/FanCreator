@@ -5,8 +5,22 @@
 
 export type ChapterStatus = 'idea' | 'draft' | 'editing' | 'done'
 
-/** Тема оформления приложения (п.12 пожеланий). */
-export type ThemeName = 'dark' | 'blue' | 'violet' | 'green' | 'orange' | 'rose'
+/**
+ * Тема оформления приложения (п.12 пожеланий).
+ * Первые шесть — классические акцентные палитры; дальше — «темы-миры»
+ * под сеттинги: фэнтези, тёмное фэнтези, средневековье, научная фантастика.
+ */
+export type ThemeName =
+  | 'dark'
+  | 'blue'
+  | 'violet'
+  | 'green'
+  | 'orange'
+  | 'rose'
+  | 'fantasy'
+  | 'darkfantasy'
+  | 'medieval'
+  | 'scifi'
 
 /** Глава истории — содержит контент редактора (TipTap JSON). */
 export interface Chapter {

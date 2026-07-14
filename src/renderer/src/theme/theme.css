@@ -103,6 +103,131 @@
   --paper-text: #1d1c1a;
 }
 
+/* ============================================================
+   Темы-миры: оформление под сеттинг истории. Та же тёмная база
+   и токены, но своя атмосфера — цвет, свет и «бумага».
+   ============================================================ */
+
+/* ⚔️ Фэнтези (Warcraft/Hearthstone): магический пурпур + золото таверны */
+[data-theme='fantasy'] {
+  --surface-0: #0c0918;
+  --surface-1: #171029;
+  --surface-2: #1f163a;
+  --surface-3: #2c2052;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1100px 600px at 84% -14%, #33255c 0%, transparent 58%),
+    radial-gradient(820px 520px at -10% 110%, #2a1c14 0%, transparent 55%),
+    radial-gradient(520px 320px at 50% 118%, rgba(230, 180, 85, 0.10) 0%, transparent 70%),
+    #0c0918;
+  --panel: rgba(23, 16, 41, 0.76);
+  --panel-solid: var(--surface-2);
+  --panel-2: rgba(44, 32, 82, 0.55);
+  --stroke: rgba(240, 214, 150, 0.08);
+  --stroke-strong: rgba(240, 214, 150, 0.17);
+  --text: #f1ecfc;
+  --text-dim: #a89cc8;
+  --text-faint: #6f6592;
+  --accent: #e6b455;
+  --accent-hover: #f2c56b;
+  --accent-2: #8f6df0;
+  --accent-contrast: #221604;
+  --accent-soft: rgba(230, 180, 85, 0.18);
+  --accent-glow: rgba(230, 180, 85, 0.34);
+  --paper: #f6eed9;
+  --paper-text: #2b2115;
+}
+
+/* 🕯 Тёмное фэнтези (Dark Souls): пепел, туман и тлеющие угли */
+[data-theme='darkfantasy'] {
+  --surface-0: #0a0908;
+  --surface-1: #14110e;
+  --surface-2: #1c1814;
+  --surface-3: #292219;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1100px 620px at 80% -16%, #232019 0%, transparent 60%),
+    radial-gradient(760px 460px at 12% 116%, rgba(208, 123, 58, 0.13) 0%, transparent 60%),
+    radial-gradient(900px 500px at -12% -8%, #191614 0%, transparent 55%),
+    #0a0908;
+  --panel: rgba(20, 17, 14, 0.78);
+  --panel-solid: var(--surface-2);
+  --panel-2: rgba(41, 34, 25, 0.58);
+  --stroke: rgba(232, 214, 190, 0.07);
+  --stroke-strong: rgba(232, 214, 190, 0.15);
+  --text: #e8e2d8;
+  --text-dim: #a1968a;
+  --text-faint: #6b6156;
+  --accent: #d07b3a;
+  --accent-hover: #e08d4a;
+  --accent-2: #a44242;
+  --accent-contrast: #1c0f04;
+  --accent-soft: rgba(208, 123, 58, 0.16);
+  --accent-glow: rgba(208, 123, 58, 0.30);
+  --paper: #ece4d2;
+  --paper-text: #26201a;
+}
+
+/* 🏰 Средневековье (Kingdom Come): тёплое дерево, свечи и мёд */
+[data-theme='medieval'] {
+  --surface-0: #120d07;
+  --surface-1: #1d150c;
+  --surface-2: #271c11;
+  --surface-3: #362818;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1100px 600px at 82% -12%, #3a2b18 0%, transparent 58%),
+    radial-gradient(860px 520px at -10% 112%, #241a0f 0%, transparent 55%),
+    radial-gradient(460px 300px at 62% 112%, rgba(201, 154, 75, 0.12) 0%, transparent 68%),
+    #120d07;
+  --panel: rgba(29, 21, 12, 0.78);
+  --panel-solid: var(--surface-2);
+  --panel-2: rgba(54, 40, 24, 0.58);
+  --stroke: rgba(244, 222, 176, 0.08);
+  --stroke-strong: rgba(244, 222, 176, 0.16);
+  --text: #f2e9da;
+  --text-dim: #b3a48e;
+  --text-faint: #7c6f5c;
+  --accent: #c99a4b;
+  --accent-hover: #dcae5e;
+  --accent-2: #7d9450;
+  --accent-contrast: #211603;
+  --accent-soft: rgba(201, 154, 75, 0.18);
+  --accent-glow: rgba(201, 154, 75, 0.32);
+  --paper: #f4e9cf;
+  --paper-text: #2d2415;
+}
+
+/* 🚀 Научная фантастика: космос и неоновый циан */
+[data-theme='scifi'] {
+  --surface-0: #04070e;
+  --surface-1: #081120;
+  --surface-2: #0c1a2e;
+  --surface-3: #12283f;
+
+  --bg: var(--surface-0);
+  --bg-grad: radial-gradient(1150px 620px at 84% -14%, #0d2b45 0%, transparent 58%),
+    radial-gradient(860px 520px at -12% 112%, #141033 0%, transparent 55%),
+    radial-gradient(520px 300px at 44% -8%, rgba(47, 212, 245, 0.10) 0%, transparent 65%),
+    #04070e;
+  --panel: rgba(8, 17, 32, 0.76);
+  --panel-solid: var(--surface-2);
+  --panel-2: rgba(18, 40, 63, 0.58);
+  --stroke: rgba(155, 225, 255, 0.08);
+  --stroke-strong: rgba(155, 225, 255, 0.16);
+  --text: #e6f4fb;
+  --text-dim: #8fa9c0;
+  --text-faint: #587187;
+  --accent: #2fd4f5;
+  --accent-hover: #55e0ff;
+  --accent-2: #8b5cf6;
+  --accent-contrast: #02141c;
+  --accent-soft: rgba(47, 212, 245, 0.16);
+  --accent-glow: rgba(47, 212, 245, 0.34);
+  --paper: #eef4f8;
+  --paper-text: #14212e;
+}
+
 [data-theme='blue'] {
   --surface-0: #071019;
   --surface-1: #0c1926;

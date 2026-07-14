@@ -299,6 +299,32 @@
 .theme-dot--active {
   border-color: var(--text);
 }
+/* кнопка «Темы-миры» — оформление под сеттинг истории */
+.theme-worlds {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
+  padding: 0;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: transform var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+}
+.theme-worlds:hover {
+  transform: scale(1.12);
+  color: var(--text);
+  border-color: var(--accent);
+}
+.theme-worlds--active {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px -2px var(--accent-glow);
+}
 
 /* ---------- Welcome ---------- */
 .welcome {
