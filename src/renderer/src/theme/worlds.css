@@ -170,71 +170,321 @@
 }
 
 /* ------------------------------------------------------------
-   🕯 ТЁМНОЕ ФЭНТЕЗИ (Dark Souls / Elden Ring)
-   Камень, тусклое золото, пепел; строгие малые радиусы
+   🕯 ТЁМНОЕ ФЭНТЕЗИ (Dark Souls / Elden Ring) — ЭТАЛОННЫЙ МИР
+   Полная дизайн-система, а не палитра. Это шаблон глубины для
+   остальных миров; чеклист компонентов:
+     0. токены (шрифт/регистр/радиусы/текстуры)
+     1. атмосфера (фон, дым, виньетка)
+     2. каркас (сайдбар, таб-бар, вкладки, дерево)
+     3. кнопки (primary / soft / ghost)
+     4. карточки и панели (card, story-card, hero, modal)
+     5. поля ввода (input, tag-editor, select)
+     6. меню и дропдауны (ctx-menu, палитра)
+     7. бейджи и чипы
+     8. прогресс
+     9. скроллбар
+    10. типографика и иконки
+    11. декор (разделители, орнаменты)
+    12. микро-анимации
+   Художественный язык: чёрный камень, кованое железо, старое
+   золото, руны, тлеющие угли. Тяжесть, гравировка, древность.
    ------------------------------------------------------------ */
 [data-theme='darkfantasy'] {
   --font-display: Georgia, 'Palatino Linotype', 'Times New Roman', serif;
   --display-case: uppercase;
   --display-track: 0.1em;
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 9px;
-  --r-xl: 12px;
-  /* шершавый камень */
-  --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' seed='13'/%3E%3CfeColorMatrix values='0 0 0 0 0.52 0 0 0 0 0.48 0 0 0 0 0.42 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23s)'/%3E%3C/svg%3E");
-  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='4' seed='21'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.04 0 0 0 0 0.03 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23c)'/%3E%3C/svg%3E");
-  /* тяжёлая виньетка по краям экрана */
-  --tex-app: radial-gradient(1200px 800px at 50% 45%, transparent 52%, rgba(2, 1, 0, 0.62));
+  --r-sm: 3px;
+  --r-md: 5px;
+  --r-lg: 8px;
+  --r-xl: 11px;
+  /* шершавый чёрный камень (панели) */
+  --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' seed='13'/%3E%3CfeColorMatrix values='0 0 0 0 0.52 0 0 0 0 0.48 0 0 0 0 0.42 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23s)'/%3E%3C/svg%3E");
+  /* угольная крошка (карточки) */
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='4' seed='21'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.04 0 0 0 0 0.03 0 0 0 0.24 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23c)'/%3E%3C/svg%3E");
+  /* дым в глубине + тяжёлая виньетка по краям экрана */
+  --tex-app: radial-gradient(900px 520px at 18% 28%, rgba(118, 106, 88, 0.05), transparent 62%),
+    radial-gradient(1050px 640px at 80% 70%, rgba(96, 84, 66, 0.05), transparent 60%),
+    radial-gradient(1200px 800px at 50% 45%, transparent 50%, rgba(2, 1, 0, 0.66));
+
+  /* фирменные декор-ассеты мира (процедурный SVG) */
+  /* трещины на каменных плитах */
+  --df-cracks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='340'%3E%3Cg fill='none' stroke='rgba(0,0,0,0.45)' stroke-width='1'%3E%3Cpath d='M22 4 L30 36 L18 60 L34 94'/%3E%3Cpath d='M312 238 L288 254 L292 280 L266 300'/%3E%3Cpath d='M160 332 L176 320 L172 298'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(232,214,190,0.06)' stroke-width='1'%3E%3Cpath d='M23 5 L31 37 L19 61 L35 95'/%3E%3Cpath d='M313 239 L289 255 L293 281 L267 301'/%3E%3C/g%3E%3C/svg%3E");
+  /* рунная строка для разделителей */
+  --df-runes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='12'%3E%3Cg stroke='rgba(200,178,122,0.55)' stroke-width='1.1' fill='none'%3E%3Cpath d='M10 2 L10 10 M10 4 L15 2 M10 7 L15 10'/%3E%3Cpath d='M42 2 L42 10 M42 3 L47 5.5 L42 8'/%3E%3Cpath d='M74 2 L74 10 M79 2 L79 10 M74 4 L79 8'/%3E%3Cpath d='M104 10 L108 2 L112 10 M106 6.5 L110 6.5'/%3E%3Cpath d='M138 2 L143 6 L138 10 M143 6 L148 2 M143 6 L148 10'/%3E%3C/g%3E%3C/svg%3E");
+  /* кованая рамка с угловыми пластинами и заклёпками (border-image) */
+  --df-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect x='1.5' y='1.5' width='93' height='93' fill='none' stroke='%23070503' stroke-width='3'/%3E%3Crect x='5' y='5' width='86' height='86' fill='none' stroke='%233d3223' stroke-width='2'/%3E%3Crect x='8.5' y='8.5' width='79' height='79' fill='none' stroke='rgba(200,178,122,0.45)' stroke-width='1'/%3E%3Cg fill='%23241d14' stroke='%23554630' stroke-width='1'%3E%3Crect x='2.5' y='2.5' width='19' height='19'/%3E%3Crect x='74.5' y='2.5' width='19' height='19'/%3E%3Crect x='2.5' y='74.5' width='19' height='19'/%3E%3Crect x='74.5' y='74.5' width='19' height='19'/%3E%3C/g%3E%3Cg fill='%23806b45'%3E%3Ccircle cx='12' cy='12' r='2.2'/%3E%3Ccircle cx='84' cy='12' r='2.2'/%3E%3Ccircle cx='12' cy='84' r='2.2'/%3E%3Ccircle cx='84' cy='84' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
+  /* заклёпка в углу плиты (background-слой) */
+  --df-rivet-color: #7d6a45;
 }
 
-/* кнопки — потёртый металл со слабым отблеском углей */
+/* --- 2. Каркас: сайдбар — чёрный камень с угольной кромкой --- */
+[data-world='darkfantasy'] .sidebar {
+  background-color: #0d0b08;
+  border-right: 1px solid #060504;
+  box-shadow:
+    inset -8px 0 16px -10px rgba(0, 0, 0, 0.85),
+    inset -1px 0 0 rgba(200, 178, 122, 0.07);
+}
+[data-world='darkfantasy'] .sidebar-foot {
+  border-top: none;
+  padding-top: 16px;
+  background-image: var(--df-runes);
+  background-repeat: repeat-x;
+  background-position: top center;
+  background-size: auto 10px;
+}
+[data-world='darkfantasy'] .brand-mark {
+  background: linear-gradient(180deg, #35291a, #1c150d);
+  border: 1px solid #55462e;
+  color: #d8b96a;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.14), 0 4px 10px -4px rgba(0, 0, 0, 0.7);
+}
+[data-world='darkfantasy'] .tree-section-title {
+  color: #8d7d5c;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+/* активная глава — тлеющая зарубка в камне */
+[data-world='darkfantasy'] .tree-row--active {
+  background: linear-gradient(90deg, rgba(208, 123, 58, 0.16), rgba(208, 123, 58, 0.03));
+  box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px rgba(208, 123, 58, 0.1);
+}
+
+/* таб-бар — железная балка; вкладки — клеймёные пластины */
+[data-world='darkfantasy'] .tabbar {
+  box-shadow: inset 0 -1px 0 #060504, inset 0 -2px 0 rgba(200, 178, 122, 0.06);
+}
+[data-world='darkfantasy'] .tab {
+  background: linear-gradient(180deg, #1b1611, #13100c);
+  border: 1px solid #060504;
+  box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.05);
+  color: #a1968a;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+}
+[data-world='darkfantasy'] .tab:hover {
+  background: linear-gradient(180deg, #221c15, #171310);
+  color: var(--text);
+}
+[data-world='darkfantasy'] .tab--active {
+  background: linear-gradient(180deg, #2a2318, #1b1611);
+  color: #e8d9b4;
+  box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.09), inset 0 -2px 0 var(--accent);
+}
+
+/* --- 3. Кнопки --- */
+/* primary — тяжёлая кованая пластина: скошенные углы, гравировка, угли на ховере */
 [data-world='darkfantasy'] .btn--primary {
-  background: linear-gradient(180deg, #3a3327, #241f17);
-  border-color: #5c5140;
+  clip-path: polygon(
+    5px 0, calc(100% - 5px) 0, 100% 5px,
+    100% calc(100% - 5px), calc(100% - 5px) 100%,
+    5px 100%, 0 calc(100% - 5px), 0 5px
+  );
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(180deg, #4a4034 0%, #332b21 45%, #241f17 58%, #1d1812 100%);
   color: #e8d9b4;
   font-family: var(--font-display);
-  letter-spacing: 0.07em;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 244, 214, 0.1),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
-    0 6px 16px -8px rgba(0, 0, 0, 0.65);
-}
-[data-world='darkfantasy'] .btn--primary:hover {
-  border-color: #8a744d;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9);
   box-shadow:
     inset 0 1px 0 rgba(255, 244, 214, 0.14),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
-    0 0 22px -6px var(--accent-glow);
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(200, 178, 122, 0.16);
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.55));
+}
+[data-world='darkfantasy'] .btn--primary:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 214, 0.18),
+    inset 0 -7px 14px -6px rgba(208, 123, 58, 0.5),
+    inset 0 0 0 1px rgba(200, 178, 122, 0.28);
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(208, 123, 58, 0.28));
+  transform: none;
+}
+/* soft/ghost — высеченные в камне */
+[data-world='darkfantasy'] .btn--soft {
+  background: linear-gradient(180deg, #1e1913, #15110c);
+  border-color: #3d3223;
+  box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.06);
+}
+[data-world='darkfantasy'] .btn--soft:hover {
+  background: linear-gradient(180deg, #241e17, #181310);
+  border-color: #5c5140;
+}
+[data-world='darkfantasy'] .btn--ghost:hover {
+  background: rgba(208, 123, 58, 0.09);
 }
 
-/* карточки — каменные плиты с виньеткой и двойной тусклой рамкой */
-[data-world='darkfantasy'] .card,
-[data-world='darkfantasy'] .modal,
+/* --- 4. Карточки и панели --- */
+/* карточка — каменная плита: металлические уголки-заклёпки, трещины, виньетка */
 [data-world='darkfantasy'] .library-story-card,
 [data-world='darkfantasy'] .library-folder-card {
+  border: 1px solid #060504;
+  background-color: #16120e;
+  background-image:
+    radial-gradient(circle 3px at 11px 11px, var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
+    radial-gradient(circle 3px at calc(100% - 11px) 11px, var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
+    radial-gradient(circle 3px at 11px calc(100% - 11px), var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
+    radial-gradient(circle 3px at calc(100% - 11px) calc(100% - 11px), var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
+    var(--df-cracks),
+    var(--tex-card),
+    linear-gradient(165deg, #1e1915, #16120e);
   box-shadow:
     var(--shadow-md),
-    inset 0 0 36px rgba(0, 0, 0, 0.4),
+    inset 0 0 36px rgba(0, 0, 0, 0.45),
     inset 0 0 0 1px rgba(232, 214, 190, 0.05);
 }
-[data-world='darkfantasy'] .library-hero {
+[data-world='darkfantasy'] .library-story-card:hover {
+  border-color: #3d3223;
   box-shadow:
     var(--shadow-lg),
-    inset 0 0 60px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(200, 178, 122, 0.14);
+    inset 0 0 36px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(200, 178, 122, 0.14),
+    0 16px 40px -18px rgba(208, 123, 58, 0.35);
+}
+[data-world='darkfantasy'] .card,
+[data-world='darkfantasy'] .library-material-card {
+  border-color: #060504;
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 30px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(232, 214, 190, 0.05);
+}
+/* hero и модалка — древние плиты в кованой раме с заклёпками */
+[data-world='darkfantasy'] .library-hero {
+  border: 12px solid transparent;
+  border-image: var(--df-frame) 30 / 12px stretch;
+  border-radius: 0;
+  box-shadow: var(--shadow-lg), inset 0 0 70px rgba(0, 0, 0, 0.55);
+}
+[data-world='darkfantasy'] .modal {
+  border: 12px solid transparent;
+  border-image: var(--df-frame) 30 / 12px stretch;
+  border-radius: 0;
+  background-color: #16120e;
+  background-image: var(--tex-card), linear-gradient(180deg, #1a1611, #131009);
+  backdrop-filter: none;
+  box-shadow: var(--shadow-lg), inset 0 0 46px rgba(0, 0, 0, 0.55);
+}
+[data-world='darkfantasy'] .modal h3 {
+  position: relative;
+  padding-bottom: 14px;
+  color: #cdb98a;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.85);
+}
+[data-world='darkfantasy'] .modal h3::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  background: var(--df-runes) repeat-x left center / auto 9px;
+  opacity: 0.55;
 }
 
-/* заголовки — тусклое золото, соулс-капитель */
+/* --- 5. Поля ввода — утопленные железные пластины --- */
+[data-world='darkfantasy'] .input,
+[data-world='darkfantasy'] .tag-editor,
+[data-world='darkfantasy'] select {
+  background: linear-gradient(180deg, #0f0c09, #14100c);
+  border-color: #060504;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(232, 214, 190, 0.05);
+}
+[data-world='darkfantasy'] .input:focus,
+[data-world='darkfantasy'] .tag-editor:focus-within {
+  border-color: #8a744d;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(208, 123, 58, 0.3),
+    0 0 16px -6px var(--accent-glow);
+}
+
+/* --- 6. Меню и дропдауны — железные таблички (не «стекло») --- */
+[data-world='darkfantasy'] .ctx-menu,
+[data-world='darkfantasy'] .color-palette-panel {
+  background-color: #14100c;
+  background-image: var(--tex-card), linear-gradient(180deg, #191510, #120f0b);
+  border: 1px solid #3d3223;
+  backdrop-filter: none;
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(232, 214, 190, 0.07),
+    inset 0 0 26px rgba(0, 0, 0, 0.5);
+}
+[data-world='darkfantasy'] .ctx-item:hover {
+  background: linear-gradient(90deg, rgba(208, 123, 58, 0.16), rgba(208, 123, 58, 0.03));
+  box-shadow: inset 2px 0 0 rgba(208, 123, 58, 0.6);
+}
+[data-world='darkfantasy'] .ctx-label {
+  color: #8d7d5c;
+}
+
+/* --- 7. Бейджи и чипы — клеймо на железе --- */
+[data-world='darkfantasy'] .badge {
+  border-color: #3d3223;
+  background: linear-gradient(180deg, #1c1712, #14100c);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+}
+[data-world='darkfantasy'] .tag-chip {
+  border-color: #3d3223;
+  background: linear-gradient(180deg, rgba(208, 123, 58, 0.16), rgba(208, 123, 58, 0.07));
+}
+
+/* --- 8. Прогресс — тлеющие угли в жёлобе --- */
+[data-world='darkfantasy'] .library-story-progress {
+  background: #0d0a08;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+[data-world='darkfantasy'] .library-story-progress span {
+  background: linear-gradient(90deg, #571f0b, #99401a 45%, #d07b3a 78%, #f0b268);
+  box-shadow: 0 0 10px -2px rgba(224, 141, 74, 0.55);
+  animation: df-ember 3.2s ease-in-out infinite;
+}
+
+/* --- 9. Скроллбар — кованый ползун --- */
+[data-world='darkfantasy'] *::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: #2e271e;
+  border: 1px solid #0a0806;
+  background-clip: padding-box;
+}
+[data-world='darkfantasy'] *::-webkit-scrollbar-thumb:hover {
+  background: #4a3f30;
+  background-clip: padding-box;
+}
+
+/* --- 10. Типографика и иконки --- */
+/* заголовки — гравировка по камню: тень вниз + едва заметный блик сверху */
 [data-world='darkfantasy'] .welcome h1,
 [data-world='darkfantasy'] .home-title {
   color: #cdb98a;
   font-weight: var(--fw-medium);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 -1px 0 rgba(255, 240, 200, 0.06);
+}
+/* иконки тоньше — линия резца, а не маркера */
+[data-world='darkfantasy'] .lucide {
+  stroke-width: 1.6px;
 }
 
-/* разделители — гаснущая линия */
+/* --- 11. Декор: разделители — рунные строки --- */
 [data-world='darkfantasy'] .ctx-sep {
-  background: linear-gradient(90deg, transparent, rgba(200, 178, 122, 0.3), transparent);
+  height: 12px;
+  margin: 4px 2px;
+  background: var(--df-runes) repeat-x center / auto 10px;
+  opacity: 0.8;
+}
+
+/* --- 12. Микро-анимации: мерцание углей --- */
+@keyframes df-ember {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.28) saturate(1.1);
+  }
+  60% {
+    filter: brightness(1.12);
+  }
 }
 
 /* ------------------------------------------------------------
