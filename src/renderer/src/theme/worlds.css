@@ -841,44 +841,70 @@
 }
 
 /* ------------------------------------------------------------
-   🏰 СРЕДНЕВЕКОВЬЕ (Kingdom Come / Pentiment) — «монастырская
-   библиотека XV века». Философия: ИСТОРИЧНОСТЬ, КНИГИ, ПЕРГАМЕНТ.
-   Материалы: пергамент (главный), кожа, дерево, железо; золото —
-   минимально. Карточки — СТРАНИЦЫ с линейкой полей и загнутым
-   уголком, hero — раскрытый манускрипт с восковой печатью,
-   типографика — печатная хроника с красными инициалами-рубриками.
-   НИКАКОЙ магии, НИКАКОГО свечения, НИКАКИХ современных анимаций.
+   🏰 СРЕДНЕВЕКОВЬЕ (Kingdom Come / Pentiment / инкунабулы) —
+   «манускрипт, случайно ставший интерфейсом».
+   САМЫЙ РАДИКАЛЬНЫЙ мир после Dark Fantasy: это НЕ приложение
+   в стиле средневековья — это монастырский кодекс XV века.
+   Архитектура: тема СВЕТЛАЯ (пергамент + чернила глобально),
+   а тёмный дуб — только рама: сайдбар-шкаф и балка вкладок
+   ЛОКАЛЬНО переопределяют токены (--text и др.) внутри себя.
+   UI-элементы — предметы: карточка = лист кодекса, папка =
+   кожаная книжка, hero = разворот книги в железных уголках,
+   активный пункт = закладка-пергамент, поиск = строка на листе
+   (никаких прямоугольников), вкладки = кожаные язычки.
+   Свет — свеча: тёплый, мягкий; hover — блик свечи, не glow.
    ------------------------------------------------------------ */
 [data-theme='medieval'] {
   --font-display: 'Book Antiqua', 'Palatino Linotype', Cambria, Georgia, serif;
   --display-track: 0.01em;
-  /* книжная геометрия: спокойные малые радиусы */
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 9px;
-  --r-xl: 12px;
-  /* строгое тёмное дерево шкафа */
+  /* книжная геометрия: почти прямые углы листов */
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 5px;
+  --r-xl: 7px;
+  /* дуб рамы (шкаф, балка, стол) */
   --tex-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.05' numOctaves='3' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0.40 0 0 0 0 0.30 0 0 0 0 0.17 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23l)'/%3E%3C/svg%3E");
-  /* плотное зерно пергамента */
-  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.83 0 0 0 0 0.62 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
-  /* тихий полумрак архива — без тёплых бликов */
-  --tex-app: radial-gradient(1300px 850px at 50% 108%, transparent 55%, rgba(8, 4, 0, 0.52));
+  /* зерно пергамента (тёмное, для затенения светлого листа) */
+  --tex-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.24 0 0 0 0 0.08 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* вечер в скриптории: тёплый свет свечи слева + мягкая виньетка */
+  --tex-app: radial-gradient(720px 420px at 16% 20%, rgba(255, 214, 130, 0.07), transparent 60%),
+    radial-gradient(1300px 850px at 50% 108%, transparent 55%, rgba(12, 7, 0, 0.55));
   /* киноварь — красная рубрикация хроник */
-  --md-rubric: #b13a28;
+  --md-rubric: #8a2f1f;
   /* старая кожа переплётов */
   --md-leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210'%3E%3Cfilter id='ml'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.34' numOctaves='3' seed='23'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.30 0 0 0 0 0.13 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='210' height='210' filter='url(%23ml)'/%3E%3C/svg%3E");
-  /* кованые железные уголки стола (border-image, только углы, без золота) */
+  /* кованые железные уголки переплёта (border-image, только углы) */
   --md-iron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cg fill='none' stroke='%23423e38' stroke-width='6'%3E%3Cpath d='M4 30 L4 4 L30 4'/%3E%3Cpath d='M66 4 L92 4 L92 30'/%3E%3Cpath d='M92 66 L92 92 L66 92'/%3E%3Cpath d='M30 92 L4 92 L4 66'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(220,214,200,0.16)' stroke-width='1'%3E%3Cpath d='M4 27 L4 4 L27 4'/%3E%3Cpath d='M69 4 L92 4 L92 27'/%3E%3Cpath d='M92 69 L92 92 L69 92'/%3E%3Cpath d='M27 92 L4 92 L4 69'/%3E%3C/g%3E%3Cg fill='%23262320'%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='84' cy='12' r='2'/%3E%3Ccircle cx='12' cy='84' r='2'/%3E%3Ccircle cx='84' cy='84' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  /* растительная виньетка писца (у заголовков, сепия с золочением) */
+  --md-vine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='30'%3E%3Cg fill='none' stroke='rgba(146,108,38,0.65)' stroke-width='1.4'%3E%3Cpath d='M2 24 Q18 22 30 12 Q40 4 60 6'/%3E%3Cpath d='M22 17 Q24 10 31 9'/%3E%3Cpath d='M40 8 Q44 14 52 13'/%3E%3C/g%3E%3Cg fill='rgba(146,108,38,0.55)'%3E%3Cpath d='M30 12 q-6 -1 -8 4 q6 1 8 -4z'/%3E%3Cpath d='M46 7 q-5 -3 -9 1 q5 3 9 -1z'/%3E%3Ccircle cx='60' cy='6' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  /* линия пера с листиком — разделитель */
+  --md-inkline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='10'%3E%3Cg fill='none' stroke='rgba(92,64,22,0.45)' stroke-width='1'%3E%3Cpath d='M0 5 L96 5'/%3E%3Cpath d='M124 5 L220 5'/%3E%3C/g%3E%3Cpath d='M110 5 q-6 -4 -12 0 q6 4 12 0z' fill='rgba(138,47,31,0.5)'/%3E%3C/svg%3E");
 }
 
-/* --- каркас: сайдбар — деревянный шкаф с железной кромкой --- */
+/* --- рама: сайдбар — дубовый шкаф скриптория (ТЁМНЫЙ внутри светлой
+   темы: локально возвращаем светлые чернила на дереве) --- */
+[data-world='medieval'] .sidebar,
+[data-world='medieval'] .tabbar {
+  --text: #ecdfc0;
+  --text-dim: #b7a483;
+  --text-faint: #86714e;
+  --panel-solid: #2c2010;
+  --panel-2: rgba(244, 222, 176, 0.09);
+  --surface-3: #3a2a14;
+  --stroke: rgba(232, 214, 180, 0.12);
+  --stroke-strong: rgba(232, 214, 180, 0.24);
+  --accent-soft: rgba(244, 222, 176, 0.12);
+}
 [data-world='medieval'] .sidebar {
-  background-color: #171008;
+  background-color: #1c1207;
   background-image:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 96px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.4), transparent 7px),
+    linear-gradient(270deg, rgba(0, 0, 0, 0.45), transparent 7px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 2px, rgba(244, 222, 176, 0.04) 2px 3px, transparent 3px 96px),
     var(--tex-panel);
-  border-right: 1px solid #090603;
-  box-shadow: inset -1px 0 0 rgba(150, 150, 150, 0.08);
+  border-right: 1px solid #0a0602;
+  box-shadow: inset -2px 0 0 rgba(70, 60, 45, 0.4);
+  color: var(--text);
 }
 [data-world='medieval'] .brand-mark {
   background: linear-gradient(180deg, #4c3a20, #33250f);
@@ -886,154 +912,242 @@
   color: #e8d5a8;
   box-shadow: inset 0 1px 0 rgba(244, 233, 207, 0.15);
 }
+/* резная планка секции шкафа */
 [data-world='medieval'] .tree-section-title {
-  color: #a08a62;
+  color: #b7a483;
   font-style: italic;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 80%) left bottom / 100% 1px
+    no-repeat;
 }
-/* активная глава — закладка-ляссе */
+/* активная глава — закладка: полоска пергамента, вложенная между страниц */
 [data-world='medieval'] .tree-row--active {
-  background: rgba(177, 58, 40, 0.12);
-  box-shadow: inset 3px 0 0 var(--md-rubric);
+  --text: #2c2212;
+  --text-dim: #5f4e2d;
+  --text-faint: #8d7950;
+  color: #2c2212;
+  background: linear-gradient(180deg, #f0e4be, #e3d3a4);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(120, 90, 40, 0.35);
 }
-
-/* вкладки — пергаментные ярлыки-закладки */
-[data-world='medieval'] .tab {
-  background: linear-gradient(180deg, #2a2112, #211a0e);
-  border: 1px solid #0c0805;
-  border-radius: 3px 3px 0 0;
-  color: #ab9871;
-}
-[data-world='medieval'] .tab:hover {
-  background: linear-gradient(180deg, #332815, #271f10);
+[data-world='medieval'] .tree-row--active.tree-row--ancestor,
+[data-world='medieval'] .tree-row--ancestor {
+  background: rgba(244, 222, 176, 0.12);
+  box-shadow: inset 2px 0 0 rgba(228, 205, 160, 0.6);
   color: var(--text);
 }
-/* активная — красная нить хрониста, без свечения и движения */
-[data-world='medieval'] .tab--active {
-  background: linear-gradient(180deg, #3a2d18, #2b2211);
-  color: #f2e9da;
-  box-shadow: inset 0 -2px 0 var(--md-rubric);
+/* поиск в шкафу — не поле, а светлая строка пера на дереве */
+[data-world='medieval'] .sidebar .input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(232, 214, 180, 0.28);
+  border-radius: 0;
+  box-shadow: none;
+  color: #ecdfc0;
+  caret-color: #ecdfc0;
+}
+[data-world='medieval'] .sidebar .input::placeholder {
+  color: #86714e;
+}
+[data-world='medieval'] .sidebar .input:focus {
+  border-bottom-color: rgba(240, 220, 170, 0.6);
+  box-shadow: none;
+}
+[data-world='medieval'] .sidebar .input-wrap .input-icon {
+  color: #86714e;
 }
 
-/* --- кнопки: матовая латунь на дереве — никакого свечения --- */
+/* балка вкладок и кожаные язычки-закладки, свисающие с неё */
+[data-world='medieval'] .tabbar {
+  background-color: #221709;
+  background-image: linear-gradient(180deg, rgba(255, 226, 160, 0.05), transparent 40%), var(--tex-panel);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+}
+[data-world='medieval'] .tab {
+  background: linear-gradient(180deg, #3a2a14, #2a1c0b);
+  background-image: var(--md-leather), linear-gradient(180deg, #3a2a14, #2a1c0b);
+  border: 1px solid #120b04;
+  border-top: none;
+  border-radius: 0 0 9px 9px;
+  color: #cbb488;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.4);
+}
+[data-world='medieval'] .tab:hover {
+  color: #f0e4c2;
+  filter: brightness(1.12);
+}
+/* активная — пергаментный язычок с чернильным именем */
+[data-world='medieval'] .tab--active {
+  --text: #2c2212;
+  background: linear-gradient(180deg, #efe3bd, #e2d1a1);
+  background-image: linear-gradient(180deg, #efe3bd, #e2d1a1);
+  color: #2c2212;
+  border-color: #8a6f42;
+  box-shadow: inset 0 2px 3px rgba(120, 90, 40, 0.3), 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: none;
+}
+[data-world='medieval'] .tab--active .tab-close {
+  color: #8d7950;
+}
+
+/* --- кнопки: предметы, не кнопки --- */
+/* primary — латунная пластина с чеканной кромкой; по ней скользит свет свечи */
 [data-world='medieval'] .btn--primary {
-  background: linear-gradient(180deg, #a5843f, #7e6128 62%, #6a501e);
-  border-color: #3f3013;
-  color: #241a08;
+  background:
+    linear-gradient(110deg, transparent 36%, rgba(255, 236, 190, 0.4) 50%, transparent 64%)
+      no-repeat -180% 0 / 200% 100%,
+    linear-gradient(180deg, #8a6c2c, #6d5320 60%, #5c4519);
+  border-color: #33250c;
+  color: #f6ecd2;
   font-family: var(--font-display);
-  text-shadow: 0 1px 0 rgba(255, 235, 190, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 235, 190, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.28);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 190, 0.35),
+    inset 0 0 0 1px rgba(46, 32, 10, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
 }
-/* лёгкое осветление металла, без эффектов энергии */
 [data-world='medieval'] .btn--primary:hover {
-  filter: brightness(1.07);
-  box-shadow: inset 0 1px 0 rgba(255, 235, 190, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.28);
+  animation: md-candle 0.8s var(--ease) 1;
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 190, 0.4),
+    inset 0 0 0 1px rgba(46, 32, 10, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
 }
-/* soft — дерево с железной окантовкой */
+/* soft — кожаный ярлык */
 [data-world='medieval'] .btn--soft {
-  background: linear-gradient(180deg, #2e2412, #231b0d);
-  border-color: #4b4237;
+  background-color: #33240f;
+  background-image: var(--md-leather), linear-gradient(180deg, #3a2a14, #2b1d0b);
+  border-color: #120b04;
+  color: #e6d6ae;
 }
 [data-world='medieval'] .btn--soft:hover {
-  border-color: #6e6250;
-  background: linear-gradient(180deg, #362a16, #281f0f);
+  filter: brightness(1.12);
+  border-color: #120b04;
+}
+/* ghost — чернильная пометка на полях */
+[data-world='medieval'] .btn--ghost {
+  color: #5f4e2d;
+}
+[data-world='medieval'] .btn--ghost:hover {
+  background: rgba(120, 90, 40, 0.12);
+  color: #2c2212;
 }
 
-/* --- карточки: тёплые материалы, минимум бликов --- */
-/* история — кожаная книга: корешок слева с бинтами, тёплое зерно кожи */
+/* --- карточки: листы кодекса, разложенные на столе --- */
+/* лист: чернильная линия пера по краю, загнутый уголок, пятна от рук,
+   толщина листа снизу; лежит на столе с мягкой тенью свечи */
 [data-world='medieval'] .library-story-card {
-  border: 1px solid #0c0805;
-  background-color: #241708;
+  border: 1px solid rgba(92, 64, 22, 0.5);
+  background-color: #ecdfb8;
   background-image:
-    repeating-linear-gradient(0deg, transparent 0 22px, rgba(0, 0, 0, 0.45) 22px 25px, rgba(244, 222, 176, 0.05) 25px 26px, transparent 26px 48px),
-    linear-gradient(90deg, #170d04 0 16px, rgba(0, 0, 0, 0.4) 16px 18px, transparent 18px),
+    linear-gradient(225deg, rgba(120, 84, 30, 0.4) 0 11px, rgba(255, 250, 235, 0.75) 11px 12.5px, transparent 12.5px),
+    radial-gradient(180px 110px at 88% 90%, rgba(120, 84, 30, 0.08), transparent 70%),
+    radial-gradient(140px 90px at 6% 8%, rgba(120, 84, 30, 0.07), transparent 70%),
+    var(--tex-card),
+    linear-gradient(168deg, #f0e4c0, #e4d4a6);
+  box-shadow:
+    0 3px 10px -3px rgba(30, 18, 4, 0.55),
+    inset 0 0 0 1px rgba(255, 250, 235, 0.4),
+    inset 0 -2px 0 rgba(255, 250, 235, 0.55),
+    inset 0 0 34px rgba(120, 84, 30, 0.12);
+}
+/* блик свечи скользнул по листу */
+[data-world='medieval'] .library-story-card:hover {
+  filter: brightness(1.04);
+  box-shadow:
+    0 6px 16px -4px rgba(30, 18, 4, 0.6),
+    inset 0 0 0 1px rgba(255, 250, 235, 0.4),
+    inset 0 -2px 0 rgba(255, 250, 235, 0.55),
+    inset 0 0 34px rgba(120, 84, 30, 0.12);
+}
+/* папка — маленькая кожаная книга: корешок с бинтами, застёжка,
+   светлое тиснение (локально тёмная среди листов) */
+[data-world='medieval'] .library-folder-card {
+  --text: #eadfc2;
+  --text-dim: #b7a483;
+  --text-faint: #86714e;
+  --panel-2: rgba(244, 222, 176, 0.1);
+  --stroke: rgba(232, 214, 180, 0.14);
+  position: relative;
+  border: 1px solid #120b04;
+  background-color: #2e1e0c;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 20px, rgba(0, 0, 0, 0.45) 20px 23px, rgba(244, 222, 176, 0.06) 23px 24px, transparent 24px 44px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0 14px, rgba(244, 222, 176, 0.08) 14px 15px, transparent 15px),
     var(--md-leather),
-    linear-gradient(168deg, #2c1c0b, #1f1306);
+    linear-gradient(168deg, #33220e, #241607);
   background-size:
-    16px 100%,
+    14px 100%,
     auto,
     auto,
     auto;
   background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  color: var(--text);
   box-shadow:
-    var(--shadow-md),
-    inset 0 1px 0 rgba(244, 222, 176, 0.05),
-    inset 0 0 26px rgba(0, 0, 0, 0.35);
-}
-/* лёгкое осветление кожи под рукой — никакой энергии */
-[data-world='medieval'] .library-story-card:hover {
-  border-color: #1a120a;
-  filter: brightness(1.08);
-  box-shadow:
-    var(--shadow-lg),
-    inset 0 1px 0 rgba(244, 222, 176, 0.05),
-    inset 0 0 26px rgba(0, 0, 0, 0.35);
-}
-/* папка — деревянная табличка с железной скобой */
-[data-world='medieval'] .library-folder-card {
-  position: relative;
-  border: 1px solid #0c0805;
-  background-color: #241a0c;
-  background-image: var(--tex-panel), linear-gradient(168deg, #2e2210, #1f1608);
-  box-shadow:
-    var(--shadow-md),
-    inset 0 1px 0 rgba(244, 222, 176, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-}
-[data-world='medieval'] .library-folder-card:hover {
-  filter: brightness(1.08);
+    0 3px 10px -3px rgba(30, 18, 4, 0.6),
+    inset 0 1px 0 rgba(244, 222, 176, 0.08);
 }
 [data-world='medieval'] .library-folder-card::after {
   content: '';
   position: absolute;
   top: 50%;
   right: 10px;
-  width: 16px;
-  height: 10px;
+  width: 15px;
+  height: 9px;
   transform: translateY(-50%);
   border: 2px solid #5f544a;
   border-radius: 2px;
   box-shadow: inset 0 1px 0 rgba(220, 220, 220, 0.12);
   pointer-events: none;
 }
-/* hero — дубовый стол писаря: кожаные ремни с прошивкой, железные уголки,
-   восковая печать. Никакого свечения — только материал. */
+[data-world='medieval'] .library-folder-card:hover {
+  filter: brightness(1.1);
+}
+/* материалы проекта — архивные записки */
+[data-world='medieval'] .library-material-card {
+  border: 1px solid rgba(92, 64, 22, 0.45);
+  background-color: #e9dcb2;
+  background-image: var(--tex-card), linear-gradient(168deg, #eee2bc, #e0cf9e);
+  box-shadow: 0 2px 8px -3px rgba(30, 18, 4, 0.5), inset 0 -2px 0 rgba(255, 250, 235, 0.5);
+}
+
+/* --- hero: разворот кодекса в железных уголках, с виньеткой писца --- */
 [data-world='medieval'] .library-hero {
   border: 12px solid transparent;
   border-image: var(--md-iron) 28 / 12px stretch;
   border-radius: 0;
-  background-color: #2b1f10;
+  background-color: #eee2bc;
   background-image:
-    repeating-linear-gradient(0deg, rgba(244, 222, 176, 0.12) 0 4px, transparent 4px 11px),
-    linear-gradient(180deg, #1a1006, #221607),
-    repeating-linear-gradient(0deg, rgba(244, 222, 176, 0.12) 0 4px, transparent 4px 11px),
-    linear-gradient(180deg, #1a1006, #221607),
-    var(--tex-panel),
-    linear-gradient(180deg, #342714, #241a0c);
-  background-size:
-    2px 100%,
-    26px 100%,
-    2px 100%,
-    26px 100%,
-    auto,
-    auto;
-  background-position:
-    calc(13% - 1px) 0,
-    calc(13% - 13px) 0,
-    calc(87% - 1px) 0,
-    calc(87% - 13px) 0,
-    left top,
-    left top;
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat;
+    linear-gradient(90deg, transparent 49.5%, rgba(90, 62, 20, 0.28) 50%, transparent 50.5%),
+    radial-gradient(600px 340px at 12% 0%, rgba(255, 226, 160, 0.28), transparent 62%),
+    var(--tex-card),
+    linear-gradient(180deg, #f2e7c4, #e2d1a1);
   box-shadow:
     var(--shadow-lg),
-    inset 0 1px 0 rgba(244, 222, 176, 0.06),
-    inset 0 0 46px rgba(0, 0, 0, 0.35);
+    inset 0 0 60px rgba(120, 84, 30, 0.16);
 }
+/* внутри книги свои поверхности: скрим и чипы пересчитываются от пергамента */
+[data-world='medieval'] .library-hero {
+  --surface-0: #efe4c2;
+}
+[data-world='medieval'] .library-hero .home-title {
+  padding-left: 74px;
+  background: var(--md-vine) no-repeat left center / 64px 30px;
+  text-shadow: none;
+}
+[data-world='medieval'] .library-hero .library-summary > div {
+  border: 1px solid rgba(92, 64, 22, 0.4);
+  border-radius: 3px;
+  background: rgba(255, 252, 240, 0.45);
+  backdrop-filter: none;
+  box-shadow: inset 0 1px 0 rgba(255, 252, 240, 0.6);
+}
+/* восковая печать хрониста */
 [data-world='medieval'] .library-hero::after {
   content: '';
   position: absolute;
-  right: 22px;
-  top: 18px;
+  right: 20px;
+  top: 16px;
   z-index: 1;
   width: 34px;
   height: 34px;
@@ -1042,23 +1156,24 @@
   box-shadow:
     inset 0 0 0 4px rgba(0, 0, 0, 0.18),
     inset 0 0 0 5px rgba(255, 200, 160, 0.12),
-    0 2px 6px rgba(0, 0, 0, 0.5);
+    0 2px 6px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
-/* модалка — лист хроники: простое появление, никакой театральности */
+
+/* --- модалка — лист хроники, положенный поверх стола --- */
 [data-world='medieval'] .modal {
-  border: 1px solid #0c0805;
-  border-radius: 4px;
-  outline: 1px solid rgba(160, 120, 70, 0.24);
-  outline-offset: -10px;
-  background-color: #2e2514;
-  background-image: var(--tex-card), linear-gradient(180deg, #352a17, #272012);
+  border: 1px solid rgba(92, 64, 22, 0.55);
+  border-radius: 3px;
+  background-color: #eee2bc;
+  background-image: var(--tex-card), linear-gradient(180deg, #f2e7c4, #e2d1a1);
   backdrop-filter: none;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 18px 50px -12px rgba(20, 12, 2, 0.7), inset 0 0 0 1px rgba(255, 250, 235, 0.5);
   animation: fade 0.16s ease;
 }
 [data-world='medieval'] .modal h3 {
-  color: #ecd9ac;
+  color: #2c2212;
+  padding-left: 40px;
+  background: var(--md-vine) no-repeat left center / 34px 16px;
 }
 /* красные инициалы-рубрики, как в печатных хрониках */
 [data-world='medieval'] .modal h3::first-letter,
@@ -1067,99 +1182,110 @@
   font-size: 1.24em;
 }
 
-/* --- поля ввода: строка на пергаменте — пишем чернилами по светлому листу --- */
+/* --- поля ввода: не поля — строки пера на листе --- */
 [data-world='medieval'] .input,
 [data-world='medieval'] .tag-editor {
-  background: linear-gradient(180deg, #ece0bd, #e1d2a4);
-  border-color: #8a6f42;
-  color: #2d2415;
-  caret-color: #2d2415;
-  box-shadow: inset 0 1px 3px rgba(110, 82, 36, 0.35);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(92, 64, 22, 0.45);
+  border-radius: 0;
+  box-shadow: none;
+  color: #2c2212;
+  caret-color: #2c2212;
 }
 [data-world='medieval'] .input::placeholder {
-  color: #8a7a55;
+  color: #8d7950;
 }
 [data-world='medieval'] .tag-editor input {
-  color: #2d2415;
+  color: #2c2212;
 }
 [data-world='medieval'] .tag-editor input::placeholder {
-  color: #8a7a55;
+  color: #8d7950;
 }
 [data-world='medieval'] .input-wrap .input-icon {
-  color: #7a6a45;
+  color: #8d7950;
 }
-/* фокус — твёрдая железная рамка, БЕЗ свечения */
+/* фокус — писец обмакнул перо: строка чуть темнее, киноварная отметка */
 [data-world='medieval'] .input:focus,
 [data-world='medieval'] .tag-editor:focus-within {
-  border-color: #5c4526;
-  box-shadow: inset 0 1px 3px rgba(110, 82, 36, 0.35), 0 0 0 1px #8a6f42;
+  border-bottom-color: rgba(92, 64, 22, 0.8);
+  box-shadow: 0 1px 0 rgba(138, 47, 31, 0.35);
 }
 
-/* --- меню — раскрытый свиток: светлый пергамент, чернила и киноварь --- */
+/* --- меню — раскрытый кодекс: поле рукописи и линии пера --- */
 [data-world='medieval'] .ctx-menu,
 [data-world='medieval'] .color-palette-panel {
-  background-color: #e7d8ac;
-  background-image: var(--tex-card), linear-gradient(180deg, #eee0b8, #ddcd9d);
-  border: 1px solid #6b5228;
+  background-color: #ecdfb8;
+  background-image:
+    linear-gradient(90deg, transparent 20px, rgba(138, 47, 31, 0.3) 20px 21px, transparent 21px),
+    var(--tex-card),
+    linear-gradient(180deg, #f0e4c0, #e2d1a1);
+  border: 1px solid rgba(92, 64, 22, 0.55);
   border-radius: 3px;
   backdrop-filter: none;
-  box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255, 248, 220, 0.5);
+  box-shadow: 0 14px 40px -10px rgba(20, 12, 2, 0.65), inset 0 0 0 1px rgba(255, 250, 235, 0.5);
 }
 [data-world='medieval'] .ctx-item {
   color: #33270f;
 }
 [data-world='medieval'] .ctx-item:hover {
-  background: rgba(177, 58, 40, 0.14);
+  background: rgba(138, 47, 31, 0.12);
 }
 [data-world='medieval'] .ctx-item--danger {
   color: #8f2517;
 }
 [data-world='medieval'] .ctx-label,
 [data-world='medieval'] .color-palette-label {
-  color: #7a5c2a;
+  color: var(--md-rubric);
   font-style: italic;
 }
-/* разделитель — тонкая линия с киноварным ромбом переписчика */
+/* разделитель — линия пера с листиком */
 [data-world='medieval'] .ctx-sep {
-  height: 9px;
-  margin: 4px 2px;
-  background:
-    linear-gradient(45deg, transparent 46%, rgba(177, 58, 40, 0.55) 46% 54%, transparent 54%) center / 7px 7px
-      no-repeat,
-    linear-gradient(90deg, transparent, rgba(160, 120, 70, 0.3) 20% 80%, transparent) center / 100% 1px no-repeat;
+  height: 10px;
+  margin: 3px 2px;
+  background: var(--md-inkline) no-repeat center / 100% 8px;
 }
 [data-world='medieval'] .sidebar-foot {
-  border-top: 1px solid rgba(160, 120, 70, 0.2);
+  border-top: 1px solid rgba(232, 214, 180, 0.18);
 }
 
 /* --- бейджи: чернильные пометки на полях --- */
 [data-world='medieval'] .badge,
 [data-world='medieval'] .tag-chip {
-  border-color: rgba(160, 120, 70, 0.24);
+  border-color: rgba(92, 64, 22, 0.4);
+  background: rgba(255, 252, 240, 0.4);
   font-style: italic;
 }
 
-/* --- прогресс: строка, заполненная чернилами (без свечения) --- */
+/* --- прогресс: строка, заполняемая чернилами --- */
 [data-world='medieval'] .library-story-progress {
-  background: #1d1509;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  background: rgba(255, 252, 240, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(92, 64, 22, 0.35);
 }
 [data-world='medieval'] .library-story-progress span {
-  background: linear-gradient(90deg, #7a5a2c, #a0793c);
+  background: linear-gradient(90deg, #4a3413, #6d5320);
   box-shadow: none;
 }
 
-/* --- скроллбар: деревянный, без украшений --- */
+/* --- скроллбар: тонкая кожаная тесьма --- */
 [data-world='medieval'] *::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background: #463a26;
+  background: rgba(92, 64, 22, 0.45);
+  background-clip: padding-box;
+}
+[data-world='medieval'] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(92, 64, 22, 0.65);
+  background-clip: padding-box;
+}
+[data-world='medieval'] .sidebar *::-webkit-scrollbar-thumb {
+  background: rgba(232, 214, 180, 0.25);
   background-clip: padding-box;
 }
 
-/* --- типографика: печатная хроника --- */
+/* --- типографика: хроника с рубриками --- */
 [data-world='medieval'] .welcome h1,
 [data-world='medieval'] .home-title {
-  color: #ecd9ac;
+  color: #2c2212;
   font-weight: var(--fw-semibold);
 }
 [data-world='medieval'] .welcome h1::first-letter {
@@ -1169,9 +1295,23 @@
 [data-world='medieval'] .library-hero .library-summary span {
   font-style: italic;
 }
-/* иконки — перо и чернила: чуть плотнее линия, без эффектов */
+/* иконки — перо и чернила */
 [data-world='medieval'] .lucide {
   stroke-width: 1.75px;
+}
+
+/* --- микро-анимации: свет свечи скользит по латуни --- */
+@keyframes md-candle {
+  from {
+    background-position:
+      -180% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      280% 0,
+      0 0;
+  }
 }
 
 /* ------------------------------------------------------------
