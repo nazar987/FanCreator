@@ -144,12 +144,10 @@ export function ZoomPan({
       moved: false,
       captured: false
     }
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-      drag.current.captured = true
-    } catch {
-      // Some environments can deny pointer capture; window blur/pointercancel still clear the drag.
-    }
+    // ВАЖНО: pointer capture НЕ здесь. При захвате производные click/dblclick
+    // переадресуются на обёртку, и двойной клик по узлу (переименование на месте)
+    // перестаёт работать — регрессия T-N2 из 2.1.3. Захватываем в onPointerMove,
+    // когда началось реальное движение: «залипание» драга это по-прежнему лечит.
   }
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
@@ -160,6 +158,12 @@ export function ZoomPan({
     if (!d.moved && Math.abs(dx) + Math.abs(dy) > 3) {
       d.moved = true
       document.body.classList.add('zoompan-dragging')
+      try {
+        d.target.setPointerCapture(d.pointerId)
+        d.captured = true
+      } catch {
+        // Some environments can deny pointer capture; window blur/pointercancel still clear the drag.
+      }
     }
     if (d.moved) {
       e.preventDefault()

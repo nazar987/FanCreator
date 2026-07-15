@@ -71,7 +71,7 @@ export function HierarchyView({ hierarchyId }: { hierarchyId: string }): React.J
         <div className="timeline-head">
           <div>
             <div className="home-title">{h.title}</div>
-            <div className="home-sub">Дерево · Ctrl+колесо — масштаб, перетаскивание — сдвиг</div>
+            <div className="home-sub">Дерево · Ctrl+колесо — масштаб, зажатая ЛКМ — сдвиг</div>
           </div>
           <Button variant="soft" onClick={() => addNode(null)}>
             <GitBranchPlus size={16} /> Добавить корень
