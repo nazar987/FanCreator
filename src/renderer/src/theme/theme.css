@@ -126,34 +126,34 @@
    и токены, но своя атмосфера — цвет, свет и «бумага».
    ============================================================ */
 
-/* ⚔️ Фэнтези (Warcraft/Hearthstone): магический пурпур + золото таверны */
+/* ⚔️ Фэнтези (библиотека Верховного мага): ночной лазурит, аметист и золото */
 [data-theme='fantasy'] {
-  --surface-0: #0c0918;
-  --surface-1: #171029;
-  --surface-2: #1f163a;
-  --surface-3: #2c2052;
+  --surface-0: #0a0d20;
+  --surface-1: #121737;
+  --surface-2: #1a2047;
+  --surface-3: #272e63;
 
   --bg: var(--surface-0);
-  --bg-grad: radial-gradient(1100px 600px at 84% -14%, #33255c 0%, transparent 58%),
-    radial-gradient(820px 520px at -10% 110%, #2a1c14 0%, transparent 55%),
-    radial-gradient(520px 320px at 50% 118%, rgba(230, 180, 85, 0.10) 0%, transparent 70%),
-    #0c0918;
-  --panel: rgba(23, 16, 41, 0.76);
+  --bg-grad: radial-gradient(1100px 620px at 82% -14%, #2b2a68 0%, transparent 58%),
+    radial-gradient(860px 540px at -10% 110%, #221a4e 0%, transparent 55%),
+    radial-gradient(520px 320px at 52% -6%, rgba(167, 139, 250, 0.12) 0%, transparent 68%),
+    #0a0d20;
+  --panel: rgba(18, 23, 55, 0.76);
   --panel-solid: var(--surface-2);
-  --panel-2: rgba(44, 32, 82, 0.55);
-  --stroke: rgba(240, 214, 150, 0.08);
-  --stroke-strong: rgba(240, 214, 150, 0.17);
-  --text: #f1ecfc;
-  --text-dim: #a89cc8;
-  --text-faint: #6f6592;
-  --accent: #e6b455;
-  --accent-hover: #f2c56b;
-  --accent-2: #8f6df0;
+  --panel-2: rgba(39, 46, 99, 0.55);
+  --stroke: rgba(232, 194, 104, 0.1);
+  --stroke-strong: rgba(232, 194, 104, 0.2);
+  --text: #eef0fc;
+  --text-dim: #a6abd6;
+  --text-faint: #6d7099;
+  --accent: #e8c268;
+  --accent-hover: #f4d27e;
+  --accent-2: #a78bfa;
   --accent-contrast: #221604;
-  --accent-soft: rgba(230, 180, 85, 0.18);
-  --accent-glow: rgba(230, 180, 85, 0.34);
-  --paper: #f6eed9;
-  --paper-text: #2b2115;
+  --accent-soft: rgba(232, 194, 104, 0.18);
+  --accent-glow: rgba(232, 194, 104, 0.34);
+  --paper: #f4f0e2;
+  --paper-text: #2a2438;
 }
 
 /* 🕯 Тёмное фэнтези (Dark Souls): пепел, туман и тлеющие угли */
