@@ -299,12 +299,20 @@
 .theme-dot--active {
   border-color: var(--text);
 }
-/* кнопка «Темы-миры» — оформление под сеттинг истории */
+/* цветная точка палитры в меню темы */
+.theme-menu-dot {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+/* единая кнопка «Тема оформления»: палитры + темы-миры в одном меню */
 .theme-worlds {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   margin-left: 2px;
   padding: 0;
   border: 1px solid var(--stroke-strong);

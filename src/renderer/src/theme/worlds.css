@@ -190,7 +190,8 @@
    золото, руны, тлеющие угли. Тяжесть, гравировка, древность.
    ------------------------------------------------------------ */
 [data-theme='darkfantasy'] {
-  --font-display: Georgia, 'Palatino Linotype', 'Times New Roman', serif;
+  /* капитель Cormorant SC — гравировка в духе Elden Ring (кириллица есть) */
+  --font-display: 'Cormorant SC', Georgia, 'Palatino Linotype', serif;
   --display-case: uppercase;
   --display-track: 0.1em;
   --r-sm: 3px;
@@ -215,11 +216,24 @@
   --df-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect x='1.5' y='1.5' width='93' height='93' fill='none' stroke='%23070503' stroke-width='3'/%3E%3Crect x='5' y='5' width='86' height='86' fill='none' stroke='%233d3223' stroke-width='2'/%3E%3Crect x='8.5' y='8.5' width='79' height='79' fill='none' stroke='rgba(200,178,122,0.45)' stroke-width='1'/%3E%3Cg fill='%23241d14' stroke='%23554630' stroke-width='1'%3E%3Crect x='2.5' y='2.5' width='19' height='19'/%3E%3Crect x='74.5' y='2.5' width='19' height='19'/%3E%3Crect x='2.5' y='74.5' width='19' height='19'/%3E%3Crect x='74.5' y='74.5' width='19' height='19'/%3E%3C/g%3E%3Cg fill='%23806b45'%3E%3Ccircle cx='12' cy='12' r='2.2'/%3E%3Ccircle cx='84' cy='12' r='2.2'/%3E%3Ccircle cx='12' cy='84' r='2.2'/%3E%3Ccircle cx='84' cy='84' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
   /* заклёпка в углу плиты (background-слой) */
   --df-rivet-color: #7d6a45;
+
+  /* --- материалы: у каждой поверхности своя фактура --- */
+  /* чёрный базальт (сайдбар): плотное холодное зерно */
+  --df-tex-basalt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0.30 0 0 0 0 0.28 0 0 0 0 0.26 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23b)'/%3E%3C/svg%3E");
+  /* брашированный тёмный металл (алтарь-hero): горизонтальные штрихи */
+  --df-tex-metal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.35' numOctaves='3' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 0.72 0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23m)'/%3E%3C/svg%3E");
+  /* чеканка молотком (меню-таблички): крупные мягкие вмятины */
+  --df-tex-hammer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='2' seed='27'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.50 0 0 0 0 0.40 0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23h)'/%3E%3C/svg%3E");
+  /* старая кожа (папки): тёплое живое зерно */
+  --df-tex-leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.38' numOctaves='3' seed='41'/%3E%3CfeColorMatrix values='0 0 0 0 0.48 0 0 0 0 0.33 0 0 0 0 0.16 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23l)'/%3E%3C/svg%3E");
 }
 
-/* --- 2. Каркас: сайдбар — чёрный камень с угольной кромкой --- */
+/* --- 2. Каркас: сайдбар — чёрный базальт (холодная порода, колонны) --- */
 [data-world='darkfantasy'] .sidebar {
-  background-color: #0d0b08;
+  background-color: #0b0908;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 74px),
+    var(--df-tex-basalt);
   border-right: 1px solid #060504;
   box-shadow:
     inset -8px 0 16px -10px rgba(0, 0, 0, 0.85),
@@ -249,11 +263,14 @@
   box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px rgba(208, 123, 58, 0.1);
 }
 
-/* таб-бар — железная балка; вкладки — клеймёные пластины */
+/* таб-бар — железная балка с чеканкой; вкладки — клеймёные пластины */
 [data-world='darkfantasy'] .tabbar {
+  background-color: #12100c;
+  background-image: var(--df-tex-hammer);
   box-shadow: inset 0 -1px 0 #060504, inset 0 -2px 0 rgba(200, 178, 122, 0.06);
 }
 [data-world='darkfantasy'] .tab {
+  position: relative;
   background: linear-gradient(180deg, #1b1611, #13100c);
   border: 1px solid #060504;
   box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.05);
@@ -267,7 +284,21 @@
 [data-world='darkfantasy'] .tab--active {
   background: linear-gradient(180deg, #2a2318, #1b1611);
   color: #e8d9b4;
-  box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.09), inset 0 -2px 0 var(--accent);
+  box-shadow: inset 0 1px 0 rgba(232, 214, 190, 0.09);
+}
+/* по активной пластине медленно проходит жар */
+[data-world='darkfantasy'] .tab--active::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #63290f, #b3591f 30%, #f0b268 50%, #b3591f 70%, #63290f);
+  background-size: 220% 100%;
+  animation: df-heat 6s ease-in-out infinite;
 }
 
 /* --- 3. Кнопки --- */
@@ -291,7 +322,9 @@
     inset 0 0 0 1px rgba(200, 178, 122, 0.16);
   filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.55));
 }
+/* кнопка не «светится» — она нагревается изнутри: жар поднимается снизу */
 [data-world='darkfantasy'] .btn--primary:hover {
+  color: #f2dfb0;
   box-shadow:
     inset 0 1px 0 rgba(255, 244, 214, 0.18),
     inset 0 -7px 14px -6px rgba(208, 123, 58, 0.5),
@@ -313,10 +346,10 @@
   background: rgba(208, 123, 58, 0.09);
 }
 
-/* --- 4. Карточки и панели --- */
-/* карточка — каменная плита: металлические уголки-заклёпки, трещины, виньетка */
-[data-world='darkfantasy'] .library-story-card,
-[data-world='darkfantasy'] .library-folder-card {
+/* --- 4. Карточки и панели: у каждого предмета свой материал --- */
+/* карточка истории — холодная каменная плита: фаска по кромке, заклёпки,
+   трещины и светлая потёртость от рук в верхнем углу */
+[data-world='darkfantasy'] .library-story-card {
   border: 1px solid #060504;
   background-color: #16120e;
   background-image:
@@ -324,13 +357,45 @@
     radial-gradient(circle 3px at calc(100% - 11px) 11px, var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
     radial-gradient(circle 3px at 11px calc(100% - 11px), var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
     radial-gradient(circle 3px at calc(100% - 11px) calc(100% - 11px), var(--df-rivet-color) 0 1.3px, #0a0806 1.7px, transparent 3px),
+    radial-gradient(150px 90px at 80% 8%, rgba(232, 214, 190, 0.04), transparent 70%),
     var(--df-cracks),
     var(--tex-card),
     linear-gradient(165deg, #1e1915, #16120e);
   box-shadow:
     var(--shadow-md),
+    inset 0 1px 0 rgba(255, 240, 200, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.65),
     inset 0 0 36px rgba(0, 0, 0, 0.45),
     inset 0 0 0 1px rgba(232, 214, 190, 0.05);
+}
+/* папка — старая кожаная папка: живое зерно, прошивка по краю,
+   металлическая застёжка на правом торце */
+[data-world='darkfantasy'] .library-folder-card {
+  position: relative;
+  border: 1px solid #0a0705;
+  outline: 1px dashed rgba(200, 178, 122, 0.15);
+  outline-offset: -7px;
+  background-color: #1d150c;
+  background-image: var(--df-tex-leather), linear-gradient(165deg, #241a10, #180f08);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 240, 200, 0.06),
+    inset 0 0 28px rgba(0, 0, 0, 0.5);
+}
+[data-world='darkfantasy'] .library-folder-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  width: 7px;
+  height: 30px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #4a3f30, #241d14);
+  border: 1px solid #0a0705;
+  border-right: none;
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.16);
+  pointer-events: none;
 }
 [data-world='darkfantasy'] .library-story-card:hover {
   border-color: #3d3223;
@@ -348,27 +413,59 @@
     inset 0 0 30px rgba(0, 0, 0, 0.4),
     inset 0 0 0 1px rgba(232, 214, 190, 0.05);
 }
-/* hero и модалка — древние плиты в кованой раме с заклёпками */
+/* hero — алтарь: брашированная плита тёмного металла в кованой раме,
+   свет падает сверху, как из окна под сводом */
 [data-world='darkfantasy'] .library-hero {
   border: 12px solid transparent;
   border-image: var(--df-frame) 30 / 12px stretch;
   border-radius: 0;
-  box-shadow: var(--shadow-lg), inset 0 0 70px rgba(0, 0, 0, 0.55);
+  background-color: #17110b;
+  background-image:
+    radial-gradient(130% 100% at 50% -25%, rgba(240, 214, 150, 0.07), transparent 55%),
+    var(--df-tex-metal),
+    linear-gradient(180deg, #201913, #140e09);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(255, 240, 200, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.7),
+    inset 0 0 70px rgba(0, 0, 0, 0.55);
 }
+/* метрики на алтаре — не «стеклянные пилюли», а клейма на железе */
+[data-world='darkfantasy'] .library-hero .library-summary > div {
+  border-radius: 3px;
+  border-color: rgba(200, 178, 122, 0.16);
+  background: rgba(10, 8, 6, 0.55);
+  backdrop-filter: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 240, 200, 0.04);
+}
+/* модалка — ритуальная стела: не проявляется, а тяжело встаёт на место */
 [data-world='darkfantasy'] .modal {
   border: 12px solid transparent;
   border-image: var(--df-frame) 30 / 12px stretch;
   border-radius: 0;
   background-color: #16120e;
-  background-image: var(--tex-card), linear-gradient(180deg, #1a1611, #131009);
+  background-image:
+    var(--df-cracks),
+    var(--tex-card),
+    linear-gradient(180deg, #1a1611, #131009);
   backdrop-filter: none;
-  box-shadow: var(--shadow-lg), inset 0 0 46px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(255, 240, 200, 0.05),
+    inset 0 0 46px rgba(0, 0, 0, 0.55);
+  animation: df-slab 300ms var(--ease);
 }
 [data-world='darkfantasy'] .modal h3 {
   position: relative;
   padding-bottom: 14px;
   color: #cdb98a;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.85);
+  font-weight: 700;
+  text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 240, 200, 0.07);
+}
+/* буквица-капитель у гравированного заголовка */
+[data-world='darkfantasy'] .modal h3::first-letter,
+[data-world='darkfantasy'] .home-title::first-letter {
+  font-size: 1.22em;
 }
 [data-world='darkfantasy'] .modal h3::after {
   content: '';
@@ -398,16 +495,17 @@
     0 0 16px -6px var(--accent-glow);
 }
 
-/* --- 6. Меню и дропдауны — железные таблички (не «стекло») --- */
+/* --- 6. Меню и дропдауны — кованая табличка (чеканка молотком) --- */
 [data-world='darkfantasy'] .ctx-menu,
 [data-world='darkfantasy'] .color-palette-panel {
   background-color: #14100c;
-  background-image: var(--tex-card), linear-gradient(180deg, #191510, #120f0b);
+  background-image: var(--df-tex-hammer), linear-gradient(180deg, #191510, #120f0b);
   border: 1px solid #3d3223;
   backdrop-filter: none;
   box-shadow:
     var(--shadow-lg),
     inset 0 1px 0 rgba(232, 214, 190, 0.07),
+    inset 0 0 0 1px rgba(10, 8, 6, 0.8),
     inset 0 0 26px rgba(0, 0, 0, 0.5);
 }
 [data-world='darkfantasy'] .ctx-item:hover {
@@ -453,27 +551,35 @@
 }
 
 /* --- 10. Типографика и иконки --- */
-/* заголовки — гравировка по камню: тень вниз + едва заметный блик сверху */
+/* заголовки — выгравированы: тень СВЕРХУ внутри штриха, блик СНИЗУ,
+   как у высеченной в камне буквы при верхнем свете */
 [data-world='darkfantasy'] .welcome h1,
 [data-world='darkfantasy'] .home-title {
   color: #cdb98a;
-  font-weight: var(--fw-medium);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 -1px 0 rgba(255, 240, 200, 0.06);
+  font-weight: 600;
+  text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 240, 200, 0.07);
 }
-/* иконки тоньше — линия резца, а не маркера */
+/* иконки — вырезаны в металле: тонкая линия резца + гравировочная светотень */
 [data-world='darkfantasy'] .lucide {
-  stroke-width: 1.6px;
+  stroke-width: 1.5px;
+  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.5)) drop-shadow(0 1px 0 rgba(255, 240, 200, 0.07));
 }
 
-/* --- 11. Декор: разделители — рунные строки --- */
+/* --- 11. Декор: рунные строки и резные подзаголовки --- */
 [data-world='darkfantasy'] .ctx-sep {
   height: 12px;
   margin: 4px 2px;
   background: var(--df-runes) repeat-x center / auto 10px;
   opacity: 0.8;
 }
+/* подзаголовки секций — гравированная строка с гаснущей чертой */
+[data-world='darkfantasy'] .tree-section-title {
+  padding-bottom: 9px;
+  background: linear-gradient(90deg, rgba(200, 178, 122, 0.24), rgba(200, 178, 122, 0.02) 72%)
+    left bottom / 100% 1px no-repeat;
+}
 
-/* --- 12. Микро-анимации: мерцание углей --- */
+/* --- 12. Микро-анимации: угли, жар по металлу, тяжёлая плита --- */
 @keyframes df-ember {
   0%,
   100% {
@@ -484,6 +590,32 @@
   }
   60% {
     filter: brightness(1.12);
+  }
+}
+/* жар медленно проходит по раскалённой кромке */
+@keyframes df-heat {
+  0%,
+  100% {
+    background-position: 0% 0;
+    filter: brightness(0.92);
+  }
+  50% {
+    background-position: 100% 0;
+    filter: brightness(1.18);
+  }
+}
+/* стела опускается и с лёгкой осадкой встаёт на место */
+@keyframes df-slab {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
   }
 }
 

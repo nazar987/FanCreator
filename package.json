@@ -17,6 +17,7 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@fontsource/cormorant-sc": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "better-sqlite3": "^11.8.1",
     "docx": "^9.5.1",
