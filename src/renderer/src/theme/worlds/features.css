@@ -1,0 +1,363 @@
+/* ============================================================
+   Theme Worlds 3.0: feature coverage.
+
+   These adapters change only visual chrome. Layout contracts, canvas
+   coordinates, user-defined sticker colors and editor content stay intact.
+   ============================================================ */
+
+/* ---------- Shared feature surfaces ---------- */
+[data-world] :is(
+  .characters-selectbar,
+  .characters-folder-row,
+  .folder-panel,
+  .character-template-card,
+  .character-tile,
+  .character-page-section,
+  .genealogy-bar,
+  .genealogy-toolbar,
+  .timeline-event-card,
+  .dendro-node,
+  .fishbone-node,
+  .fishbone-subnode,
+  .board-arrow-bar,
+  .board-link-preview,
+  .trash-item,
+  .help-tour-card,
+  .help-center,
+  .update-banner,
+  .whatsnew,
+  .cmdk
+) {
+  border-color: var(--world-feature-border);
+  border-radius: var(--world-feature-radius);
+  background-color: var(--panel-solid);
+  background-image: var(--world-feature-surface);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] :is(
+  .characters-folder-row,
+  .character-tile,
+  .timeline-event-card,
+  .dendro-node,
+  .fishbone-node,
+  .fishbone-subnode,
+  .board-link-preview,
+  .trash-item,
+  .cmdk-item
+):hover {
+  border-color: var(--world-feature-border-strong);
+  box-shadow: var(--world-feature-shadow-hover);
+}
+
+[data-world] :is(.characters-folder-row, .character-tile, .timeline-event-card):hover {
+  transform: var(--world-hover-lift);
+}
+
+[data-world] :is(.character-page-section, .character-template-card) {
+  padding: 16px;
+  border: 1px solid var(--world-feature-border);
+}
+
+[data-world] :is(
+  .characters-section-head h2,
+  .character-page-section-head h3,
+  .character-template-title,
+  .timeline-event-title-input,
+  .fishbone-node-title,
+  .board-title,
+  .help-center-body h3,
+  .whatsnew-head h3
+) {
+  font-family: var(--font-display);
+  letter-spacing: var(--display-track);
+}
+
+[data-world] :is(
+  .character-tile-role,
+  .genealogy-hint,
+  .board-subtitle,
+  .board-preview-kind,
+  .help-tour-count,
+  .cmdk-group,
+  .update-banner-sub,
+  .whatsnew-version
+) {
+  font-family: var(--world-meta-font);
+  letter-spacing: var(--world-meta-spacing);
+  text-transform: var(--world-meta-transform);
+}
+
+/* ---------- Characters ---------- */
+[data-world] .characters-selectbar {
+  background-image: var(--world-feature-surface-raised);
+}
+
+[data-world] .characters-folder-row {
+  background-image: var(--world-feature-surface);
+}
+
+[data-world] .characters-folder-row.is-active,
+[data-world] .character-card--selected {
+  border-color: var(--world-feature-border-strong);
+  background-image: var(--world-feature-surface-raised);
+  box-shadow: var(--world-feature-shadow-hover);
+}
+
+[data-world] .characters-folder-icon,
+[data-world] .character-avatar,
+[data-world] .character-tile-avatar,
+[data-world] .character-avatar-frame {
+  border-color: var(--world-feature-border-strong);
+  border-radius: var(--world-avatar-radius);
+  background-color: var(--panel-2);
+  background-image: var(--world-feature-surface-raised);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] .character-tile-name {
+  font-family: var(--font-display);
+  letter-spacing: var(--display-track);
+}
+
+[data-world] :is(.characters-section-switch, .genealogy-tabs, .genealogy-tab) {
+  border-color: var(--world-feature-border);
+  border-radius: var(--world-control-radius);
+  background-color: var(--panel-2);
+  background-image: var(--world-feature-surface-raised);
+}
+
+[data-world] :is(.characters-section-switch button, .genealogy-tab) {
+  border-radius: var(--world-control-radius);
+  font-family: var(--world-meta-font);
+  letter-spacing: var(--world-meta-spacing);
+}
+
+[data-world] :is(.characters-section-switch button.is-active, .genealogy-tab.is-active) {
+  border-color: var(--world-feature-border-strong);
+  background: var(--world-feature-marker);
+  color: var(--accent-contrast);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] .genealogy--canvas {
+  border-color: var(--world-feature-border);
+  background-color: var(--world-canvas-background);
+}
+
+[data-world] :is(.genealogy--canvas .genealogy-bar, .genealogy--canvas .genealogy-toolbar) {
+  border-color: var(--world-feature-border);
+  background-color: var(--panel-solid);
+  background-image: var(--tex-panel);
+}
+
+/* ---------- Timeline, hierarchy and genealogy canvases ---------- */
+[data-world] .timeline--canvas .timeline-head,
+[data-world] .board-toolbar {
+  border-color: var(--world-feature-border);
+  background-color: var(--panel-solid);
+  background-image: var(--tex-panel);
+}
+
+[data-world] .timeline-event-card {
+  overflow: hidden;
+}
+
+[data-world] .timeline-event-card::before {
+  width: 4px;
+  background: var(--world-feature-marker);
+  opacity: var(--world-decoration-opacity);
+}
+
+[data-world] .timeline-event-marker,
+[data-world] .fishbone-node-order {
+  border-color: var(--world-feature-border-strong);
+  border-radius: var(--world-control-radius);
+  background: var(--world-feature-marker);
+  color: var(--accent-contrast);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] :is(.timeline-event-title-input, .timeline-event-note, .dendro-node-input, .dendro-edge-input, .genealogy-node-input) {
+  border-color: var(--world-feature-border);
+  border-radius: var(--world-control-radius);
+  background-color: color-mix(in srgb, var(--panel-2) 78%, transparent);
+}
+
+[data-world] :is(.timeline-view-switch, .zoompan-controls) {
+  border-color: var(--world-feature-border);
+  border-radius: var(--world-control-radius);
+  background-color: var(--panel-solid);
+  background-image: var(--world-feature-surface-raised);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] :is(.timeline-view-switch button, .zoompan-controls button) {
+  border-radius: var(--world-control-radius);
+  font-family: var(--world-meta-font);
+  letter-spacing: var(--world-meta-spacing);
+}
+
+[data-world] .timeline-view-switch button.is-active {
+  background: var(--world-feature-marker);
+  color: var(--accent-contrast);
+}
+
+[data-world] :is(.dendro-node, .fishbone-node, .fishbone-subnode) {
+  border-color: var(--world-feature-border-strong);
+  border-radius: var(--world-node-radius);
+  background-color: var(--panel-solid);
+  background-image: var(--world-feature-surface);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] :is(.dendro-node:hover, .fishbone-node:hover, .fishbone-subnode:hover) {
+  border-color: var(--accent);
+  box-shadow: var(--world-feature-shadow-hover);
+}
+
+[data-world] .dendro-node--root {
+  border-color: var(--accent);
+  background-image: var(--world-feature-surface-raised);
+}
+
+[data-world] .dendro-edge-label {
+  border-radius: var(--world-control-radius);
+  font-family: var(--world-meta-font);
+  letter-spacing: var(--world-meta-spacing);
+}
+
+[data-world] :is(.board-canvas, .timeline--canvas .zoompan, .genealogy--canvas .genealogy-canvas) {
+  background-color: var(--world-canvas-background);
+  background-image: var(--world-canvas-grid);
+  background-size: var(--world-canvas-grid-size);
+}
+
+[data-world] :is(.timeline--canvas .zoompan, .genealogy--canvas .genealogy-canvas)::before {
+  background: var(--world-canvas-overlay);
+  opacity: var(--world-decoration-opacity);
+}
+
+/* ---------- Board chrome ---------- */
+[data-world] .board-canvas {
+  background-image: var(--world-canvas-overlay), var(--world-canvas-grid);
+  background-size: 100% 100%, var(--world-canvas-grid-size);
+}
+
+[data-world] .board-arrow-bar {
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background-image: var(--world-feature-surface-raised);
+}
+
+[data-world] :is(.board-sticker-menu, .board-sticker-tools select, .board-sticker-tools button, .board-link-chip) {
+  border-color: var(--world-feature-border-strong);
+  border-radius: var(--world-control-radius);
+  background-color: var(--panel-solid);
+  background-image: var(--world-feature-surface-raised);
+  color: var(--text);
+  box-shadow: var(--world-feature-shadow);
+}
+
+[data-world] .board-link-chip {
+  font-family: var(--world-meta-font);
+  letter-spacing: var(--world-meta-spacing);
+  text-transform: var(--world-meta-transform);
+}
+
+/* ---------- System overlays ---------- */
+[data-world] :is(.cmdk-overlay, .modal-overlay) {
+  background: color-mix(in srgb, var(--surface-0) 68%, transparent);
+  backdrop-filter: blur(7px) saturate(1.08);
+}
+
+[data-world] .cmdk-input-row {
+  border-color: var(--world-feature-border);
+  background-image: var(--world-feature-surface-raised);
+}
+
+[data-world] .cmdk-input {
+  font-family: var(--world-meta-font);
+}
+
+[data-world] .cmdk-item {
+  border: 1px solid transparent;
+  border-radius: var(--world-control-radius);
+}
+
+[data-world] .cmdk-item.is-active {
+  border-color: var(--world-feature-border-strong);
+  background-image: var(--world-feature-surface-raised);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+[data-world] .help-center-nav {
+  border-color: var(--world-feature-border);
+  background-color: var(--panel-solid);
+  background-image: var(--tex-panel);
+}
+
+[data-world] :is(.help-center-search, .help-center-topics button, .help-kbd) {
+  border-color: var(--world-feature-border);
+  border-radius: var(--world-control-radius);
+}
+
+[data-world] .help-center-topics button.is-active {
+  background-image: var(--world-feature-surface-raised);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+[data-world] .trash-item {
+  border: 1px solid var(--world-feature-border);
+  padding: 10px;
+}
+
+/* ---------- World-specific signatures ---------- */
+[data-world='fantasy'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node) {
+  backdrop-filter: blur(7px) saturate(1.08);
+}
+
+[data-world='darkfantasy'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node, .cmdk) {
+  border-width: 1px 2px 2px 1px;
+}
+
+[data-world='medieval'] .characters-section-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--world-divider);
+  opacity: var(--world-decoration-opacity);
+}
+
+[data-world='medieval'] :is(.timeline-event-note, .dendro-node-input, .genealogy-node-input) {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0 23px,
+    color-mix(in srgb, var(--text-faint) 18%, transparent) 23px 24px
+  );
+}
+
+[data-world='scifi'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node),
+[data-world='cyberpunk'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node) {
+  position: relative;
+}
+
+[data-world='scifi'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node)::after,
+[data-world='cyberpunk'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node)::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 14px;
+  height: 8px;
+  border-top: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+  opacity: var(--world-decoration-opacity);
+  pointer-events: none;
+}
+
+[data-world='cyberpunk'] :is(.character-tile-role, .board-preview-kind, .cmdk-group)::before {
+  content: '// ';
+  color: var(--accent-2);
+}

@@ -28,11 +28,11 @@ component geometry, typography and motion rather than by a color palette alone.
 | --- | --- | --- | --- |
 | Shell, tabs, sidebar | complete | complete | existing `worlds.css` |
 | Library and folders | complete | complete | existing `worlds.css` |
-| Characters and folders | token-only | T-R2 | cards, profile, templates |
-| Timeline list | token-only | T-R2 | events and rail |
-| Tree, fishbone, genealogy | token-only | T-R2 | canvas, nodes, zoom controls |
-| Board chrome | token-only | T-R2 | toolbar and linked entity preview |
-| Help, updates, command palette | token-only | T-R2 | system overlays |
+| Characters and folders | complete | complete | cards, profile, templates |
+| Timeline list | complete | complete | events and rail |
+| Tree, fishbone, genealogy | complete | complete | canvas, nodes, zoom controls |
+| Board chrome | complete | complete | toolbar and linked entity preview |
+| Help, updates, command palette | complete | complete | system overlays |
 | Editor chrome | senior-owned | not in Codex scope | editor content is invariant |
 
 ## Acceptance Rules
