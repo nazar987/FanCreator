@@ -1,0 +1,719 @@
+/* Medieval illuminated codex pass.
+   Visual-only overrides: no component geometry or editor content is changed. */
+
+/* ---------- Atmosphere ---------- */
+[data-world='medieval'] body {
+  background-color: var(--md-wood-deep);
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.24)),
+    repeating-linear-gradient(90deg, rgba(201, 169, 96, 0.018) 0 1px, transparent 1px 88px),
+    var(--tex-app),
+    var(--bg-grad);
+}
+
+[data-world='medieval'] :is(.home-glow, .shelf-glow) {
+  background:
+    radial-gradient(46% 34% at 20% -10%, rgba(208, 178, 101, 0.11), transparent 72%),
+    radial-gradient(38% 32% at 100% 0%, rgba(48, 75, 77, 0.12), transparent 74%);
+}
+
+/* ---------- Carved shell ---------- */
+[data-world='medieval'] .sidebar {
+  background-color: #12100b;
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.48), transparent 8px, transparent calc(100% - 8px), rgba(0, 0, 0, 0.5)),
+    repeating-linear-gradient(0deg, transparent 0 91px, rgba(196, 161, 82, 0.09) 91px 92px, rgba(0, 0, 0, 0.5) 92px 95px),
+    var(--tex-panel),
+    linear-gradient(135deg, #201a10, #11100b);
+  border-right-color: #5b4828;
+  box-shadow:
+    inset -4px 0 0 rgba(0, 0, 0, 0.42),
+    inset -5px 0 0 rgba(190, 154, 73, 0.12),
+    4px 0 18px rgba(0, 0, 0, 0.22);
+}
+
+[data-world='medieval'] .sidebar-head {
+  border-bottom: 1px solid rgba(191, 157, 80, 0.2);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.26);
+}
+
+[data-world='medieval'] .brand-mark {
+  border: 1px solid var(--md-gold);
+  border-radius: 3px 9px 3px 9px;
+  background: linear-gradient(145deg, #365456, var(--md-woad-deep));
+  color: #f2dfac;
+  box-shadow:
+    inset 0 0 0 2px rgba(11, 17, 16, 0.54),
+    inset 0 0 0 3px rgba(215, 183, 103, 0.2),
+    0 5px 12px rgba(0, 0, 0, 0.34);
+}
+
+[data-world='medieval'] .tree-section-title {
+  color: #c7ad70;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, rgba(190, 155, 76, 0.48), transparent 86%) left bottom / 100% 1px no-repeat;
+}
+
+[data-world='medieval'] .tree-row {
+  border-radius: 2px;
+}
+
+[data-world='medieval'] .tree-row:hover {
+  background: rgba(48, 75, 77, 0.34);
+  color: #f1e4c4;
+}
+
+[data-world='medieval'] .tree-row--ancestor {
+  background: rgba(48, 75, 77, 0.22);
+  color: #e7d8b5;
+  box-shadow: inset 2px 0 0 rgba(203, 171, 91, 0.7);
+}
+
+[data-world='medieval'] .tree-row--active,
+[data-world='medieval'] .tree-row--active.tree-row--ancestor {
+  --text: #f7e9c4;
+  --text-dim: #d8c499;
+  --text-faint: #ad9869;
+  border: 1px solid rgba(202, 170, 88, 0.48);
+  background: linear-gradient(90deg, #365456, #22383a);
+  color: #f7e9c4;
+  box-shadow:
+    inset 3px 0 0 var(--md-gold-light),
+    inset 0 1px 0 rgba(255, 244, 205, 0.1),
+    0 3px 9px rgba(0, 0, 0, 0.28);
+}
+
+[data-world='medieval'] .tree-children {
+  border-left-color: rgba(185, 151, 73, 0.28);
+}
+
+[data-world='medieval'] .sidebar .btn--ghost {
+  color: #c8b487;
+}
+
+[data-world='medieval'] .sidebar .btn--ghost:hover {
+  background: rgba(48, 75, 77, 0.34);
+  color: #f1e2bd;
+}
+
+[data-world='medieval'] .tabbar {
+  background-color: #11100b;
+  background-image:
+    linear-gradient(180deg, rgba(214, 180, 101, 0.08), transparent 38%),
+    linear-gradient(90deg, transparent, rgba(48, 75, 77, 0.12), transparent),
+    var(--tex-panel),
+    linear-gradient(180deg, #1d190f, #100f0a);
+  border-bottom-color: #6d572e;
+  box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.52),
+    inset 0 -4px 0 rgba(188, 151, 68, 0.13);
+}
+
+[data-world='medieval'] .tab {
+  border: 1px solid rgba(166, 132, 63, 0.24);
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, rgba(49, 40, 23, 0.94), rgba(24, 20, 12, 0.94));
+  color: #bda97d;
+  box-shadow: inset 0 1px 0 rgba(239, 216, 161, 0.06);
+}
+
+[data-world='medieval'] .tab:hover {
+  border-color: rgba(207, 174, 91, 0.42);
+  color: #f0dfb8;
+  filter: none;
+}
+
+[data-world='medieval'] .tab--active {
+  --text: #f7e8c0;
+  border-color: #90733b;
+  background:
+    linear-gradient(90deg, var(--md-gold), var(--md-gold-light), var(--md-gold)) top / 100% 2px no-repeat,
+    linear-gradient(180deg, #365355, #213638);
+  color: #f7e8c0;
+  box-shadow:
+    inset 0 0 0 1px rgba(232, 205, 139, 0.12),
+    0 4px 9px rgba(0, 0, 0, 0.34);
+}
+
+[data-world='medieval'] .tab--active .tab-close {
+  color: #c8b487;
+}
+
+/* ---------- Heraldic controls ---------- */
+[data-world='medieval'] .btn--primary {
+  border-color: #4f1b14;
+  background:
+    linear-gradient(110deg, transparent 36%, rgba(255, 227, 157, 0.3) 50%, transparent 64%) no-repeat -180% 0 / 200% 100%,
+    linear-gradient(180deg, #b24b36, #842b20 68%, #6f231b);
+  color: #fff0ca;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 232, 179, 0.36),
+    inset 0 0 0 1px rgba(211, 174, 88, 0.3),
+    inset 0 -2px 0 rgba(50, 15, 10, 0.45),
+    0 5px 12px -8px rgba(0, 0, 0, 0.8);
+}
+
+[data-world='medieval'] .btn--soft {
+  border-color: #806936;
+  background:
+    linear-gradient(180deg, rgba(255, 244, 204, 0.08), transparent 45%),
+    linear-gradient(145deg, #385558, #203436);
+  color: #f1dfb5;
+  box-shadow:
+    inset 0 0 0 1px rgba(10, 18, 18, 0.5),
+    inset 0 1px 0 rgba(255, 239, 191, 0.1);
+}
+
+[data-world='medieval'] .btn--soft:hover {
+  border-color: var(--md-gold-light);
+  filter: brightness(1.08);
+}
+
+/* ---------- Project shelf ---------- */
+[data-world='medieval'] .project-card {
+  border: 1px solid rgba(113, 87, 40, 0.7);
+  border-radius: 5px;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad), var(--md-gold), var(--md-woad)) top / 100% 4px no-repeat,
+    var(--tex-card),
+    linear-gradient(155deg, var(--md-paper-light), var(--md-paper));
+  color: var(--md-ink);
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 247, 220, 0.3),
+    0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] .project-card .book-meta {
+  color: var(--md-ink-soft);
+}
+
+[data-world='medieval'] .home-version {
+  border-color: rgba(197, 163, 80, 0.42);
+  border-radius: 3px;
+  background: rgba(48, 75, 77, 0.42);
+  color: #dfcca0;
+}
+
+[data-world='medieval'] .library-hero {
+  border: 1px solid #8d733d;
+  border-image: none;
+  border-radius: 4px;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, transparent 49.7%, rgba(73, 57, 28, 0.2) 50%, transparent 50.3%),
+    linear-gradient(90deg, var(--md-woad-deep), var(--md-woad), var(--md-gold), var(--md-woad), var(--md-woad-deep)) top / 100% 7px no-repeat,
+    var(--tex-card),
+    linear-gradient(165deg, #f1e7ca, #d9c596);
+  box-shadow:
+    inset 0 0 0 4px rgba(255, 248, 220, 0.4),
+    inset 0 0 0 6px rgba(102, 77, 31, 0.24),
+    inset 0 0 54px rgba(99, 73, 28, 0.12),
+    0 18px 38px -24px rgba(0, 0, 0, 0.95);
+}
+
+[data-world='medieval'] .library-hero::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  z-index: 2;
+  border: 1px solid rgba(91, 70, 30, 0.34);
+  background:
+    linear-gradient(135deg, var(--md-gold) 0 2px, transparent 2px) top left / 24px 24px no-repeat,
+    linear-gradient(225deg, var(--md-gold) 0 2px, transparent 2px) top right / 24px 24px no-repeat,
+    linear-gradient(45deg, var(--md-gold) 0 2px, transparent 2px) bottom left / 24px 24px no-repeat,
+    linear-gradient(315deg, var(--md-gold) 0 2px, transparent 2px) bottom right / 24px 24px no-repeat;
+  pointer-events: none;
+}
+
+[data-world='medieval'] .library-hero-art {
+  filter: grayscale(1) sepia(0.72) contrast(0.72);
+  mix-blend-mode: multiply;
+  opacity: 0.09;
+}
+
+[data-world='medieval'] .library-hero-scrim {
+  background: linear-gradient(90deg, rgba(248, 238, 209, 0.42), transparent 62%);
+}
+
+[data-world='medieval'] .library-hero-main {
+  z-index: 3;
+}
+
+[data-world='medieval'] .library-hero .home-title {
+  color: var(--md-ink);
+  text-shadow: none;
+}
+
+[data-world='medieval'] .library-hero .home-sub {
+  color: var(--md-ink-soft);
+}
+
+[data-world='medieval'] .library-hero .library-summary > div {
+  border: 1px solid rgba(89, 68, 31, 0.48);
+  border-radius: 3px;
+  background:
+    linear-gradient(var(--md-woad), var(--md-woad)) left / 3px 100% no-repeat,
+    rgba(255, 250, 230, 0.52);
+  color: var(--md-ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 250, 230, 0.42);
+}
+
+[data-world='medieval'] .library-hero .library-summary span {
+  color: var(--md-ink-soft);
+}
+
+[data-world='medieval'] .library-hero::after {
+  border: 2px solid rgba(89, 26, 18, 0.72);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 179, 128, 0.16) 0 16%, transparent 17%),
+    radial-gradient(circle at 34% 30%, #b44931, #722318 65%, #50160f);
+  box-shadow:
+    inset 0 0 0 4px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 6px rgba(255, 213, 160, 0.09),
+    0 3px 7px rgba(0, 0, 0, 0.4);
+}
+
+[data-world='medieval'] .continue-hero,
+[data-world='medieval'] .continue-stats > div,
+[data-world='medieval'] .continue-recent-item {
+  border-color: rgba(104, 79, 35, 0.7);
+  border-radius: 4px;
+  background-color: var(--md-paper);
+  background-image:
+    var(--tex-card),
+    linear-gradient(155deg, var(--md-paper-light), var(--md-paper));
+  color: var(--md-ink);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 249, 226, 0.3),
+    0 10px 22px -20px rgba(0, 0, 0, 0.92);
+}
+
+[data-world='medieval'] .continue-hero::after {
+  inset: 0;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, var(--md-woad), var(--md-gold), var(--md-rubric)) top / 100% 4px no-repeat,
+    radial-gradient(180px 110px at 100% 100%, rgba(111, 81, 29, 0.07), transparent 72%);
+}
+
+[data-world='medieval'] .continue-hero:hover {
+  border-color: var(--md-gold);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 249, 226, 0.4),
+    0 16px 30px -22px rgba(0, 0, 0, 0.98);
+}
+
+[data-world='medieval'] .continue-hero-title,
+[data-world='medieval'] .continue-stats strong {
+  color: var(--md-ink);
+}
+
+[data-world='medieval'] .continue-hero-sub,
+[data-world='medieval'] .continue-stats span,
+[data-world='medieval'] .continue-recent-item {
+  color: var(--md-ink-soft);
+}
+
+[data-world='medieval'] .continue-eyebrow {
+  color: var(--md-rubric);
+  font-family: var(--font-display);
+}
+
+[data-world='medieval'] .continue-hero-go {
+  border: 1px solid #542018;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #b14a35, #7f291f);
+  color: #fff0c8;
+  box-shadow:
+    inset 0 0 0 1px rgba(217, 181, 92, 0.36),
+    0 6px 14px -9px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] .continue-stats > div::before {
+  background: linear-gradient(90deg, var(--md-woad), var(--md-gold), var(--md-rubric));
+  opacity: 0.9;
+}
+
+[data-world='medieval'] .library-controls {
+  border: 1px solid rgba(163, 131, 61, 0.42);
+  border-right: 0;
+  border-left: 0;
+  background:
+    linear-gradient(180deg, rgba(235, 211, 150, 0.08), transparent 46%),
+    linear-gradient(90deg, #1d3234, #2d484a 52%, #1d3234);
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 239, 190, 0.08),
+    0 8px 20px -16px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] .library-breadcrumbs,
+[data-world='medieval'] .library-breadcrumbs button {
+  color: #cbb98f;
+}
+
+[data-world='medieval'] .library-breadcrumbs button:hover,
+[data-world='medieval'] .library-breadcrumbs button.is-current {
+  background: rgba(232, 215, 174, 0.1);
+  color: #f3e5bf;
+}
+
+[data-world='medieval'] .characters-breadcrumbs,
+[data-world='medieval'] .characters-breadcrumbs button {
+  color: #bda97b;
+}
+
+[data-world='medieval'] .characters-breadcrumbs button:hover,
+[data-world='medieval'] .characters-breadcrumbs button.is-current {
+  background: rgba(48, 75, 77, 0.32);
+  color: #efe0b9;
+}
+
+[data-world='medieval'] .characters-section-switch {
+  border-color: rgba(168, 137, 67, 0.58);
+  background-color: var(--md-woad-deep);
+  background-image: linear-gradient(180deg, #2c484a, #17292b);
+  box-shadow: inset 0 0 0 1px rgba(8, 14, 13, 0.52);
+}
+
+[data-world='medieval'] .characters-section-switch button:not(.is-active) {
+  color: #c7b384;
+}
+
+[data-world='medieval'] .characters-section-switch button:not(.is-active):hover {
+  background: rgba(232, 213, 166, 0.08);
+  color: #f0dfb5;
+}
+
+[data-world='medieval'] :is(
+  .characters-empty,
+  .characters-folders-empty,
+  .character-page-missing,
+  .board-missing,
+  .timeline:not(.timeline--canvas) .timeline-empty,
+  .timeline-missing,
+  .library-empty
+) {
+  color: #b7a477;
+}
+
+[data-world='medieval'] :is(.library-tools .input, .library-sort) {
+  border: 1px solid #8c743e;
+  border-radius: 3px;
+  background: var(--md-paper-light);
+  color: var(--md-ink);
+  box-shadow: inset 0 1px 3px rgba(72, 51, 18, 0.16);
+}
+
+[data-world='medieval'] .library-tools .input::placeholder {
+  color: #887a5b;
+}
+
+[data-world='medieval'] .library-tools .input-wrap .input-icon {
+  color: #776946;
+}
+
+[data-world='medieval'] :is(.library-section h2, .library-section-head h2) {
+  color: #d8c18a;
+  font-family: var(--font-display);
+  letter-spacing: 0.11em;
+}
+
+[data-world='medieval'] .library-section-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(205, 169, 83, 0.5), rgba(48, 75, 77, 0.5), transparent);
+}
+
+[data-world='medieval'] .library-section-head > span {
+  margin-left: 0;
+  border: 1px solid rgba(192, 154, 67, 0.35);
+  border-radius: 3px;
+  background: rgba(48, 75, 77, 0.38);
+  color: #e0cb99;
+}
+
+[data-world='medieval'] .library-section-toggle > svg {
+  color: #bfa35e;
+}
+
+[data-world='medieval'] .library-section-toggle:hover {
+  background: rgba(48, 75, 77, 0.28);
+}
+
+[data-world='medieval'] .library-folder-card {
+  --text: #f1e2bd;
+  --text-dim: #c9b486;
+  --text-faint: #a38d61;
+  border: 1px solid #806738;
+  border-radius: 3px 8px 3px 8px;
+  background-color: var(--md-woad-deep);
+  background-image:
+    linear-gradient(90deg, #7e2b21 0 10px, #b18d45 10px 11px, transparent 11px),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(236, 214, 158, 0.06) 18px 19px),
+    var(--md-leather),
+    linear-gradient(145deg, #304b4d, #17292b);
+  background-blend-mode: normal, normal, soft-light, normal;
+  color: #f1e2bd;
+  box-shadow:
+    inset 0 0 0 2px rgba(10, 15, 14, 0.42),
+    inset 0 1px 0 rgba(250, 231, 178, 0.1),
+    0 8px 16px -12px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] .library-folder-card::after {
+  border-color: var(--md-gold);
+  background: rgba(11, 16, 15, 0.36);
+}
+
+[data-world='medieval'] .library-folder-card:hover {
+  border-color: var(--md-gold-light);
+  filter: brightness(1.08);
+}
+
+[data-world='medieval'] .library-story-card {
+  border: 1px solid rgba(100, 76, 33, 0.7);
+  border-radius: 5px;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad-deep), var(--md-woad), var(--md-gold)) top / 100% 4px no-repeat,
+    radial-gradient(150px 90px at 92% 90%, rgba(111, 81, 29, 0.07), transparent 72%),
+    var(--tex-card),
+    linear-gradient(165deg, var(--md-paper-light), var(--md-paper));
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 249, 226, 0.34),
+    0 12px 24px -20px rgba(0, 0, 0, 0.95);
+}
+
+[data-world='medieval'] .library-story-card::after {
+  inset: auto 4px 4px;
+  width: auto;
+  height: 2px;
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, var(--md-gold), var(--md-rubric), var(--md-gold), transparent);
+  opacity: 0.42;
+}
+
+[data-world='medieval'] .library-story-card:hover::after {
+  opacity: 0.9;
+}
+
+[data-world='medieval'] .library-story-card:hover {
+  border-color: #9b7c3c;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 249, 226, 0.42),
+    0 18px 34px -22px rgba(0, 0, 0, 0.98);
+}
+
+[data-world='medieval'] .library-story-stat {
+  border-color: rgba(82, 63, 30, 0.34);
+  border-radius: 2px;
+  background: rgba(48, 75, 77, 0.07);
+}
+
+[data-world='medieval'] .library-story-progress {
+  border-radius: 0;
+  background: rgba(45, 63, 62, 0.16);
+}
+
+[data-world='medieval'] .library-story-progress span {
+  background: linear-gradient(90deg, var(--md-woad), var(--md-gold), var(--md-rubric));
+}
+
+[data-world='medieval'] .library-material-card {
+  border-color: #725c31;
+  border-radius: 3px;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad), var(--md-gold)) top / 100% 2px no-repeat,
+    var(--tex-card),
+    linear-gradient(155deg, var(--md-paper-light), var(--md-paper));
+  box-shadow: inset 0 0 0 2px rgba(255, 248, 221, 0.28);
+}
+
+[data-world='medieval'] .library-material-label--board {
+  color: #91b8b5;
+}
+
+[data-world='medieval'] .library-material-label--timeline {
+  color: #d1b663;
+}
+
+/* ---------- Folios and workspaces ---------- */
+[data-world='medieval'] .timeline:not(.timeline--canvas) .timeline-head,
+[data-world='medieval'] .timeline--canvas .timeline-head,
+[data-world='medieval'] .board-toolbar,
+[data-world='medieval'] .genealogy--canvas .genealogy-bar,
+[data-world='medieval'] .genealogy--canvas .genealogy-toolbar {
+  border-color: #826a38;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad-deep), var(--md-woad), var(--md-gold), var(--md-woad-deep)) bottom / 100% 4px no-repeat,
+    var(--tex-card),
+    linear-gradient(165deg, var(--md-paper-light), var(--md-paper));
+  color: var(--md-ink);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 249, 228, 0.32),
+    0 10px 24px -20px rgba(0, 0, 0, 0.94);
+}
+
+[data-world='medieval'] .timeline:not(.timeline--canvas) .timeline-head {
+  padding: 16px 18px;
+  border: 1px solid #826a38;
+  border-radius: 4px;
+}
+
+[data-world='medieval'] .character-page-head {
+  padding: 16px;
+  border: 1px solid #826a38;
+  border-radius: 4px;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad-deep), var(--md-woad), var(--md-gold), var(--md-rubric)) bottom / 100% 4px no-repeat,
+    var(--tex-card),
+    linear-gradient(165deg, var(--md-paper-light), var(--md-paper));
+  color: var(--md-ink);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 249, 228, 0.32),
+    0 12px 26px -20px rgba(0, 0, 0, 0.96);
+}
+
+[data-world='medieval'] .character-page-head .character-avatar-frame {
+  border-color: var(--md-gold);
+  background: linear-gradient(145deg, #3a5658, #1d3032);
+  box-shadow:
+    inset 0 0 0 3px rgba(12, 20, 19, 0.42),
+    0 8px 18px -12px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] .character-page-head :is(.character-page-name, .character-page-meta .input) {
+  color: var(--md-ink);
+}
+
+[data-world='medieval'] :is(.timeline-head, .board-toolbar) :is(.home-title, .board-title) {
+  color: var(--md-ink);
+  text-shadow: none;
+}
+
+[data-world='medieval'] :is(.timeline-head, .board-toolbar) :is(.home-sub, .board-subtitle) {
+  color: var(--md-ink-soft);
+}
+
+[data-world='medieval'] :is(
+  .characters-selectbar,
+  .characters-folder-row,
+  .folder-panel,
+  .character-template-card,
+  .character-tile,
+  .character-page-section,
+  .timeline-event-card,
+  .dendro-node,
+  .fishbone-node,
+  .fishbone-subnode,
+  .board-link-preview,
+  .trash-item,
+  .help-tour-card,
+  .help-center,
+  .update-banner,
+  .whatsnew,
+  .cmdk
+) {
+  color: var(--md-ink);
+}
+
+[data-world='medieval'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node, .fishbone-subnode) {
+  border-width: 1px;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 249, 226, 0.3),
+    0 12px 24px -20px rgba(0, 0, 0, 0.96);
+}
+
+[data-world='medieval'] :is(.character-tile, .timeline-event-card)::after {
+  border-radius: 0;
+}
+
+[data-world='medieval'] .timeline-event-marker,
+[data-world='medieval'] .fishbone-node-order {
+  border-color: #5c2118;
+  background: linear-gradient(180deg, #b04a35, #7a281f);
+  color: #fff0c8;
+  box-shadow:
+    inset 0 0 0 1px rgba(220, 184, 98, 0.45),
+    0 5px 12px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-world='medieval'] :is(.timeline-view-switch, .genealogy-tabs, .zoompan-controls) {
+  border-color: #806a3b;
+  background-image:
+    var(--tex-card),
+    linear-gradient(180deg, #efe4c7, #d9c79d);
+}
+
+[data-world='medieval'] :is(.timeline-view-switch button.is-active, .genealogy-tab.is-active) {
+  background: linear-gradient(180deg, #3c5a5c, #22383a);
+  color: #f5e6bd;
+  box-shadow: inset 0 -2px 0 var(--md-gold);
+}
+
+[data-world='medieval'] :is(.board-canvas, .timeline--canvas .zoompan, .genealogy--canvas .genealogy-canvas) {
+  box-shadow: inset 0 0 42px rgba(75, 57, 24, 0.14);
+}
+
+[data-world='medieval'] .board-arrow-bar {
+  border-color: #755f32;
+  background-image:
+    linear-gradient(180deg, rgba(255, 247, 218, 0.28), transparent),
+    var(--tex-card),
+    linear-gradient(180deg, #e4d7b7, #d2bf92);
+}
+
+[data-world='medieval'] :is(.modal, .ctx-menu, .color-palette-panel) {
+  border-color: #765e30;
+  background-color: var(--md-paper);
+  background-image:
+    linear-gradient(90deg, var(--md-woad), var(--md-gold), var(--md-woad)) top / 100% 4px no-repeat,
+    var(--tex-card),
+    linear-gradient(160deg, var(--md-paper-light), var(--md-paper));
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 249, 227, 0.3),
+    0 24px 56px -18px rgba(0, 0, 0, 0.86);
+}
+
+[data-world='medieval'] .cmdk-item.is-active,
+[data-world='medieval'] .help-center-topics button.is-active {
+  background-image: linear-gradient(90deg, rgba(48, 75, 77, 0.2), rgba(168, 137, 67, 0.1));
+  box-shadow: inset 3px 0 0 var(--md-rubric);
+}
+
+/* Titles placed directly on the dark desk stay light. */
+[data-world='medieval'] :is(
+  .home-title:not(.library-hero *):not(.timeline-head *),
+  .welcome h1,
+  .characters-section-head h2
+) {
+  color: #efe0b9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42);
+}
+
+[data-world='medieval'] :is(
+  .home-sub:not(.library-hero *):not(.timeline-head *),
+  .characters-section-head > span
+) {
+  color: #bda97b;
+}
+
+@media (max-width: 720px) {
+  [data-world='medieval'] .library-hero::before {
+    inset: 6px;
+  }
+
+  [data-world='medieval'] .library-controls {
+    margin-right: 0;
+    margin-left: 0;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}

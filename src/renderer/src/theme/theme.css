@@ -191,36 +191,36 @@
    тёмный дуб — только рама (шкаф-сайдбар, балка вкладок; их субдеревья
    локально переопределяют токены в worlds.css). Акцент — киноварь писца. */
 [data-theme='medieval'] {
-  /* 0 — дубовый стол под листами; 1 — дерево шкафа; 2/3 — пергамент */
-  --surface-0: #2a1e0f;
-  --surface-1: #221709;
-  --surface-2: #ecdfb8;
-  --surface-3: #e2d1a1;
+  /* Blackened oak frame, parchment leaves and restrained heraldic accents. */
+  --surface-0: #12130f;
+  --surface-1: #191710;
+  --surface-2: #e8ddbe;
+  --surface-3: #d8c697;
 
   --bg: var(--surface-0);
-  --bg-grad: radial-gradient(1100px 620px at 80% -12%, #453117 0%, transparent 58%),
-    radial-gradient(860px 520px at -10% 112%, #33240f 0%, transparent 55%),
-    radial-gradient(520px 320px at 30% 108%, rgba(240, 200, 120, 0.1) 0%, transparent 65%),
-    #2a1e0f;
-  --panel: rgba(236, 223, 184, 0.95);
+  --bg-grad: radial-gradient(980px 560px at 76% -16%, rgba(145, 112, 45, 0.18), transparent 58%),
+    radial-gradient(720px 480px at -8% 108%, rgba(54, 75, 72, 0.14), transparent 58%),
+    linear-gradient(122deg, rgba(104, 77, 31, 0.08), transparent 44%),
+    #12130f;
+  --panel: rgba(232, 221, 190, 0.96);
   --panel-solid: var(--surface-2);
-  --panel-2: rgba(120, 90, 40, 0.12);
-  --stroke: rgba(92, 64, 22, 0.3);
-  --stroke-strong: rgba(92, 64, 22, 0.5);
-  --text: #2c2212;
-  --text-dim: #5f4e2d;
-  --text-faint: #8d7950;
-  --accent: #8a2f1f;
-  --accent-hover: #a03a26;
-  --accent-2: #7d6a35;
-  --accent-contrast: #f6ecd2;
-  --accent-soft: rgba(138, 47, 31, 0.12);
-  --accent-glow: rgba(138, 47, 31, 0.16);
-  --paper: #f4e9cf;
-  --paper-text: #2d2415;
-  --glass-surface: rgba(236, 223, 184, 0.92);
-  --glass-surface-strong: rgba(238, 226, 189, 0.97);
-  --glass-backdrop: rgba(26, 17, 6, 0.55);
+  --panel-2: rgba(78, 61, 30, 0.13);
+  --stroke: rgba(91, 70, 32, 0.34);
+  --stroke-strong: rgba(78, 58, 25, 0.58);
+  --text: #2a271d;
+  --text-dim: #615740;
+  --text-faint: #887a5b;
+  --accent: #983426;
+  --accent-hover: #af4431;
+  --accent-2: #9d8040;
+  --accent-contrast: #fff3d0;
+  --accent-soft: rgba(152, 52, 38, 0.13);
+  --accent-glow: rgba(184, 145, 66, 0.18);
+  --paper: #f2e9d2;
+  --paper-text: #29251b;
+  --glass-surface: rgba(232, 221, 190, 0.93);
+  --glass-surface-strong: rgba(241, 232, 207, 0.98);
+  --glass-backdrop: rgba(12, 12, 8, 0.68);
 }
 
 /* 🚀 Научная фантастика: космос и неоновый циан */

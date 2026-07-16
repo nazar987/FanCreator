@@ -190,12 +190,35 @@
 .theme-preview[data-preview='darkfantasy'] .theme-preview-card { border-radius: 2px; border-width: 1px 2px 2px 1px; }
 
 .theme-preview[data-preview='medieval'] {
-  --preview-bg: #33240f;
-  --preview-panel: #24180a;
-  --preview-surface: #eadcb4;
-  --preview-accent: #9a3724;
+  --preview-bg: #11120e;
+  --preview-panel: #1b3031;
+  --preview-surface: #e8ddbe;
+  --preview-accent: #b09148;
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.3)),
+    radial-gradient(circle at 82% -10%, rgba(176, 145, 72, 0.18), transparent 45%);
 }
-.theme-preview[data-preview='medieval'] .theme-preview-card { border-radius: 2px 7px 3px 5px; }
+.theme-preview[data-preview='medieval'] .theme-preview-sidebar {
+  background:
+    linear-gradient(90deg, #7c2b21 0 4px, #a88943 4px 5px, transparent 5px),
+    linear-gradient(145deg, #2f4a4c, #162829);
+}
+.theme-preview[data-preview='medieval'] .theme-preview-top {
+  border-radius: 1px;
+  background: linear-gradient(90deg, #304b4d, #b09148, #983426);
+}
+.theme-preview[data-preview='medieval'] .theme-preview-card {
+  border-color: #8e743c;
+  border-radius: 2px;
+  background:
+    linear-gradient(90deg, #304b4d, #b09148) top / 100% 3px no-repeat,
+    linear-gradient(145deg, #f1e7cc, #d8c698);
+  box-shadow: inset 0 0 0 2px rgba(255, 248, 219, 0.34);
+}
+.theme-preview[data-preview='medieval'] .theme-preview-button {
+  border-radius: 2px;
+  background: linear-gradient(180deg, #b14834, #7c281f);
+}
 
 .theme-preview[data-preview='scifi'] {
   --preview-bg: #04070e;

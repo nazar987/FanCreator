@@ -18,7 +18,7 @@ component geometry, typography and motion rather than by a color palette alone.
 | --- | --- | --- | --- |
 | Fantasy | lapis, crystal, marble, gold | soft and floating | light sweep and mana breath |
 | Dark Fantasy | basalt, forged iron, ember | heavy and compact | heat and weight |
-| Medieval | parchment, ink, leather, oak | handmade and slightly irregular | candle light |
+| Medieval | blackened oak, parchment, woad, gilt and rubric | framed Gothic folios | candle light |
 | Sci-Fi | titanium, holographic glass | precise and technical | scan and activation |
 | Cyberpunk | terminal glass, signal labels | asymmetric hard cuts | short controlled glitch |
 
@@ -26,8 +26,8 @@ component geometry, typography and motion rather than by a color palette alone.
 
 | Surface | Identity layer | Feature adapter | Notes |
 | --- | --- | --- | --- |
-| Shell, tabs, sidebar | complete | complete | existing `worlds.css` |
-| Library and folders | complete | complete | existing `worlds.css` |
+| Shell, tabs, sidebar | complete | complete | `worlds.css` plus the per-world signature layer |
+| Library and folders | complete | complete | `worlds.css` plus the per-world signature layer |
 | Characters and folders | complete | complete | cards, profile, templates |
 | Timeline list | complete | complete | events and rail |
 | Tree, fishbone, genealogy | complete | complete | canvas, nodes, zoom controls |

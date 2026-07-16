@@ -9,6 +9,16 @@
   --world-hover-lift: translateY(-1px);
 }
 
+[data-world='medieval'][data-world-intensity='calm'] {
+  --md-leather: none;
+  --md-vine: none;
+  --md-inkline: none;
+}
+
+[data-world='medieval'][data-world-intensity='calm'] :is(.library-hero::before, .library-hero-art) {
+  opacity: 0.18;
+}
+
 [data-world][data-world-intensity='calm'] :is(
   .library-story-progress span,
   .btn--primary,
