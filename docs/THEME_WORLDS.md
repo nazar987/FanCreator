@@ -35,6 +35,9 @@ component geometry, typography and motion rather than by a color palette alone.
 | Help, updates, command palette | complete | complete | system overlays |
 | Editor chrome | senior-owned | not in Codex scope | editor content is invariant |
 
+The theme gallery previews a world without persisting it. It also exposes calm
+and immersive intensity modes plus an explicit reduced-motion preference.
+
 ## Acceptance Rules
 
 1. Hiding color must not erase a world's geometry and material hierarchy.

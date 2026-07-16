@@ -23,6 +23,7 @@ import './features/board/board.css'
 import './features/timeline/timeline.css'
 import './features/help/help.css'
 import './features/updates/updates.css'
+import './theme/theme-gallery.css'
 // слой тем-миров — последним, чтобы перекрывать компонентные стили
 import './theme/worlds.css'
 // семантический контракт Theme Worlds 3.0 (профили материалов пяти миров)

@@ -1,0 +1,48 @@
+/* Calm mode keeps geometry and typography, but lowers visual noise. */
+[data-world][data-world-intensity='calm'] {
+  --tex-app: none;
+  --tex-panel: none;
+  --tex-card: none;
+  --world-decoration-opacity: 0.32;
+  --world-feature-shadow: var(--shadow-sm);
+  --world-feature-shadow-hover: var(--shadow-md);
+  --world-hover-lift: translateY(-1px);
+}
+
+[data-world][data-world-intensity='calm'] :is(
+  .library-story-progress span,
+  .btn--primary,
+  .tab--active::after,
+  .library-hero::before,
+  .library-story-card::before,
+  .modal,
+  .character-tile,
+  .timeline-event-card
+) {
+  animation: none !important;
+}
+
+[data-world][data-world-intensity='calm'] :is(.card, .modal, .cmdk, .library-story-card, .character-tile) {
+  backdrop-filter: none;
+}
+
+/* Explicit preference and OS preference both disable decorative motion. */
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

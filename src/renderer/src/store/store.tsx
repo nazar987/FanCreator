@@ -1,7 +1,7 @@
 import React from 'react'
 import type { Project, ProjectSummary, ThemeName, Chapter } from '@shared/types'
-import { WORLD_THEMES } from '@shared/types'
 import { confirmDialog } from '../shared/ui/dialogs'
+import { applyThemeAttributes } from '../theme/runtime'
 
 /** Открытая вкладка рабочего стола (эфемерное UI-состояние, п.10). */
 export interface OpenTab {
@@ -78,14 +78,6 @@ function isTabAlive(p: Project, tab: OpenTab): boolean {
 }
 
 const sessionKey = (projectId: string): string => `fancreator.session.${projectId}`
-function hasStoredTheme(): boolean {
-  try {
-    return localStorage.getItem(THEME_KEY) != null
-  } catch {
-    return false
-  }
-}
-
 function loadSession(projectId: string): { tabs: OpenTab[]; activeTabId: string | null } | null {
   try {
     const raw = localStorage.getItem(sessionKey(projectId))
@@ -118,10 +110,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
   React.useEffect(() => {
     const el = document.documentElement
     const prevWorld = el.getAttribute('data-world')
-    const world = WORLD_THEMES.includes(theme) ? theme : null
-    el.setAttribute('data-theme', theme)
-    if (world) el.setAttribute('data-world', world)
-    else el.removeAttribute('data-world')
+    applyThemeAttributes(theme)
+    const world = el.getAttribute('data-world')
     if (firstThemeRef.current) {
       firstThemeRef.current = false
       return
@@ -254,7 +244,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       setCurrent(p)
       setCharacterFolderId(null)
       setCharacterFolderNonce(0)
-      if (p.theme && !hasStoredTheme()) applyThemeLocal(p.theme)
+      if (p.theme) applyThemeLocal(p.theme)
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
       // восстановление вкладок прошлой сессии (как в браузере)
