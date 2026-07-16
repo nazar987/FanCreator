@@ -1,0 +1,34 @@
+/*
+  Semantic contract for Theme Worlds 3.0.
+
+  worlds.css keeps the established art direction of the shell and library.
+  Feature adapters consume only these tokens, so a new world can cover the
+  whole application without duplicating every component selector.
+*/
+[data-world] {
+  --world-feature-surface: var(--tex-card), var(--panel-solid);
+  --world-feature-surface-raised: var(--tex-card), var(--panel-2);
+  --world-feature-border: var(--stroke);
+  --world-feature-border-strong: var(--stroke-strong);
+  --world-feature-shadow: var(--shadow-md);
+  --world-feature-shadow-hover: var(--shadow-lg);
+  --world-feature-radius: var(--r-lg);
+  --world-control-radius: var(--r-sm);
+  --world-node-radius: var(--r-md);
+  --world-avatar-radius: var(--r-lg);
+  --world-hover-lift: translateY(-2px);
+  --world-feature-marker: linear-gradient(180deg, var(--accent), var(--accent-2));
+  --world-divider: linear-gradient(90deg, transparent, var(--stroke-strong), transparent);
+  --world-canvas-background: color-mix(in srgb, var(--surface-0) 86%, var(--surface-1));
+  --world-canvas-grid: radial-gradient(var(--stroke-strong) 1px, transparent 1px);
+  --world-canvas-grid-size: 24px 24px;
+  --world-canvas-overlay: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel) 28%, transparent),
+    transparent 28%
+  );
+  --world-meta-font: var(--font-ui);
+  --world-meta-spacing: 0.04em;
+  --world-meta-transform: none;
+  --world-decoration-opacity: 1;
+}

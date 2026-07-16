@@ -1,0 +1,26 @@
+/* High Fantasy: floating crystal, lapis and gold filigree. */
+[data-world='fantasy'] {
+  --world-feature-surface: var(--tex-card),
+    linear-gradient(155deg, color-mix(in srgb, var(--accent-2) 15%, var(--surface-2)), var(--surface-2));
+  --world-feature-surface-raised: var(--tex-card),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 9%, var(--surface-3)), var(--surface-2));
+  --world-feature-border: color-mix(in srgb, var(--accent) 30%, var(--stroke));
+  --world-feature-border-strong: color-mix(in srgb, var(--accent) 58%, var(--stroke-strong));
+  --world-feature-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-2) 12%, transparent),
+    0 16px 42px -28px var(--accent-glow);
+  --world-feature-shadow-hover: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    0 22px 54px -28px var(--accent-glow);
+  --world-feature-radius: 20px;
+  --world-control-radius: 14px;
+  --world-node-radius: 18px;
+  --world-avatar-radius: 50% 50% 44% 44%;
+  --world-hover-lift: translateY(-3px);
+  --world-feature-marker: linear-gradient(180deg, var(--accent), var(--accent-2));
+  --world-divider: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+  --world-canvas-background: color-mix(in srgb, var(--surface-0) 80%, var(--accent-2));
+  --world-canvas-grid: radial-gradient(color-mix(in srgb, var(--accent) 30%, transparent) 1px, transparent 1px);
+  --world-canvas-grid-size: 26px 26px;
+  --world-canvas-overlay: radial-gradient(circle at 50% 12%, var(--accent-soft), transparent 34%);
+  --world-meta-font: var(--font-display);
+  --world-meta-spacing: 0.08em;
+}

@@ -1,0 +1,26 @@
+/* Cyberpunk: corporate terminal, hard cuts and controlled signal noise. */
+[data-world='cyberpunk'] {
+  --world-feature-surface: var(--tex-card),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, var(--surface-2)), var(--surface-2));
+  --world-feature-surface-raised: var(--tex-card),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 7%, var(--surface-3)), var(--surface-2));
+  --world-feature-border: color-mix(in srgb, var(--accent) 24%, var(--stroke));
+  --world-feature-border-strong: color-mix(in srgb, var(--accent) 66%, var(--stroke-strong));
+  --world-feature-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent-2) 55%, transparent), var(--shadow-sm);
+  --world-feature-shadow-hover: inset 3px 0 0 var(--accent), 0 18px 42px -28px var(--accent-glow);
+  --world-feature-radius: 1px 10px 1px 10px;
+  --world-control-radius: 1px 6px 1px 6px;
+  --world-node-radius: 1px 8px 1px 8px;
+  --world-avatar-radius: 1px 12px 1px 12px;
+  --world-hover-lift: translateX(2px);
+  --world-feature-marker: linear-gradient(180deg, var(--accent), var(--accent-2));
+  --world-divider: linear-gradient(90deg, var(--accent), var(--accent-2), transparent 72%);
+  --world-canvas-background: color-mix(in srgb, var(--surface-0) 90%, var(--accent-2));
+  --world-canvas-grid: linear-gradient(color-mix(in srgb, var(--accent-2) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent-2) 10%, transparent) 1px, transparent 1px);
+  --world-canvas-grid-size: 28px 28px;
+  --world-canvas-overlay: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 18%);
+  --world-meta-font: Consolas, 'Courier New', monospace;
+  --world-meta-spacing: 0.1em;
+  --world-meta-transform: uppercase;
+}

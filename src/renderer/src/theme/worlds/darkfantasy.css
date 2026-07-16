@@ -1,0 +1,27 @@
+/* Dark Fantasy: basalt, forged iron and restrained ember light. */
+[data-world='darkfantasy'] {
+  --world-feature-surface: var(--tex-card),
+    linear-gradient(150deg, color-mix(in srgb, var(--surface-3) 34%, var(--surface-2)), var(--surface-2));
+  --world-feature-surface-raised: var(--tex-card),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 7%, var(--surface-3)), var(--surface-2));
+  --world-feature-border: color-mix(in srgb, var(--text-faint) 34%, var(--stroke));
+  --world-feature-border-strong: color-mix(in srgb, var(--accent) 42%, var(--stroke-strong));
+  --world-feature-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent),
+    inset 0 -10px 28px color-mix(in srgb, var(--surface-0) 45%, transparent), var(--shadow-md);
+  --world-feature-shadow-hover: inset 0 1px 0 color-mix(in srgb, var(--accent) 12%, transparent),
+    inset 0 -12px 32px color-mix(in srgb, var(--surface-0) 52%, transparent), 0 20px 48px -28px var(--accent-glow);
+  --world-feature-radius: 5px;
+  --world-control-radius: 3px;
+  --world-node-radius: 4px;
+  --world-avatar-radius: 4px;
+  --world-hover-lift: translateY(-1px);
+  --world-feature-marker: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent-2) 60%, transparent));
+  --world-divider: linear-gradient(90deg, transparent, var(--text-faint), var(--accent), var(--text-faint), transparent);
+  --world-canvas-background: color-mix(in srgb, var(--surface-0) 90%, var(--surface-2));
+  --world-canvas-grid: radial-gradient(color-mix(in srgb, var(--text-faint) 30%, transparent) 1px, transparent 1px);
+  --world-canvas-grid-size: 24px 24px;
+  --world-canvas-overlay: radial-gradient(circle at 50% 100%, var(--accent-soft), transparent 38%);
+  --world-meta-font: var(--font-display);
+  --world-meta-spacing: 0.09em;
+  --world-meta-transform: uppercase;
+}

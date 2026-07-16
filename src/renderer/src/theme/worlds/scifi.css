@@ -1,0 +1,28 @@
+/* Science Fiction: precise titanium console and holographic glass. */
+[data-world='scifi'] {
+  --world-feature-surface: var(--tex-card),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 7%, var(--surface-2)), var(--surface-2));
+  --world-feature-surface-raised: var(--tex-card),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 8%, var(--surface-3)), var(--surface-2));
+  --world-feature-border: color-mix(in srgb, var(--accent) 22%, var(--stroke));
+  --world-feature-border-strong: color-mix(in srgb, var(--accent) 58%, var(--stroke-strong));
+  --world-feature-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+    0 18px 48px -34px var(--accent-glow);
+  --world-feature-shadow-hover: inset 0 1px 0 color-mix(in srgb, var(--accent) 18%, transparent),
+    0 24px 56px -32px var(--accent-glow);
+  --world-feature-radius: 7px;
+  --world-control-radius: 5px;
+  --world-node-radius: 6px;
+  --world-avatar-radius: 6px;
+  --world-hover-lift: translateY(-2px);
+  --world-feature-marker: linear-gradient(180deg, var(--accent), var(--accent-2));
+  --world-divider: linear-gradient(90deg, transparent, var(--accent), transparent);
+  --world-canvas-background: color-mix(in srgb, var(--surface-0) 86%, var(--accent));
+  --world-canvas-grid: linear-gradient(color-mix(in srgb, var(--accent) 13%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 13%, transparent) 1px, transparent 1px);
+  --world-canvas-grid-size: 32px 32px;
+  --world-canvas-overlay: linear-gradient(180deg, var(--accent-soft), transparent 22%);
+  --world-meta-font: 'Arial Narrow', 'Segoe UI', sans-serif;
+  --world-meta-spacing: 0.12em;
+  --world-meta-transform: uppercase;
+}

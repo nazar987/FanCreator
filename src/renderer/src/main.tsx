@@ -25,6 +25,8 @@ import './features/help/help.css'
 import './features/updates/updates.css'
 // слой тем-миров — последним, чтобы перекрывать компонентные стили
 import './theme/worlds.css'
+// семантический контракт Theme Worlds 3.0 (профили материалов пяти миров)
+import './theme/worlds/index.css'
 import { StoreProvider } from './store/store'
 import { App } from './app/App'
 

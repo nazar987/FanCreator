@@ -1,0 +1,45 @@
+# Theme Worlds 3.0
+
+Theme World changes the visual language of FanCreator without changing navigation,
+data, keyboard shortcuts or editor content. A world is defined by physical materials,
+component geometry, typography and motion rather than by a color palette alone.
+
+## Architecture
+
+- `theme.css` owns color and surface tokens for classic palettes and worlds.
+- `worlds.css` preserves the approved shell and library art direction.
+- `theme/worlds/*.css` defines the semantic material contract for each world.
+- Feature adapters consume semantic tokens and must not duplicate five selector trees.
+- `.fc-prose` and the printable page remain outside Theme Worlds.
+
+## World Identities
+
+| World | Primary materials | Geometry | Motion |
+| --- | --- | --- | --- |
+| Fantasy | lapis, crystal, marble, gold | soft and floating | light sweep and mana breath |
+| Dark Fantasy | basalt, forged iron, ember | heavy and compact | heat and weight |
+| Medieval | parchment, ink, leather, oak | handmade and slightly irregular | candle light |
+| Sci-Fi | titanium, holographic glass | precise and technical | scan and activation |
+| Cyberpunk | terminal glass, signal labels | asymmetric hard cuts | short controlled glitch |
+
+## Coverage Matrix
+
+| Surface | Identity layer | Feature adapter | Notes |
+| --- | --- | --- | --- |
+| Shell, tabs, sidebar | complete | complete | existing `worlds.css` |
+| Library and folders | complete | complete | existing `worlds.css` |
+| Characters and folders | token-only | T-R2 | cards, profile, templates |
+| Timeline list | token-only | T-R2 | events and rail |
+| Tree, fishbone, genealogy | token-only | T-R2 | canvas, nodes, zoom controls |
+| Board chrome | token-only | T-R2 | toolbar and linked entity preview |
+| Help, updates, command palette | token-only | T-R2 | system overlays |
+| Editor chrome | senior-owned | not in Codex scope | editor content is invariant |
+
+## Acceptance Rules
+
+1. Hiding color must not erase a world's geometry and material hierarchy.
+2. Every feature remains usable at 900 px and with the sidebar collapsed.
+3. Focus, hover, selected and danger states remain legible in every world.
+4. Decorative generated content is never required to understand an action.
+5. System reduced-motion preference disables all repeating world animations.
+6. Calm intensity keeps geometry and typography while reducing texture, glow and motion.
