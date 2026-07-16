@@ -1288,6 +1288,24 @@
   color: #2c2212;
   font-weight: var(--fw-semibold);
 }
+/* заголовки, лежащие прямо на тёмном столе (полка проектов, страницы
+   разделов), — светлая краска по дереву; на пергаменте (hero, шапки
+   холстов .timeline-head) остаются чернильными */
+[data-world='medieval'] .home-title:not(.library-hero *):not(.timeline-head *) {
+  color: #ecdfc0;
+}
+[data-world='medieval'] .home-sub:not(.library-hero *):not(.timeline-head *) {
+  color: #b7a483;
+}
+[data-world='medieval'] .welcome h1 {
+  color: #ecdfc0;
+}
+[data-world='medieval'] .characters-section-head h2 {
+  color: #ecdfc0;
+}
+[data-world='medieval'] .characters-section-head > span {
+  color: #b7a483;
+}
 [data-world='medieval'] .welcome h1::first-letter {
   color: var(--md-rubric);
   font-size: 1.24em;
