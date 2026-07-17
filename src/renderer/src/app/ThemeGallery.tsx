@@ -15,6 +15,7 @@ interface ThemeOption {
   name: ThemeName
   title: string
   description: string
+  signature: string
   icon: React.ReactNode
 }
 
@@ -29,30 +30,35 @@ const WORLDS: ThemeOption[] = [
     name: 'fantasy',
     title: 'Высокое фэнтези',
     description: 'Лазурит, хрусталь, золотая филигрань и мягкое дыхание магии.',
+    signature: 'CHRONICLES',
     icon: <Swords size={17} />
   },
   {
     name: 'darkfantasy',
     title: 'Тёмное фэнтези',
     description: 'Базальт, кованое железо, старые клейма и тлеющие угли.',
+    signature: 'FORBIDDEN ARCHIVE',
     icon: <Skull size={17} />
   },
   {
     name: 'medieval',
     title: 'Средневековье',
     description: 'Манускрипт, пергамент, чернила, кожа и дубовый стол скриптория.',
+    signature: 'SCRIPTORIUM',
     icon: <Castle size={17} />
   },
   {
     name: 'scifi',
     title: 'Научная фантастика',
     description: 'Титановая консоль, голографическое стекло и точная HUD-разметка.',
+    signature: 'STORY SYSTEM',
     icon: <Rocket size={17} />
   },
   {
     name: 'cyberpunk',
     title: 'Киберпанк',
     description: 'Корпоративный терминал, жёсткая геометрия и контролируемый глитч.',
+    signature: 'NARRATIVE OS',
     icon: <Zap size={17} />
   }
 ]
@@ -162,11 +168,16 @@ export function ThemeGallery({ current, onApply, onClose }: ThemeGalleryProps): 
                 onClick={() => previewTheme(world.name)}
               >
                 <span className="theme-preview" data-preview={world.name} aria-hidden="true">
-                  <span className="theme-preview-sidebar" />
-                  <span className="theme-preview-top" />
-                  <span className="theme-preview-card theme-preview-card--one" />
-                  <span className="theme-preview-card theme-preview-card--two" />
-                  <span className="theme-preview-button" />
+                  <span className="theme-preview-logo">
+                    <span className="theme-preview-logo-mark">{world.icon}</span>
+                    <span className="theme-preview-logo-copy">
+                      <span className="theme-preview-logo-name">
+                        <span>Fan</span>
+                        <span>Creator</span>
+                      </span>
+                      <span className="theme-preview-logo-signature">{world.signature}</span>
+                    </span>
+                  </span>
                 </span>
                 <span className="theme-world-card-copy">
                   <span className="theme-world-card-title">{world.icon}{world.title}</span>
