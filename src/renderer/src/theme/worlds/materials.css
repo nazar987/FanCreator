@@ -1,0 +1,63 @@
+/* Theme Worlds material pass.
+   Only procedural textures are replaced here; component geometry stays intact. */
+
+/* High Fantasy: celestial cartography over lapis and cut crystal. */
+[data-world='fantasy'] {
+  --hf-material-atlas: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='480'%3E%3Cg fill='none' stroke='rgba(232,194,104,0.16)' stroke-width='1'%3E%3Ccircle cx='514' cy='116' r='82'/%3E%3Ccircle cx='514' cy='116' r='61' stroke-dasharray='2 9'/%3E%3Ccircle cx='514' cy='116' r='29'/%3E%3Cpath d='M420 116h188M514 22v188M451 53l126 126M577 53L451 179' opacity='.46'/%3E%3Cpath d='M54 370Q132 300 216 354T378 330' stroke-dasharray='1 8'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(167,139,250,0.2)' stroke-width='1'%3E%3Cpath d='M68 82L142 48l76 65 92-42 62 74'/%3E%3Cpath d='M102 264l92-52 74 43 84-67'/%3E%3C/g%3E%3Cg fill='rgba(218,224,255,0.5)'%3E%3Ccircle cx='68' cy='82' r='1.4'/%3E%3Ccircle cx='142' cy='48' r='2'/%3E%3Ccircle cx='218' cy='113' r='1.3'/%3E%3Ccircle cx='310' cy='71' r='1.7'/%3E%3Ccircle cx='372' cy='145' r='1.2'/%3E%3Ccircle cx='102' cy='264' r='1.2'/%3E%3Ccircle cx='194' cy='212' r='1.8'/%3E%3Ccircle cx='268' cy='255' r='1.2'/%3E%3Ccircle cx='352' cy='188' r='1.5'/%3E%3Ccircle cx='578' cy='326' r='1.4'/%3E%3Ccircle cx='448' cy='404' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  --hf-material-facets: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='220'%3E%3Cg fill='none' stroke='rgba(190,203,255,0.07)' stroke-width='1'%3E%3Cpath d='M0 46L82 0l72 58 74-42 72 48M0 172l72-54 88 44 76-64 64 46M82 0L72 118M154 58l6 104M228 16l8 82'/%3E%3C/g%3E%3Cg fill='rgba(167,139,250,0.035)'%3E%3Cpath d='M82 0l72 58-82 60zM160 162l76-64 64 46-70 76z'/%3E%3C/g%3E%3Cg fill='rgba(232,194,104,0.3)'%3E%3Ccircle cx='82' cy='1' r='1'/%3E%3Ccircle cx='160' cy='162' r='1'/%3E%3Ccircle cx='236' cy='98' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  --tex-app:
+    var(--hf-material-atlas),
+    radial-gradient(ellipse at 72% 16%, rgba(79, 104, 206, 0.13), transparent 42%),
+    radial-gradient(ellipse at 18% 92%, rgba(117, 83, 176, 0.11), transparent 40%),
+    linear-gradient(145deg, rgba(7, 10, 34, 0.12), rgba(3, 5, 19, 0.5));
+  --tex-panel:
+    var(--hf-material-facets),
+    linear-gradient(155deg, rgba(171, 190, 255, 0.035), transparent 42%);
+  --tex-card:
+    var(--hf-material-facets),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 34%, rgba(167, 139, 250, 0.025));
+}
+
+/* Dark Fantasy: cold basalt, forged scratches and restrained cinders. */
+[data-world='darkfantasy'] {
+  --df-material-cinders: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='680' height='520'%3E%3Cg fill='none' stroke='rgba(164,55,24,0.13)' stroke-width='1'%3E%3Cpath d='M24 472l62-84 48 22 58-112 74 38 72-146 86 58 72-126 82 42'/%3E%3Cpath d='M488 520l-22-92 34-48-18-76 44-64' opacity='.56'/%3E%3C/g%3E%3Cg fill='rgba(218,86,38,0.34)'%3E%3Ccircle cx='86' cy='388' r='1.2'/%3E%3Ccircle cx='192' cy='298' r='1'/%3E%3Ccircle cx='338' cy='190' r='1.4'/%3E%3Ccircle cx='496' cy='122' r='1'/%3E%3Ccircle cx='594' cy='402' r='1.2'/%3E%3Ccircle cx='278' cy='470' r='.9'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(198,186,164,0.055)'%3E%3Cpath d='M0 126Q112 92 228 130T456 118T680 134'/%3E%3Cpath d='M0 356Q142 330 266 368T520 350T680 362'/%3E%3C/g%3E%3C/svg%3E");
+  --df-material-forge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.028 .36' numOctaves='3' seed='47'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .36 0 0 0 0 .3 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='320' height='240' filter='url(%23f)'/%3E%3Cg fill='none' stroke='rgba(232,214,190,0.06)' stroke-width='1'%3E%3Cpath d='M12 42h118M188 26h116M34 196h146M218 172h88'/%3E%3C/g%3E%3Cg fill='%23564a37' stroke='%23100d09' stroke-width='1'%3E%3Ccircle cx='18' cy='18' r='2'/%3E%3Ccircle cx='302' cy='18' r='2'/%3E%3Ccircle cx='18' cy='222' r='2'/%3E%3Ccircle cx='302' cy='222' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  --df-material-fissures: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='280'%3E%3Cg fill='none' stroke='rgba(214,69,28,0.16)' stroke-width='1'%3E%3Cpath d='M18 12l24 42-17 31 33 45-12 38'/%3E%3Cpath d='M334 148l-35 26 8 34-42 48'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(232,214,190,0.045)'%3E%3Cpath d='M19 12l24 42-17 31 33 45'/%3E%3Cpath d='M335 148l-35 26 8 34'/%3E%3C/g%3E%3C/svg%3E");
+  --tex-app:
+    var(--df-material-cinders),
+    radial-gradient(ellipse at 50% 112%, rgba(145, 42, 16, 0.1), transparent 46%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16), transparent 44%, rgba(0, 0, 0, 0.34));
+  --tex-panel: var(--df-material-forge), var(--df-tex-basalt);
+  --tex-card: var(--df-material-fissures), var(--df-tex-basalt);
+}
+
+/* Medieval: oak grain outside, quiet cartography and fibres on parchment. */
+[data-world='medieval'] {
+  --md-material-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='320'%3E%3Cg fill='none' stroke='rgba(201,169,96,0.055)' stroke-width='1'%3E%3Cpath d='M0 38Q96 22 198 42T388 36T480 44'/%3E%3Cpath d='M0 102Q118 82 232 108T480 96'/%3E%3Cpath d='M0 182Q84 158 190 184T382 176T480 188'/%3E%3Cpath d='M0 272Q112 248 228 276T480 266'/%3E%3Cellipse cx='362' cy='104' rx='36' ry='18'/%3E%3Cellipse cx='362' cy='104' rx='19' ry='8'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(0,0,0,0.16)'%3E%3Cpath d='M0 105Q118 85 232 111T480 99'/%3E%3Cpath d='M0 275Q112 251 228 279T480 269'/%3E%3C/g%3E%3C/svg%3E");
+  --md-material-cartography: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='520'%3E%3Cg fill='none' stroke='rgba(83,61,25,0.12)' stroke-width='1'%3E%3Ccircle cx='566' cy='118' r='72'/%3E%3Ccircle cx='566' cy='118' r='48' stroke-dasharray='3 7'/%3E%3Cpath d='M566 32v172M480 118h172M505 57l122 122M627 57L505 179' opacity='.52'/%3E%3Cpath d='M34 390Q86 320 156 354t98-82 122 30 110-92'/%3E%3Cpath d='M76 96q68 38 126 4t124 18 110-10' stroke-dasharray='2 6'/%3E%3Cpath d='M116 430q62-34 126 2t112-8'/%3E%3C/g%3E%3Cg fill='rgba(138,47,31,0.18)'%3E%3Ccircle cx='156' cy='354' r='2'/%3E%3Ccircle cx='376' cy='302' r='2'/%3E%3Ccircle cx='566' cy='118' r='2.5'/%3E%3C/g%3E%3C/svg%3E");
+  --md-material-fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018 .42' numOctaves='3' seed='37'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .24 0 0 0 0 .08 0 0 0 .055 0'/%3E%3C/filter%3E%3Crect width='260' height='220' filter='url(%23p)'/%3E%3C/svg%3E");
+  --tex-app:
+    var(--md-material-wood),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.12), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.16));
+  --tex-panel: var(--md-material-wood), var(--md-leather);
+  --tex-card:
+    var(--md-material-cartography),
+    var(--md-material-fibre),
+    repeating-linear-gradient(0deg, rgba(83, 61, 25, 0.018) 0 1px, transparent 1px 6px);
+}
+
+/* Science Fiction: orbital navigation, titanium tracks and display glass. */
+[data-world='scifi'] {
+  --sf-material-star-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='520'%3E%3Cg fill='rgba(168,224,248,0.36)'%3E%3Ccircle cx='52' cy='72' r='1'/%3E%3Ccircle cx='122' cy='196' r='1.3'/%3E%3Ccircle cx='218' cy='58' r='.8'/%3E%3Ccircle cx='304' cy='282' r='1.2'/%3E%3Ccircle cx='416' cy='96' r='1'/%3E%3Ccircle cx='548' cy='232' r='1.4'/%3E%3Ccircle cx='662' cy='70' r='.8'/%3E%3Ccircle cx='628' cy='422' r='1.1'/%3E%3Ccircle cx='184' cy='438' r='1'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(96,193,232,0.13)' stroke-width='1'%3E%3Cpath d='M52 72l166-14 86 224 244-50 80 190'/%3E%3Cpath d='M438 520A286 286 0 0 1 720 222'/%3E%3Cpath d='M496 520A224 224 0 0 1 720 288' stroke-dasharray='4 12'/%3E%3Cpath d='M32 348h172M118 262v172' opacity='.5'/%3E%3C/g%3E%3C/svg%3E");
+  --sf-material-panel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='240'%3E%3Cg fill='none' stroke='rgba(120,210,240,0.1)' stroke-width='1'%3E%3Cpath d='M18 44h104v58h72v-34h128M42 204v-52h92v34h86v-78h102'/%3E%3Cpath d='M0 18h340M0 222h340' stroke-dasharray='18 6' opacity='.5'/%3E%3C/g%3E%3Cg fill='rgba(120,210,240,0.24)'%3E%3Ccircle cx='18' cy='44' r='1.6'/%3E%3Ccircle cx='194' cy='68' r='1.6'/%3E%3Ccircle cx='322' cy='68' r='1.6'/%3E%3Ccircle cx='42' cy='204' r='1.6'/%3E%3Ccircle cx='220' cy='108' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  --tex-app:
+    var(--sf-material-star-chart),
+    linear-gradient(180deg, rgba(9, 27, 46, 0.12), rgba(0, 3, 8, 0.48));
+  --tex-panel:
+    var(--sf-material-panel),
+    repeating-linear-gradient(0deg, rgba(155, 225, 255, 0.025) 0 1px, transparent 1px 8px);
+  --tex-card:
+    var(--sf-material-panel),
+    repeating-linear-gradient(0deg, rgba(155, 225, 255, 0.025) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(155, 225, 255, 0.025) 0 1px, transparent 1px 28px);
+}
