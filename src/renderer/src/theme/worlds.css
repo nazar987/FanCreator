@@ -294,15 +294,25 @@
   box-shadow: 0 0 0 3px rgba(232, 194, 104, 0.14), 0 0 26px -6px var(--accent-glow);
 }
 
-/* --- меню — древний свиток знаний: светлый пергамент с золотом --- */
+/* --- меню — древний свиток знаний: светлый пергамент с золотом.
+   Внутри свитка токены текста локально становятся чернильными, чтобы
+   ЛЮБОЕ содержимое (включая панель тем) читалось без спец-правил. --- */
 [data-world='fantasy'] .ctx-menu,
 [data-world='fantasy'] .color-palette-panel {
+  --text: #3a3050;
+  --text-dim: #6b5f85;
+  --text-faint: #8f84a8;
+  --panel-2: rgba(191, 146, 42, 0.14);
+  --stroke: rgba(146, 108, 38, 0.32);
+  --stroke-strong: rgba(146, 108, 38, 0.5);
+  --accent-soft: rgba(191, 146, 42, 0.18);
   background-color: #f0e7cf;
   background-image: linear-gradient(180deg, #f5edd8, #e9debf);
   border: 1px solid #c9a24b;
   border-radius: var(--r-lg);
   backdrop-filter: none;
   box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255, 252, 240, 0.6);
+  color: var(--text);
 }
 [data-world='fantasy'] .ctx-item {
   color: #3a3050;
@@ -1212,9 +1222,18 @@
   box-shadow: 0 1px 0 rgba(138, 47, 31, 0.35);
 }
 
-/* --- меню — раскрытый кодекс: поле рукописи и линии пера --- */
+/* --- меню — раскрытый кодекс: поле рукописи и линии пера.
+   Токены текста внутри — чернила, чтобы любое содержимое читалось. --- */
 [data-world='medieval'] .ctx-menu,
 [data-world='medieval'] .color-palette-panel {
+  --text: #33270f;
+  --text-dim: #6b5a36;
+  --text-faint: #8f7c52;
+  --panel-2: rgba(138, 47, 31, 0.1);
+  --stroke: rgba(92, 64, 22, 0.32);
+  --stroke-strong: rgba(92, 64, 22, 0.5);
+  --accent-soft: rgba(138, 47, 31, 0.12);
+  color: var(--text);
   background-color: #ecdfb8;
   background-image:
     linear-gradient(90deg, transparent 20px, rgba(138, 47, 31, 0.3) 20px 21px, transparent 21px),

@@ -338,8 +338,12 @@
   );
 }
 
-[data-world='scifi'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node),
-[data-world='cyberpunk'] :is(.character-tile, .timeline-event-card, .dendro-node, .fishbone-node) {
+/* ВАЖНО: .dendro-node/.fishbone-node сюда НЕ добавлять — они позиционируются
+   абсолютно раскладкой холста, и position:relative выбрасывает их в поток
+   (узлы разъезжаются, линии отрываются). Абсолютное позиционирование уже
+   даёт контекст для ::after-уголков. */
+[data-world='scifi'] :is(.character-tile, .timeline-event-card),
+[data-world='cyberpunk'] :is(.character-tile, .timeline-event-card) {
   position: relative;
 }
 
