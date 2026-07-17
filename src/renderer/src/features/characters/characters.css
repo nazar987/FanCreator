@@ -892,16 +892,6 @@
 .characters--genealogy .genealogy--canvas .genealogy-canvas {
   min-height: 0;
 }
-.genealogy--canvas .genealogy-canvas::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, var(--panel) 28%, transparent), transparent 26%);
-}
-
 /* узел родословной (поверх стилей .dendro-node) */
 .genealogy-node-label {
   display: flex;

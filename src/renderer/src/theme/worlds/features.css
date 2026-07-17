@@ -233,11 +233,6 @@
   background-size: var(--world-canvas-grid-size);
 }
 
-[data-world] :is(.timeline--canvas .zoompan, .genealogy--canvas .genealogy-canvas)::before {
-  background: var(--world-canvas-overlay);
-  opacity: var(--world-decoration-opacity);
-}
-
 /* ---------- Board chrome ---------- */
 [data-world] .board-canvas {
   background-image: var(--world-canvas-overlay), var(--world-canvas-grid);
