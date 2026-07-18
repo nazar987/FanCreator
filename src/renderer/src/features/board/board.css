@@ -501,3 +501,41 @@
 .board-preview-kind { font-size: var(--fs-caption); }
 .board-preview-sub,
 .board-preview-note { font-size: var(--fs-meta); }
+
+/* ФАЗА 24: направление связи, ручной изгиб */
+.board-arrow-dirs {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 4px;
+}
+.board-dir-btn {
+  min-width: 30px;
+  height: 26px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.board-dir-btn:hover {
+  border-color: var(--stroke-strong);
+  color: var(--text);
+}
+.board-dir-btn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.board-arrow-bend-handle {
+  /* svg-слой сам с pointer-events:none — ручке возвращаем интерактив */
+  pointer-events: all;
+  fill: var(--panel-solid);
+  stroke: var(--accent);
+  stroke-width: 2;
+  cursor: grab;
+}
+.board-arrow-bend-handle:hover {
+  fill: var(--accent-soft);
+}

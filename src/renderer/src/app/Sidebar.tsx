@@ -1232,7 +1232,9 @@ export function Sidebar(): React.JSX.Element {
     items: { id: string; title: string }[],
     open: (item: { id: string; title: string }) => void,
     activePrefix: string,
-    move: (item: { id: string; title: string }, offset: -1 | 1) => void
+    move: (item: { id: string; title: string }, offset: -1 | 1) => void,
+    rename?: (item: { id: string; title: string }) => void | Promise<void>,
+    remove?: (item: { id: string; title: string }) => void | Promise<void>
   ): React.JSX.Element => {
     const isOpen = expanded[key] ?? false
     return (
@@ -1260,6 +1262,15 @@ export function Sidebar(): React.JSX.Element {
                 onClick={() => open(it)}
                 onContextMenu={(event) =>
                   openContextMenu(event, [
+                    ...(rename
+                      ? [
+                          {
+                            label: 'Переименовать',
+                            icon: <Pencil size={15} />,
+                            onClick: () => void rename(it)
+                          }
+                        ]
+                      : []),
                     {
                       label: 'Выше',
                       icon: <ArrowUp size={15} />,
@@ -1271,7 +1282,17 @@ export function Sidebar(): React.JSX.Element {
                       icon: <ArrowDown size={15} />,
                       disabled: items.at(-1)?.id === it.id,
                       onClick: () => move(it, 1)
-                    }
+                    },
+                    ...(remove
+                      ? [
+                          {
+                            label: 'Удалить',
+                            icon: <Trash2 size={15} />,
+                            danger: true,
+                            onClick: () => void remove(it)
+                          }
+                        ]
+                      : [])
                   ])
                 }
               >
@@ -1510,7 +1531,18 @@ export function Sidebar(): React.JSX.Element {
                 orderedTimelines.map((t) => ({ id: t.id, title: t.title })),
                 (t) => openTab({ id: `timeline:${t.id}`, kind: 'timeline', title: t.title, timelineId: t.id }),
                 'timeline:',
-                moveTimeline
+                moveTimeline,
+                async (t) => {
+                  const title = await promptText({ title: 'Переименовать таймлайн', initial: t.title })
+                  if (title && title !== t.title)
+                    applyProject(
+                      await window.api.timelines.rename({ projectId: current.id, timelineId: t.id, title })
+                    )
+                },
+                async (t) => {
+                  if (!(await confirmDialog({ title: `Удалить таймлайн «${t.title}»?`, danger: true }))) return
+                  applyProject(await window.api.timelines.delete({ projectId: current.id, timelineId: t.id }))
+                }
               )}
             {current.boards.length > 0 &&
               renderNavSection(
@@ -1520,7 +1552,16 @@ export function Sidebar(): React.JSX.Element {
                 orderedBoards.map((b) => ({ id: b.id, title: b.title })),
                 (b) => openTab({ id: `board:${b.id}`, kind: 'board', title: b.title, boardId: b.id }),
                 'board:',
-                moveBoard
+                moveBoard,
+                async (b) => {
+                  const title = await promptText({ title: 'Переименовать доску', initial: b.title })
+                  if (title && title !== b.title)
+                    applyProject(await window.api.boards.rename({ projectId: current.id, boardId: b.id, title }))
+                },
+                async (b) => {
+                  if (!(await confirmDialog({ title: `Удалить доску «${b.title}»?`, danger: true }))) return
+                  applyProject(await window.api.boards.delete({ projectId: current.id, boardId: b.id }))
+                }
               )}
             {renderHierarchySection()}
           </>

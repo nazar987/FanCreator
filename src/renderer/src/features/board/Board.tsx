@@ -40,8 +40,15 @@ const SHAPE_LABEL: Record<StickerShape, string> = {
 const SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle', 'diamond', 'triangle', 'parallelogram', 'hexagon']
 const NOTE_SHAPE_OPTIONS: StickerShape[] = ['rect', 'rounded', 'circle', 'note']
 
-const ARROW_COLORS = ['#f06b9b', '#5fd39a', '#5bb8e6', '#f0a35b', '#b98cf5', '#e8e8ef']
-const STICKER_COLORS = ['#ffd166', '#f06b9b', '#5fd39a', '#5bb8e6', '#b98cf5', '#e8e8ef']
+/* расширенные палитры (фидбэк: «больше вариаций цветов — и связей, и стикеров») */
+const ARROW_COLORS = [
+  '#f06b9b', '#e05a5a', '#f0a35b', '#f0d65b', '#9adb6c', '#5fd39a',
+  '#6fe0d2', '#5bb8e6', '#8f9bff', '#b98cf5', '#e77fd0', '#e8e8ef'
+]
+const STICKER_COLORS = [
+  '#ffd166', '#ffb37a', '#ff9b9b', '#f06b9b', '#e77fd0', '#b98cf5',
+  '#8f9bff', '#5bb8e6', '#6fe0d2', '#5fd39a', '#c9e07a', '#e8e8ef'
+]
 const ZOOM_MIN = 0.25
 const ZOOM_MAX = 2.5
 
@@ -55,6 +62,7 @@ const readFileAsDataUrl = (file: File): Promise<string> =>
 
 type Interaction =
   | { mode: 'pan'; startX: number; startY: number; origX: number; origY: number }
+  | { mode: 'bend'; id: string }
   | {
       mode: 'sticker'
       id: string
@@ -100,6 +108,8 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
   zoomRef.current = zoom
   const stickersRef = React.useRef(stickers)
   stickersRef.current = stickers
+  const arrowsRef = React.useRef(arrows)
+  arrowsRef.current = arrows
 
   // автосохранение полотна целиком (как в редакторе) — дебаунс 600 мс
   React.useEffect(() => {
@@ -124,17 +134,74 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
     return { x: (sx - panRef.current.x) / zoomRef.current, y: (sy - panRef.current.y) / zoomRef.current }
   }
 
-  const curvedPath = (x1: number, y1: number, x2: number, y2: number): string => {
+  const cubicControls = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number
+  ): { c1x: number; c1y: number; c2x: number; c2y: number } => {
     const dx = x2 - x1
     const dy = y2 - y1
     if (Math.abs(dx) >= Math.abs(dy)) {
       const bend = Math.max(60, Math.abs(dx) * 0.45)
       const dir = dx >= 0 ? 1 : -1
-      return `M ${x1} ${y1} C ${x1 + bend * dir} ${y1}, ${x2 - bend * dir} ${y2}, ${x2} ${y2}`
+      return { c1x: x1 + bend * dir, c1y: y1, c2x: x2 - bend * dir, c2y: y2 }
     }
     const bend = Math.max(60, Math.abs(dy) * 0.45)
     const dir = dy >= 0 ? 1 : -1
-    return `M ${x1} ${y1} C ${x1} ${y1 + bend * dir}, ${x2} ${y2 - bend * dir}, ${x2} ${y2}`
+    return { c1x: x1, c1y: y1 + bend * dir, c2x: x2, c2y: y2 - bend * dir }
+  }
+
+  const curvedPath = (x1: number, y1: number, x2: number, y2: number): string => {
+    const c = cubicControls(x1, y1, x2, y2)
+    return `M ${x1} ${y1} C ${c.c1x} ${c.c1y}, ${c.c2x} ${c.c2y}, ${x2} ${y2}`
+  }
+
+  /**
+   * Геометрия связи: путь + точка «середины» (для подписи и ручки изгиба).
+   * Без изгиба — прежняя кубическая кривая, середина считается по Безье
+   * (подпись больше не «уезжает» к одному из стикеров и не отстаёт от
+   * линии). С ручным изгибом (arrow.bend) — квадратичная кривая, которая
+   * ПРОХОДИТ через точку-«магнит»: пользователь тянет ручку, линия обходит
+   * заметки так, как ему удобно.
+   */
+  const arrowGeometry = (
+    magnet: { x: number; y: number } | null,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number
+  ): { d: string; midX: number; midY: number } => {
+    if (magnet) {
+      // контрольная точка, при которой кривая проходит через магнит при t=0.5
+      const qx = 2 * magnet.x - (x1 + x2) / 2
+      const qy = 2 * magnet.y - (y1 + y2) / 2
+      return { d: `M ${x1} ${y1} Q ${qx} ${qy}, ${x2} ${y2}`, midX: magnet.x, midY: magnet.y }
+    }
+    const c = cubicControls(x1, y1, x2, y2)
+    return {
+      d: `M ${x1} ${y1} C ${c.c1x} ${c.c1y}, ${c.c2x} ${c.c2y}, ${x2} ${y2}`,
+      midX: (x1 + 3 * c.c1x + 3 * c.c2x + x2) / 8,
+      midY: (y1 + 3 * c.c1y + 3 * c.c2y + y2) / 8
+    }
+  }
+
+  /** Точка на границе стикера по направлению к цели (+3px отступ), чтобы
+      линия и стрелка упирались в КРАЙ заметки, а не прятались под ней. */
+  const stickerEdgePoint = (
+    s: BoardSticker,
+    tx: number,
+    ty: number
+  ): { x: number; y: number } => {
+    const cx = s.x + s.w / 2
+    const cy = s.y + s.h / 2
+    const dx = tx - cx
+    const dy = ty - cy
+    if (!dx && !dy) return { x: cx, y: cy }
+    const scaleX = dx !== 0 ? (s.w / 2 + 3) / Math.abs(dx) : Infinity
+    const scaleY = dy !== 0 ? (s.h / 2 + 3) / Math.abs(dy) : Infinity
+    const t = Math.min(scaleX, scaleY, 1)
+    return { x: cx + dx * t, y: cy + dy * t }
   }
 
   const lineAngle = (x1: number, y1: number, x2: number, y2: number): number => {
@@ -176,6 +243,20 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
         if (!from) return
         const w = toWorld(e.clientX, e.clientY)
         setTempArrow({ x1: from.x + from.w / 2, y1: from.y + from.h / 2, x2: w.x, y2: w.y })
+      } else if (it.mode === 'bend') {
+        // ручной изгиб связи: тянем точку-«магнит» (фидбэк заказчицы)
+        const arrow = arrowsRef.current.find((a) => a.id === it.id)
+        const from = arrow && stickersRef.current.find((s) => s.id === arrow.fromId)
+        const to = arrow && stickersRef.current.find((s) => s.id === arrow.toId)
+        if (!arrow || !from || !to) return
+        const w = toWorld(e.clientX, e.clientY)
+        const mx = (from.x + from.w / 2 + to.x + to.w / 2) / 2
+        const my = (from.y + from.h / 2 + to.y + to.h / 2) / 2
+        const dx = w.x - mx
+        const dy = w.y - my
+        // почти вернули на прямую — считаем, что изгиб сброшен
+        const bend = Math.abs(dx) + Math.abs(dy) < 14 ? null : { dx, dy }
+        setArrows((items) => items.map((a) => (a.id === it.id ? { ...a, bend } : a)))
       }
     }
     const onUp = (e: PointerEvent): void => {
@@ -276,13 +357,24 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
         : kind === 'image'
           ? { w: 280, h: 190 }
           : { w: 220, h: 150 }
+    // не создаём заметку ровно поверх существующей: каскад со сдвигом,
+    // как окна в ОС (фидбэк: новая заметка накрывала предыдущую с текстом)
+    let x = center.x - size.w / 2
+    let y = center.y - size.h / 2
+    const occupied = (xx: number, yy: number): boolean =>
+      stickersRef.current.some((s) => Math.abs(s.x - xx) < 36 && Math.abs(s.y - yy) < 36)
+    let guard = 0
+    while (occupied(x, y) && guard++ < 16) {
+      x += 32
+      y += 32
+    }
     setStickers((items) => [
       ...items,
       {
         id: crypto.randomUUID(),
         kind,
-        x: center.x - size.w / 2,
-        y: center.y - size.h / 2,
+        x,
+        y,
         w: size.w,
         h: size.h,
         color: kind === 'shape' ? '#5bb8e6' : kind === 'text' ? '#e8e8ef' : '#ffd166',
@@ -570,6 +662,25 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
               onClick={() => updateArrow(selected.id, { color: c })}
             />
           ))}
+          <span className="board-arrow-dirs">
+            {(
+              [
+                ['none', '—', 'Просто линия'],
+                ['from', '⟵', 'Стрелка к первому стикеру'],
+                ['to', '⟶', 'Стрелка ко второму стикеру'],
+                ['both', '⟷', 'Стрелки в обе стороны']
+              ] as const
+            ).map(([dirValue, symbol, hint]) => (
+              <button
+                key={dirValue}
+                className={`board-dir-btn ${(selected.dir ?? 'to') === dirValue ? 'is-active' : ''}`}
+                title={hint}
+                onClick={() => updateArrow(selected.id, { dir: dirValue })}
+              >
+                {symbol}
+              </button>
+            ))}
+          </span>
           <button
             className="btn btn--soft btn--sm"
             onClick={async () => {
@@ -582,6 +693,15 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
           >
             Подпись
           </button>
+          {selected.bend && (
+            <button
+              className="btn btn--soft btn--sm"
+              title="Убрать ручной изгиб"
+              onClick={() => updateArrow(selected.id, { bend: null })}
+            >
+              Выпрямить
+            </button>
+          )}
           <button className="btn btn--danger btn--sm" onClick={() => deleteArrow(selected.id)}>
             <Trash2 size={14} /> Удалить
           </button>
@@ -601,32 +721,55 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
           <svg className="board-arrows" width="6000" height="4000">
             <defs>
               {ARROW_COLORS.map((c) => (
-                <marker
-                  key={c}
-                  id={`arr-${board.id}-${c.slice(1)}`}
-                  markerWidth="9"
-                  markerHeight="9"
-                  refX="7"
-                  refY="4.5"
-                  orient="auto"
-                >
-                  <path d="M0,0 L9,4.5 L0,9 Z" fill={c} />
-                </marker>
+                <React.Fragment key={c}>
+                  <marker
+                    id={`arr-${board.id}-${c.slice(1)}`}
+                    markerWidth="9"
+                    markerHeight="9"
+                    refX="7"
+                    refY="4.5"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L9,4.5 L0,9 Z" fill={c} />
+                  </marker>
+                  <marker
+                    id={`arr-start-${board.id}-${c.slice(1)}`}
+                    markerWidth="9"
+                    markerHeight="9"
+                    refX="7"
+                    refY="4.5"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M0,0 L9,4.5 L0,9 Z" fill={c} />
+                  </marker>
+                </React.Fragment>
               ))}
             </defs>
             {arrows.map((arrow) => {
               const from = stickerById.get(arrow.fromId)
               const to = stickerById.get(arrow.toId)
               if (!from || !to) return null
-              const x1 = from.x + from.w / 2
-              const y1 = from.y + from.h / 2
-              const x2 = to.x + to.w / 2
-              const y2 = to.y + to.h / 2
+              const cx1 = from.x + from.w / 2
+              const cy1 = from.y + from.h / 2
+              const cx2 = to.x + to.w / 2
+              const cy2 = to.y + to.h / 2
+              // магнит изгиба хранится относительно середины центров —
+              // так ручка не «прыгает» при перетаскивании стикеров
+              const magnet = arrow.bend
+                ? { x: (cx1 + cx2) / 2 + arrow.bend.dx, y: (cy1 + cy2) / 2 + arrow.bend.dy }
+                : null
+              // линия начинается и заканчивается на границе заметки
+              const p1 = stickerEdgePoint(from, magnet?.x ?? cx2, magnet?.y ?? cy2)
+              const p2 = stickerEdgePoint(to, magnet?.x ?? cx1, magnet?.y ?? cy1)
+              const x1 = p1.x
+              const y1 = p1.y
+              const x2 = p2.x
+              const y2 = p2.y
               const isSel = arrow.id === selectedArrow
-              const d = curvedPath(x1, y1, x2, y2)
-              const labelX = (x1 + x2) / 2
-              const labelY = (y1 + y2) / 2 - 8
-              const labelAngle = lineAngle(x1, y1, x2, y2)
+              const dir = arrow.dir ?? 'to'
+              const { d, midX, midY } = arrowGeometry(magnet, x1, y1, x2, y2)
+              const labelAngle = magnet ? 0 : lineAngle(x1, y1, x2, y2)
+              const markerId = `${board.id}-${arrow.color.slice(1)}`
               return (
                 <g key={arrow.id} className="board-arrow-g" onPointerDown={(e) => {
                   e.stopPropagation()
@@ -645,18 +788,36 @@ export function Board({ boardId }: { boardId: string }): React.JSX.Element {
                     fill="none"
                     stroke={arrow.color}
                     strokeWidth={isSel ? 4 : 3}
-                    markerEnd={`url(#arr-${board.id}-${arrow.color.slice(1)})`}
+                    markerStart={
+                      dir === 'from' || dir === 'both' ? `url(#arr-start-${markerId})` : undefined
+                    }
+                    markerEnd={dir === 'to' || dir === 'both' ? `url(#arr-${markerId})` : undefined}
                     opacity={isSel ? 1 : 0.9}
                   />
                   {arrow.label && (
                     <text
-                      x={labelX}
-                      y={labelY}
+                      x={midX}
+                      y={midY - 9}
                       className="board-arrow-label"
-                      transform={`rotate(${labelAngle} ${labelX} ${labelY})`}
+                      transform={`rotate(${labelAngle} ${midX} ${midY - 9})`}
                     >
                       {arrow.label}
                     </text>
+                  )}
+                  {isSel && (
+                    <circle
+                      className="board-arrow-bend-handle"
+                      cx={midX}
+                      cy={midY}
+                      r={7}
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        setIsDragging(true)
+                        interaction.current = { mode: 'bend', id: arrow.id }
+                      }}
+                    >
+                      <title>Потяните, чтобы изогнуть связь; верните к линии — выпрямится</title>
+                    </circle>
                   )}
                 </g>
               )

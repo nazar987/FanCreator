@@ -219,12 +219,19 @@ export interface BoardSticker {
   link?: BoardStickerLink | null
 }
 
+/** Направление связи на доске: линия, ←, → или ↔. */
+export type BoardArrowDir = 'none' | 'from' | 'to' | 'both'
+
 export interface BoardArrow {
   id: string
   fromId: string
   toId: string
   color: string
   label?: string
+  /** Стрелки на концах; отсутствие поля = 'to' (как рисовалось раньше). */
+  dir?: BoardArrowDir
+  /** Ручной изгиб: смещение точки-«магнита» от середины прямой (мировые px). */
+  bend?: { dx: number; dy: number } | null
 }
 
 export interface Board {
