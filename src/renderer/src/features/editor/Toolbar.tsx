@@ -32,7 +32,8 @@ import {
   ListTree,
   Paintbrush,
   IndentIncrease,
-  SeparatorHorizontal
+  SeparatorHorizontal,
+  History
 } from 'lucide-react'
 import { promptText } from '../../shared/ui/dialogs'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
@@ -50,6 +51,7 @@ interface ToolbarProps {
   tocActive: boolean
   onImportDocx: () => void
   onExportMenu: (e: React.MouseEvent) => void
+  onVersionsMenu: (e: React.MouseEvent) => void
   onFormatPainter: () => void
   painterActive: boolean
 }
@@ -131,6 +133,7 @@ export function Toolbar({
   tocActive,
   onImportDocx,
   onExportMenu,
+  onVersionsMenu,
   onFormatPainter,
   painterActive
 }: ToolbarProps): React.JSX.Element {
@@ -475,6 +478,9 @@ export function Toolbar({
       </Btn>
       <Btn title="Экспорт: глава или вся история — Word / PDF" onClick={onExportMenu}>
         <FileDown size={17} />
+      </Btn>
+      <Btn title="Версии главы: сохранить точку или откатиться" onClick={onVersionsMenu}>
+        <History size={17} />
       </Btn>
     </div>
   )

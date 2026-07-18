@@ -266,6 +266,22 @@ export interface FanCreatorApi {
     /** Печать переданного HTML в аккуратный книжный PDF (A4). */
     exportHtml(input: { title: string; bodyHtml: string }): Promise<boolean>
   }
+  chapterVersions: {
+    /** Список снапшотов главы (новые сверху, максимум 20). */
+    list(input: {
+      projectId: string
+      chapterId: string
+    }): Promise<{ id: string; savedAt: number; wordCount: number; preview: string }[]>
+    /** Сохранить версию вручную («точка сохранения»). */
+    snapshot(input: { projectId: string; storyId: string; chapterId: string }): Promise<boolean>
+    /** Откатить главу к версии; текущее состояние сохраняется отдельной версией. */
+    restore(input: {
+      projectId: string
+      storyId: string
+      chapterId: string
+      versionId: string
+    }): Promise<Project | null>
+  }
   shell: {
     /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
     openExternal(url: string): Promise<void>

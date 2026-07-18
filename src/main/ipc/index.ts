@@ -31,7 +31,11 @@ import {
   countWords,
   searchChapters,
   now,
-  uid
+  uid,
+  snapshotChapter,
+  listChapterVersions,
+  readChapterVersion,
+  lastSnapshotAt
 } from '../store/store'
 
 /** Обновляет проект функцией-мутатором и сохраняет на диск. */
@@ -43,6 +47,27 @@ async function mutate(
   if (!p) return null
   fn(p)
   return writeProject(p)
+}
+
+/* ФАЗА 25 (S-V1): автоснапшот главы не чаще раза в 10 минут.
+   Кэш времени последнего снапшота живёт в памяти процесса и
+   инициализируется с диска при первом сохранении главы за сессию. */
+const AUTO_SNAPSHOT_INTERVAL = 10 * 60 * 1000
+const snapshotThrottle = new Map<string, number>()
+
+async function autoSnapshotThrottled(
+  projectId: string,
+  chapter: { id: string; content: unknown; plainText?: string; wordCount?: number }
+): Promise<void> {
+  const key = `${projectId}:${chapter.id}`
+  let last = snapshotThrottle.get(key)
+  if (last === undefined) {
+    last = await lastSnapshotAt(projectId, chapter.id)
+    snapshotThrottle.set(key, last)
+  }
+  if (Date.now() - last < AUTO_SNAPSHOT_INTERVAL) return
+  snapshotThrottle.set(key, Date.now())
+  await snapshotChapter(projectId, chapter).catch(() => undefined)
 }
 
 function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; ext: string } {
@@ -424,17 +449,62 @@ export function registerIpc(): void {
     })
   )
 
-  ipcMain.handle('chapters:update', (_e, { projectId, storyId, chapterId, patch }) =>
+  ipcMain.handle('chapters:update', async (_e, { projectId, storyId, chapterId, patch }) =>
     mutate(projectId, (p) => {
       const s = p.stories.find((s) => s.id === storyId)
       const c = s?.chapters.find((c) => c.id === chapterId)
       if (!c || !s) return
+      // ФАЗА 25 (S-V1): автоснапшот СТАРОГО содержимого перед серией правок —
+      // не чаще раза в 10 минут; «слой безопасности», работает незаметно
+      if (patch.content !== undefined && c.content != null) {
+        void autoSnapshotThrottled(projectId, {
+          id: c.id,
+          content: c.content,
+          plainText: c.plainText,
+          wordCount: c.wordCount
+        })
+      }
       if (typeof patch.plainText === 'string' && patch.wordCount === undefined) {
         patch.wordCount = countWords(patch.plainText)
       }
       Object.assign(c, patch, { updatedAt: now() })
       s.updatedAt = now()
     })
+  )
+
+  // ---- ФАЗА 25 (S-V1): история версий главы ----
+  ipcMain.handle('chapterVersions:list', (_e, { projectId, chapterId }) =>
+    listChapterVersions(projectId, chapterId)
+  )
+
+  ipcMain.handle('chapterVersions:snapshot', async (_e, { projectId, storyId, chapterId }) => {
+    const p = await readProject(projectId)
+    const c = p?.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
+    if (!c) return false
+    await snapshotChapter(projectId, c)
+    return true
+  })
+
+  ipcMain.handle(
+    'chapterVersions:restore',
+    async (_e, { projectId, storyId, chapterId, versionId }) => {
+      const version = await readChapterVersion(projectId, chapterId, versionId)
+      if (!version) return null
+      // страховка: текущее состояние сохраняем отдельной версией перед откатом
+      const before = await readProject(projectId)
+      const cur = before?.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
+      if (cur?.content != null) await snapshotChapter(projectId, cur)
+      return mutate(projectId, (p) => {
+        const s = p.stories.find((s) => s.id === storyId)
+        const c = s?.chapters.find((c) => c.id === chapterId)
+        if (!c || !s) return
+        c.content = version.content
+        c.plainText = version.plainText
+        c.wordCount = version.wordCount
+        c.updatedAt = now()
+        s.updatedAt = now()
+      })
+    }
   )
 
   // Удаление главы = в корзину (мягко, п.30)

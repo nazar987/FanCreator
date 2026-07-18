@@ -38,6 +38,103 @@ async function ensureDir(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true })
 }
 
+/* ============================================================
+   ФАЗА 25 (S-V1): история версий глав.
+   Снапшоты лежат рядом с проектом: versions/<chapterId>/<ts>.json,
+   каждый — самодостаточный ({ savedAt, wordCount, plainText,
+   preview, content }); храним последние 20 на главу.
+   ============================================================ */
+
+const VERSIONS_KEEP = 20
+
+function versionsDir(projectId: string, chapterId: string): string {
+  return path.join(projectDir(projectId), 'versions', chapterId)
+}
+
+export interface ChapterVersionMeta {
+  id: string
+  savedAt: number
+  wordCount: number
+  preview: string
+}
+
+interface ChapterVersionRecord extends ChapterVersionMeta {
+  plainText: string
+  content: unknown
+}
+
+export async function snapshotChapter(
+  projectId: string,
+  chapter: { id: string; content: unknown; plainText?: string; wordCount?: number }
+): Promise<void> {
+  if (chapter.content == null) return
+  const dir = versionsDir(projectId, chapter.id)
+  await ensureDir(dir)
+  const savedAt = now()
+  const rec: ChapterVersionRecord = {
+    id: String(savedAt),
+    savedAt,
+    wordCount: chapter.wordCount ?? 0,
+    plainText: chapter.plainText ?? '',
+    preview: (chapter.plainText ?? '').slice(0, 180),
+    content: chapter.content
+  }
+  await fs.writeFile(path.join(dir, `${savedAt}.json`), JSON.stringify(rec), 'utf8')
+  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.json')).sort()
+  for (const f of files.slice(0, Math.max(0, files.length - VERSIONS_KEEP))) {
+    await fs.unlink(path.join(dir, f)).catch(() => undefined)
+  }
+}
+
+/** Время последнего снапшота главы (0 — снапшотов нет). Дёшево: только имена файлов. */
+export async function lastSnapshotAt(projectId: string, chapterId: string): Promise<number> {
+  try {
+    const files = (await fs.readdir(versionsDir(projectId, chapterId)))
+      .filter((f) => f.endsWith('.json'))
+      .sort()
+    const last = files.at(-1)
+    return last ? Number(last.replace('.json', '')) || 0 : 0
+  } catch {
+    return 0
+  }
+}
+
+export async function listChapterVersions(
+  projectId: string,
+  chapterId: string
+): Promise<ChapterVersionMeta[]> {
+  try {
+    const dir = versionsDir(projectId, chapterId)
+    const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.json')).sort().reverse()
+    const out: ChapterVersionMeta[] = []
+    for (const f of files) {
+      try {
+        const rec = JSON.parse(await fs.readFile(path.join(dir, f), 'utf8')) as ChapterVersionRecord
+        out.push({ id: rec.id, savedAt: rec.savedAt, wordCount: rec.wordCount, preview: rec.preview })
+      } catch {
+        // повреждённый снапшот пропускаем
+      }
+    }
+    return out
+  } catch {
+    return []
+  }
+}
+
+export async function readChapterVersion(
+  projectId: string,
+  chapterId: string,
+  versionId: string
+): Promise<{ content: unknown; plainText: string; wordCount: number } | null> {
+  try {
+    const raw = await fs.readFile(path.join(versionsDir(projectId, chapterId), `${versionId}.json`), 'utf8')
+    const rec = JSON.parse(raw) as ChapterVersionRecord
+    return { content: rec.content, plainText: rec.plainText ?? '', wordCount: rec.wordCount ?? 0 }
+  } catch {
+    return null
+  }
+}
+
 export async function initStore(): Promise<void> {
   await ensureDir(PROJECTS_DIR)
   try {

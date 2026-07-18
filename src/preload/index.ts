@@ -122,6 +122,11 @@ const api: FanCreatorApi = {
   pdf: {
     exportHtml: (input) => invoke('pdf:exportHtml', input)
   },
+  chapterVersions: {
+    list: (input) => invoke('chapterVersions:list', input),
+    snapshot: (input) => invoke('chapterVersions:snapshot', input),
+    restore: (input) => invoke('chapterVersions:restore', input)
+  },
   shell: {
     openExternal: (url) => invoke('shell:openExternal', url)
   },

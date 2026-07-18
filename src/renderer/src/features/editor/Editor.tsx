@@ -11,10 +11,10 @@ import { wikiLinkGuardKey } from './EditorExtras'
 import { Toolbar } from './Toolbar'
 import { TodayWords } from './TodayWords'
 import { FindReplace } from './FindReplace'
-import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
+import { openContextMenu, openContextMenuAt, type MenuItem } from '../../shared/ui/ContextMenu'
 import { setSpellMenuExtras } from '../../shared/ui/SpellMenu'
 import { tableMenuItems } from './tableMenu'
-import { promptText } from '../../shared/ui/dialogs'
+import { promptText, confirmDialog } from '../../shared/ui/dialogs'
 import type { Chapter, Story } from '@shared/types'
 
 interface EditorProps {
@@ -1009,6 +1009,64 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     ])
   }
 
+  // ФАЗА 25 (S-V1): история версий главы — «страховка от переписала и пожалела»
+  const openVersionsMenu = async (e: React.MouseEvent): Promise<void> => {
+    if (!projectId) return
+    const { clientX, clientY } = e
+    const versions = await window.api.chapterVersions.list({ projectId, chapterId })
+    const fmt = (ts: number): string =>
+      new Date(ts).toLocaleString('ru', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    const items: MenuItem[] = [
+      { type: 'label', label: 'Версии главы' },
+      {
+        label: 'Сохранить версию сейчас',
+        onClick: async () => {
+          await save()
+          await window.api.chapterVersions.snapshot({ projectId, storyId, chapterId })
+        }
+      }
+    ]
+    if (versions.length) {
+      items.push({ type: 'sep' as const })
+      for (const v of versions) {
+        const preview = v.preview ? ` — ${v.preview.slice(0, 42)}…` : ''
+        items.push({
+          label: `${fmt(v.savedAt)} · ${v.wordCount} слов${preview}`,
+          onClick: async () => {
+            const ok = await confirmDialog({
+              title: `Восстановить версию от ${fmt(v.savedAt)}?`,
+              message: 'Текущий текст будет сохранён отдельной версией — ничего не потеряется.',
+              confirmLabel: 'Восстановить'
+            })
+            if (!ok) return
+            const p = await window.api.chapterVersions.restore({
+              projectId,
+              storyId,
+              chapterId,
+              versionId: v.id
+            })
+            if (!p) return
+            applyProject(p)
+            const ch = p.stories.find((s) => s.id === storyId)?.chapters.find((c) => c.id === chapterId)
+            if (editor && ch) {
+              const content = ch.content as Record<string, unknown> | null
+              if (content && typeof content.html === 'string') editor.commands.setContent(content.html)
+              else if (ch.content) editor.commands.setContent(ch.content as Content)
+            }
+          }
+        })
+      }
+    } else {
+      items.push({ type: 'label', label: 'Версий пока нет — они появляются при работе' })
+    }
+    openContextMenuAt(clientX, clientY, items)
+  }
+
   // п.14 — вставить ссылку на существующую главу (меню) или создать подстраницу
   const insertInternalLink = (e: React.MouseEvent): void => {
     if (!editor || !current) return
@@ -1317,6 +1375,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           tocActive={tocOpen}
           onImportDocx={importDocx}
           onExportMenu={openExportMenu}
+          onVersionsMenu={(e) => void openVersionsMenu(e)}
           onFormatPainter={startFormatPainter}
           painterActive={painterActive}
         />
