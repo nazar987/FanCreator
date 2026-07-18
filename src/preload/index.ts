@@ -116,7 +116,11 @@ const api: FanCreatorApi = {
   },
   docx: {
     importToChapter: (input) => invoke('docx:importToChapter', input),
-    exportChapter: (input) => invoke('docx:exportChapter', input)
+    exportChapter: (input) => invoke('docx:exportChapter', input),
+    exportStory: (input) => invoke('docx:exportStory', input)
+  },
+  pdf: {
+    exportHtml: (input) => invoke('pdf:exportHtml', input)
   },
   shell: {
     openExternal: (url) => invoke('shell:openExternal', url)

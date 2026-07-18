@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell } from 'electron'
+import { ipcMain, dialog, shell, BrowserWindow, app } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
@@ -1122,6 +1122,92 @@ export function registerIpc(): void {
     await fs.writeFile(filePath, Buffer.from(out as ArrayBuffer))
     return true
   })
+
+  // ФАЗА 25: экспорт всей истории одним .docx — главы с заголовками
+  // и разрывом страницы между ними
+  ipcMain.handle('docx:exportStory', async (_e, { title, chapters }) => {
+    const body = (chapters as { title: string; html: string }[])
+      .map(
+        (ch) =>
+          `<h1>${escapeHtml(ch.title || 'Глава')}</h1>${ch.html}`
+      )
+      .join('<div class="page-break" style="page-break-after: always;"></div>')
+    const inlined = await inlineAssetImages(body)
+    const out = await HTMLtoDOCX(`<!DOCTYPE html><html><body>${inlined}</body></html>`, null, {
+      table: { row: { cantSplit: true } },
+      footer: false,
+      pageNumber: true
+    })
+    const { filePath, canceled } = await dialog.showSaveDialog({
+      defaultPath: `${title || 'История'}.docx`,
+      filters: [{ name: 'Word', extensions: ['docx'] }]
+    })
+    if (canceled || !filePath) return false
+    await fs.writeFile(filePath, Buffer.from(out as ArrayBuffer))
+    return true
+  })
+
+  // ФАЗА 25: экспорт в PDF — печатаем аккуратный книжный HTML в скрытом окне
+  ipcMain.handle('pdf:exportHtml', async (_e, { title, bodyHtml }) => {
+    const { filePath, canceled } = await dialog.showSaveDialog({
+      defaultPath: `${title || 'Документ'}.pdf`,
+      filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    })
+    if (canceled || !filePath) return false
+
+    const inlined = await inlineAssetImages(bodyHtml)
+    const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+      body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt;
+             line-height: 1.55; color: #171512; margin: 0; }
+      h1.fc-export-chapter { font-size: 19pt; margin: 0 0 14pt; page-break-before: always; }
+      h1.fc-export-chapter:first-of-type { page-break-before: auto; }
+      h1, h2, h3 { line-height: 1.25; }
+      p { margin: 0 0 7pt; }
+      img { max-width: 100%; height: auto; }
+      table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+      td, th { border: 1px solid #8a8a8a; padding: 4pt 6pt; vertical-align: top; }
+      blockquote { margin: 8pt 0 8pt 16pt; padding-left: 10pt; border-left: 2pt solid #999; }
+      ul, ol { margin: 0 0 7pt; }
+    </style></head><body>${inlined}</body></html>`
+
+    const tmp = path.join(app.getPath('temp'), `fancreator-export-${Date.now()}.html`)
+    await fs.writeFile(tmp, doc, 'utf8')
+    const win = new BrowserWindow({
+      show: false,
+      width: 900,
+      height: 1200,
+      webPreferences: { sandbox: true, contextIsolation: true }
+    })
+    try {
+      await win.loadFile(tmp)
+      // дождаться загрузки картинок, иначе printToPDF снимет их пустыми
+      await win.webContents.executeJavaScript(
+        `Promise.all([...document.images].map((img) => img.complete
+           ? Promise.resolve()
+           : new Promise((res) => { img.onload = img.onerror = res })))`,
+        true
+      )
+      const pdf = await win.webContents.printToPDF({
+        pageSize: 'A4',
+        printBackground: true,
+        margins: { top: 0.79, bottom: 0.79, left: 0.71, right: 0.71 }
+      })
+      await fs.writeFile(filePath, pdf)
+      return true
+    } finally {
+      win.destroy()
+      fs.unlink(tmp).catch(() => undefined)
+    }
+  })
+}
+
+/** Экранирование текста для вставки в HTML (заголовки глав при экспорте). */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 /** Встраивает картинки asset:// в HTML как base64 — чтобы они попали в экспортируемый docx. */

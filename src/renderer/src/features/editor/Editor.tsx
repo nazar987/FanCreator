@@ -1,5 +1,6 @@
 import React from 'react'
 import { useEditor, EditorContent, type Content } from '@tiptap/react'
+import { generateHTML } from '@tiptap/core'
 import { TextSelection } from '@tiptap/pm/state'
 import { CellSelection } from '@tiptap/pm/tables'
 import type { EditorView } from '@tiptap/pm/view'
@@ -940,6 +941,74 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     })
   }
 
+  // ФАЗА 25: HTML любой главы без открытия редактора — для экспорта истории
+  const chapterToHtml = React.useCallback((c: Chapter): string => {
+    if (!c.content) return ''
+    const content = c.content as Record<string, unknown>
+    if (typeof content === 'object' && typeof content.html === 'string') return content.html
+    try {
+      return generateHTML(c.content as Parameters<typeof generateHTML>[0], buildExtensions({
+        onOpenInternalLink: () => undefined,
+        wikiTargetExists: () => true
+      }))
+    } catch {
+      return `<p>${(c.plainText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`
+    }
+  }, [])
+
+  const storyChaptersForExport = (): { title: string; html: string }[] => {
+    const story = current?.stories.find((s) => s.id === storyId)
+    if (!story) return []
+    return [...story.chapters]
+      .filter((c) => !c.deletedAt)
+      .sort((a, b) => a.order - b.order)
+      .map((c) => ({
+        title: c.title || 'Без названия',
+        // текущая глава — самая свежая версия прямо из редактора
+        html: c.id === chapterId && editor ? editor.getHTML() : chapterToHtml(c)
+      }))
+  }
+
+  const exportPdfChapter = async (): Promise<void> => {
+    if (!editor) return
+    await window.api.pdf.exportHtml({
+      title: chapter?.title || 'Глава',
+      bodyHtml: `<h1 class="fc-export-chapter">${(chapter?.title || 'Глава')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')}</h1>${editor.getHTML()}`
+    })
+  }
+
+  const exportStory = async (kind: 'docx' | 'pdf'): Promise<void> => {
+    const story = current?.stories.find((s) => s.id === storyId)
+    const chapters = storyChaptersForExport()
+    if (!story || !chapters.length) return
+    if (kind === 'docx') {
+      await window.api.docx.exportStory({ title: story.title || 'История', chapters })
+    } else {
+      const bodyHtml = chapters
+        .map(
+          (ch) =>
+            `<h1 class="fc-export-chapter">${ch.title
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')}</h1>${ch.html}`
+        )
+        .join('')
+      await window.api.pdf.exportHtml({ title: story.title || 'История', bodyHtml })
+    }
+  }
+
+  const openExportMenu = (e: React.MouseEvent): void => {
+    openContextMenu(e, [
+      { type: 'label', label: 'Экспорт' },
+      { label: 'Глава — Word (.docx)', onClick: () => void exportDocx() },
+      { label: 'Глава — PDF', onClick: () => void exportPdfChapter() },
+      { type: 'sep' as const },
+      { label: 'История целиком — Word (.docx)', onClick: () => void exportStory('docx') },
+      { label: 'История целиком — PDF', onClick: () => void exportStory('pdf') }
+    ])
+  }
+
   // п.14 — вставить ссылку на существующую главу (меню) или создать подстраницу
   const insertInternalLink = (e: React.MouseEvent): void => {
     if (!editor || !current) return
@@ -1247,7 +1316,7 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
           onToggleToc={() => setTocOpen((v) => !v)}
           tocActive={tocOpen}
           onImportDocx={importDocx}
-          onExportDocx={exportDocx}
+          onExportMenu={openExportMenu}
           onFormatPainter={startFormatPainter}
           painterActive={painterActive}
         />

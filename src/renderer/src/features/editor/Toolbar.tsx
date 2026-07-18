@@ -49,7 +49,7 @@ interface ToolbarProps {
   onToggleToc: () => void
   tocActive: boolean
   onImportDocx: () => void
-  onExportDocx: () => void
+  onExportMenu: (e: React.MouseEvent) => void
   onFormatPainter: () => void
   painterActive: boolean
 }
@@ -130,7 +130,7 @@ export function Toolbar({
   onToggleToc,
   tocActive,
   onImportDocx,
-  onExportDocx,
+  onExportMenu,
   onFormatPainter,
   painterActive
 }: ToolbarProps): React.JSX.Element {
@@ -473,7 +473,7 @@ export function Toolbar({
       <Btn title="Импорт из Word (.docx)" onClick={onImportDocx}>
         <FileUp size={17} />
       </Btn>
-      <Btn title="Экспорт в Word (.docx)" onClick={onExportDocx}>
+      <Btn title="Экспорт: глава или вся история — Word / PDF" onClick={onExportMenu}>
         <FileDown size={17} />
       </Btn>
     </div>

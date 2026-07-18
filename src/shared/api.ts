@@ -256,6 +256,15 @@ export interface FanCreatorApi {
       chapterId: string
     }): Promise<Project | null>
     exportChapter(input: { title: string; html: string }): Promise<boolean>
+    /** Экспорт всей истории одним документом: главы с заголовками и разрывами страниц. */
+    exportStory(input: {
+      title: string
+      chapters: { title: string; html: string }[]
+    }): Promise<boolean>
+  }
+  pdf: {
+    /** Печать переданного HTML в аккуратный книжный PDF (A4). */
+    exportHtml(input: { title: string; bodyHtml: string }): Promise<boolean>
   }
   shell: {
     /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
