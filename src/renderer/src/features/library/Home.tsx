@@ -20,11 +20,26 @@ import { openHelpCenter } from '../help/HelpCenter'
 import { openWhatsNew } from '../updates/WhatsNew'
 import { plural } from '../../shared/plural'
 import type { ProjectSummary } from '@shared/types'
+import { ProjectTrash } from './ProjectTrash'
 
 const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''
 
 export function Home(): React.JSX.Element {
   const { projects, refreshProjects, openProject } = useStore()
+  const [deletedProjects, setDeletedProjects] = React.useState<ProjectSummary[]>([])
+  const [trashOpen, setTrashOpen] = React.useState(false)
+
+  const refreshDeletedProjects = React.useCallback(async (): Promise<void> => {
+    setDeletedProjects(await window.api.projects.listDeleted())
+  }, [])
+
+  React.useEffect(() => {
+    void refreshDeletedProjects()
+  }, [refreshDeletedProjects])
+
+  const refreshAllProjects = React.useCallback(async (): Promise<void> => {
+    await Promise.all([refreshProjects(), refreshDeletedProjects()])
+  }, [refreshProjects, refreshDeletedProjects])
 
   const createProject = async (): Promise<void> => {
     const title = await promptText({
@@ -47,15 +62,14 @@ export function Home(): React.JSX.Element {
   const deleteProject = async (p: ProjectSummary): Promise<void> => {
     if (
       !(await confirmDialog({
-        title: `Удалить проект «${p.title}»?`,
-        message: 'Все истории, главы и персонажи проекта будут удалены безвозвратно.',
-        danger: true,
-        confirmLabel: 'Удалить'
+        title: `Переместить проект «${p.title}» в корзину?`,
+        message: 'Проект исчезнет с полки, но его можно будет восстановить вместе со всеми данными.',
+        confirmLabel: 'В корзину'
       }))
     )
       return
     await window.api.projects.delete(p.id)
-    refreshProjects()
+    await refreshAllProjects()
   }
 
   const dropCover = async (p: ProjectSummary, dataUrl: string): Promise<void> => {
@@ -134,6 +148,9 @@ export function Home(): React.JSX.Element {
           </div>
           <div className="row">
             <ThemeSwitcher />
+            <Button variant="soft" onClick={() => setTrashOpen(true)}>
+              <Trash2 size={17} /> Корзина{deletedProjects.length ? ` · ${deletedProjects.length}` : ''}
+            </Button>
             <Button
               variant="soft"
               icon
@@ -200,6 +217,13 @@ export function Home(): React.JSX.Element {
           </div>
         )}
       </div>
+      {trashOpen && (
+        <ProjectTrash
+          projects={deletedProjects}
+          onChanged={refreshAllProjects}
+          onClose={() => setTrashOpen(false)}
+        />
+      )}
     </div>
   )
 }

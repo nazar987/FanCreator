@@ -24,7 +24,9 @@ import {
   listProjects,
   readProject,
   writeProject,
-  deleteProject,
+  softDeleteProject,
+  restoreProject,
+  purgeProject,
   saveAsset,
   assetUrl,
   resolveAssetUrl,
@@ -96,6 +98,7 @@ export function registerIpc(): void {
 
   // ---------- Projects ----------
   ipcMain.handle('projects:list', () => listProjects())
+  ipcMain.handle('projects:listDeleted', () => listProjects(true))
   ipcMain.handle('projects:get', (_e, projectId: string) => readProject(projectId))
 
   ipcMain.handle('projects:create', async (_e, { title }: { title: string }) => {
@@ -124,7 +127,9 @@ export function registerIpc(): void {
   ipcMain.handle('projects:update', (_e, { projectId, patch }) =>
     mutate(projectId, (p) => Object.assign(p, patch))
   )
-  ipcMain.handle('projects:delete', (_e, projectId: string) => deleteProject(projectId))
+  ipcMain.handle('projects:delete', (_e, projectId: string) => softDeleteProject(projectId))
+  ipcMain.handle('projects:restore', (_e, projectId: string) => restoreProject(projectId))
+  ipcMain.handle('projects:purge', (_e, projectId: string) => purgeProject(projectId))
 
   ipcMain.handle('projects:setCover', async (_e, { projectId, source, isDataUrl }) => {
     let fileName: string

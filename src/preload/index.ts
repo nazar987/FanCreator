@@ -6,10 +6,13 @@ const invoke = ipcRenderer.invoke.bind(ipcRenderer)
 const api: FanCreatorApi = {
   projects: {
     list: () => invoke('projects:list'),
+    listDeleted: () => invoke('projects:listDeleted'),
     get: (projectId) => invoke('projects:get', projectId),
     create: (input) => invoke('projects:create', input),
     update: (input) => invoke('projects:update', input),
     delete: (projectId) => invoke('projects:delete', projectId),
+    restore: (projectId) => invoke('projects:restore', projectId),
+    purge: (projectId) => invoke('projects:purge', projectId),
     setCover: (input) => invoke('projects:setCover', input),
     pickCover: (input) => invoke('projects:pickCover', input),
     exportBackup: (input) => invoke('projects:exportBackup', input),

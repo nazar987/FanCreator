@@ -753,6 +753,15 @@
   font-weight: 600;
   font-size: 14px;
 }
+.project-trash-meta {
+  flex: 0 0 auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .project-trash-meta { display: none; }
+}
 
 /* T-D1: единая типографическая иерархия библиотеки */
 .home-title { font-size: var(--fs-h1); font-weight: var(--fw-bold); }

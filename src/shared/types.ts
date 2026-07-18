@@ -271,6 +271,8 @@ export interface Project {
   theme: ThemeName | null
   createdAt: number
   updatedAt: number
+  /** Время перемещения проекта в корзину; null/undefined означает активный проект. */
+  deletedAt?: number | null
   folders: Folder[]
   stories: Story[]
   characters: Character[]
@@ -292,6 +294,7 @@ export interface ProjectSummary {
   storyCount: number
   chapterCount: number
   updatedAt: number
+  deletedAt?: number | null
 }
 
 export interface SearchResult {

@@ -48,22 +48,34 @@ export function dbProjectCount(): number {
   return (ensure().prepare('SELECT COUNT(*) AS c FROM projects').get() as { c: number }).c
 }
 
-export function dbListProjects(): ProjectSummary[] {
+export function dbListProjects(deleted = false): ProjectSummary[] {
   const rows = ensure()
     .prepare(
-      'SELECT id, title, cover_path, description, tags, story_count, chapter_count, updated_at FROM projects ORDER BY updated_at DESC'
+      'SELECT id, title, cover_path, description, tags, story_count, chapter_count, updated_at, data FROM projects ORDER BY updated_at DESC'
     )
     .all() as Record<string, unknown>[]
-  return rows.map((r) => ({
-    id: r.id as string,
-    title: r.title as string,
-    coverPath: (r.cover_path as string) ?? null,
-    description: (r.description as string) ?? '',
-    tags: JSON.parse((r.tags as string) || '[]'),
-    storyCount: (r.story_count as number) ?? 0,
-    chapterCount: (r.chapter_count as number) ?? 0,
-    updatedAt: (r.updated_at as number) ?? 0
-  }))
+  return rows
+    .map((r) => {
+      let deletedAt: number | null = null
+      try {
+        const data = JSON.parse((r.data as string) || '{}') as { deletedAt?: number | null }
+        deletedAt = typeof data.deletedAt === 'number' ? data.deletedAt : null
+      } catch {
+        deletedAt = null
+      }
+      return {
+        id: r.id as string,
+        title: r.title as string,
+        coverPath: (r.cover_path as string) ?? null,
+        description: (r.description as string) ?? '',
+        tags: JSON.parse((r.tags as string) || '[]'),
+        storyCount: (r.story_count as number) ?? 0,
+        chapterCount: (r.chapter_count as number) ?? 0,
+        updatedAt: (r.updated_at as number) ?? 0,
+        deletedAt
+      }
+    })
+    .filter((project) => Boolean(project.deletedAt) === deleted)
 }
 
 export function dbReadProject(id: string): Project | null {
@@ -103,11 +115,13 @@ export function dbWriteProject(project: Project): void {
     const ins = d.prepare(
       'INSERT INTO chapters_fts (project_id, story_id, chapter_id, story_title, chapter_title, body) VALUES (?, ?, ?, ?, ?, ?)'
     )
-    for (const s of project.stories) {
-      if (s.deletedAt) continue
-      for (const c of s.chapters) {
-        if (c.deletedAt) continue
-        ins.run(project.id, s.id, c.id, s.title, c.title || '', c.plainText || '')
+    if (!project.deletedAt) {
+      for (const s of project.stories) {
+        if (s.deletedAt) continue
+        for (const c of s.chapters) {
+          if (c.deletedAt) continue
+          ins.run(project.id, s.id, c.id, s.title, c.title || '', c.plainText || '')
+        }
       }
     }
   })

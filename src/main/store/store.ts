@@ -157,6 +157,7 @@ export async function initStore(): Promise<void> {
 
 /** Приводит проект к актуальной схеме (поля, появившиеся в новых версиях). */
 function normalizeProject(project: Project): Project {
+  project.deletedAt ??= null
   project.folders ??= []
   for (const [index, folder] of project.folders.entries()) {
     folder.color ??= '#f0b84b'
@@ -195,8 +196,8 @@ function normalizeProject(project: Project): Project {
 }
 
 /** Список всех проектов в виде лёгких сводок (без контента глав). */
-export async function listProjects(): Promise<ProjectSummary[]> {
-  return backend === 'sqlite' ? dbListProjects() : jsonListProjects()
+export async function listProjects(deleted = false): Promise<ProjectSummary[]> {
+  return backend === 'sqlite' ? dbListProjects(deleted) : jsonListProjects(deleted)
 }
 
 export async function readProject(projectId: string): Promise<Project | null> {
@@ -228,7 +229,7 @@ export async function searchChapters(query: string, projectId?: string): Promise
   // JSON-фолбэк: линейный поиск
   const q = query.trim().toLowerCase()
   if (!q) return []
-  const summaries = await jsonListProjects()
+  const summaries = await jsonListProjects(false)
   const ids = projectId ? [projectId] : summaries.map((s) => s.id)
   const out: SearchResult[] = []
   for (const id of ids) {
@@ -252,23 +253,30 @@ export async function searchChapters(query: string, projectId?: string): Promise
 }
 
 // ---- JSON-бэкенд (фолбэк) ----
-async function jsonListProjects(): Promise<ProjectSummary[]> {
+async function jsonListProjects(deleted = false): Promise<ProjectSummary[]> {
   await ensureDir(PROJECTS_DIR)
   const ids = await fs.readdir(PROJECTS_DIR).catch(() => [])
   const summaries: ProjectSummary[] = []
   for (const id of ids) {
     const p = await jsonReadProject(id)
     if (!p) continue
-    const chapterCount = p.stories.reduce((n, s) => n + s.chapters.length, 0)
+    const deletedAt = typeof p.deletedAt === 'number' ? p.deletedAt : null
+    if (Boolean(deletedAt) !== deleted) continue
+    const activeStories = p.stories.filter((story) => !story.deletedAt)
+    const chapterCount = activeStories.reduce(
+      (n, story) => n + story.chapters.filter((chapter) => !chapter.deletedAt).length,
+      0
+    )
     summaries.push({
       id: p.id,
       title: p.title,
       coverPath: p.coverPath,
       description: p.description,
       tags: p.tags,
-      storyCount: p.stories.length,
+      storyCount: activeStories.length,
       chapterCount,
-      updatedAt: p.updatedAt
+      updatedAt: p.updatedAt,
+      deletedAt
     })
   }
   summaries.sort((a, b) => b.updatedAt - a.updatedAt)
@@ -290,7 +298,23 @@ async function jsonWriteProject(project: Project): Promise<Project> {
   return project
 }
 
-export async function deleteProject(projectId: string): Promise<boolean> {
+export async function softDeleteProject(projectId: string): Promise<boolean> {
+  const project = await readProject(projectId)
+  if (!project) return false
+  project.deletedAt = now()
+  await writeProject(project)
+  return true
+}
+
+export async function restoreProject(projectId: string): Promise<boolean> {
+  const project = await readProject(projectId)
+  if (!project) return false
+  project.deletedAt = null
+  await writeProject(project)
+  return true
+}
+
+export async function purgeProject(projectId: string): Promise<boolean> {
   if (backend === 'sqlite') dbDeleteProject(projectId)
   // удаляем папку проекта на диске (assets + возможный бэкап project.json)
   const dir = projectDir(projectId)

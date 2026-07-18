@@ -24,6 +24,7 @@ import type {
 export interface FanCreatorApi {
   projects: {
     list(): Promise<ProjectSummary[]>
+    listDeleted(): Promise<ProjectSummary[]>
     get(projectId: string): Promise<Project | null>
     create(input: { title: string }): Promise<Project>
     update(input: {
@@ -31,6 +32,8 @@ export interface FanCreatorApi {
       patch: Partial<Pick<Project, 'title' | 'description' | 'tags' | 'theme'>>
     }): Promise<Project | null>
     delete(projectId: string): Promise<boolean>
+    restore(projectId: string): Promise<boolean>
+    purge(projectId: string): Promise<boolean>
     setCover(input: {
       projectId: string
       source: string
