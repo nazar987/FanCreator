@@ -821,3 +821,27 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* «сегодня написано» + цель дня в статус-баре (ФАЗА 24) */
+.editor-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: var(--fs-meta);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.editor-today:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.editor-today--done {
+  color: var(--accent);
+  font-weight: 600;
+}

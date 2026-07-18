@@ -4,9 +4,11 @@ import {
   ArrowUp,
   ChevronRight,
   ClipboardList,
+  Dices,
   Folder as FolderIcon,
   FolderPlus,
   Plus,
+  RefreshCw,
   Trash2,
   UserRound,
   Trees
@@ -21,6 +23,7 @@ import { AutoTextarea } from '../../shared/ui/AutoTextarea'
 import { ImageStrip } from '../../shared/ui/ImageStrip'
 import { plural } from '../../shared/plural'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
+import { generateNames } from '../../shared/nameGenerator'
 import { Genealogy } from './Genealogy'
 
 const characterFolderMemoryKey = (projectId: string): string => `fancreator.characters.folder.${projectId}`
@@ -591,6 +594,38 @@ export function Characters(): React.JSX.Element {
     if (created) openCharacter(created)
   }
 
+  // «кубик»: создать персонажа со случайным именем (ФАЗА 24)
+  const addCharacterNamed = async (name: string): Promise<void> => {
+    let p = await window.api.characters.add({ projectId: current.id, folderId })
+    const created = p?.characters.at(-1)
+    if (!created) return
+    p = await window.api.characters.update({
+      projectId: current.id,
+      characterId: created.id,
+      patch: { name }
+    })
+    applyProject(p)
+    openCharacter({ ...created, name })
+  }
+
+  const nameDiceRef = React.useRef<HTMLButtonElement>(null)
+  const openNameDice = (e: React.MouseEvent): void => {
+    const items: MenuItem[] = [
+      { type: 'label', label: 'Случайные имена — клик создаст персонажа' },
+      ...generateNames(8).map((name) => ({
+        label: name,
+        onClick: () => void addCharacterNamed(name)
+      })),
+      { type: 'sep' as const },
+      {
+        label: 'Ещё имена',
+        icon: <RefreshCw size={14} />,
+        onClick: () => setTimeout(() => nameDiceRef.current?.click(), 0)
+      }
+    ]
+    openContextMenu(e, items)
+  }
+
   const addFolder = async (): Promise<void> => {
     const title = await promptText({
       title: selectedFolder ? 'Новая подпапка' : 'Новая папка',
@@ -709,6 +744,14 @@ export function Characters(): React.JSX.Element {
                 <Button variant="soft" onClick={addFolder}>
                   <FolderPlus size={17} /> {selectedFolder ? 'Подпапка' : 'Папка'}
                 </Button>
+                <button
+                  ref={nameDiceRef}
+                  className="btn btn--soft btn--icon"
+                  title="Случайное имя: кубик подберёт варианты, клик по имени создаст персонажа"
+                  onClick={openNameDice}
+                >
+                  <Dices size={17} />
+                </button>
                 <Button variant="primary" onClick={addCharacter}>
                   <Plus size={17} /> Добавить персонажа
                 </Button>

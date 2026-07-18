@@ -8,6 +8,7 @@ import { useStore } from '../../store/store'
 import { buildExtensions } from './extensions'
 import { wikiLinkGuardKey } from './EditorExtras'
 import { Toolbar } from './Toolbar'
+import { TodayWords } from './TodayWords'
 import { FindReplace } from './FindReplace'
 import { openContextMenu, type MenuItem } from '../../shared/ui/ContextMenu'
 import { setSpellMenuExtras } from '../../shared/ui/SpellMenu'
@@ -1315,6 +1316,8 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
 
       <div className="editor-status">
         <span>{wordCount} слов</span>
+        <span className="editor-status-sep">·</span>
+        <TodayWords />
         <span className="editor-status-sep">·</span>
         <button className="editor-page-jump" title="Перейти к странице" onClick={jumpToPage}>
           Стр. {currentPage} / {pageCount}

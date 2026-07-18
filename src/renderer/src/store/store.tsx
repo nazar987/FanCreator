@@ -218,6 +218,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
     []
   )
 
+  // Тема, выбранная на полке (без открытого проекта): это свежее намерение
+  // пользователя, поэтому при входе в следующий проект она применяется к нему
+  // и сохраняется в проект — а не затирается его прошлой темой (фидбэк).
+  const shelfThemeRef = React.useRef<ThemeName | null>(null)
+
   const setTheme = React.useCallback(
     (t: ThemeName) => {
       applyThemeLocal(t)
@@ -225,6 +230,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
         window.api.projects
           .update({ projectId: current.id, patch: { theme: t } })
           .then(applyProject)
+      } else {
+        shelfThemeRef.current = t
       }
     },
     [current, applyProject, applyThemeLocal]
@@ -244,7 +251,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
       setCurrent(p)
       setCharacterFolderId(null)
       setCharacterFolderNonce(0)
-      if (p.theme) applyThemeLocal(p.theme)
+      const shelfTheme = shelfThemeRef.current
+      shelfThemeRef.current = null
+      if (shelfTheme) {
+        // выбранная на полке тема «переезжает» в открытый проект
+        applyThemeLocal(shelfTheme)
+        void window.api.projects
+          .update({ projectId, patch: { theme: shelfTheme } })
+          .then(applyProject)
+      } else if (p.theme) {
+        applyThemeLocal(p.theme)
+      }
       setTabs([SHELF_TAB])
       setActiveTabId('shelf')
       // восстановление вкладок прошлой сессии (как в браузере)
@@ -267,7 +284,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }): Reac
         }
       }
     },
-    [applyThemeLocal]
+    [applyThemeLocal, applyProject]
   )
 
   const closeProject = React.useCallback(() => {
