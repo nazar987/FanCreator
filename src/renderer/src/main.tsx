@@ -22,6 +22,7 @@ import './features/characters/characters.css'
 import './features/board/board.css'
 import './features/timeline/timeline.css'
 import './features/help/help.css'
+import './features/achievements/achievements.css'
 import './features/updates/updates.css'
 import './theme/theme-gallery.css'
 // слой тем-миров — последним, чтобы перекрывать компонентные стили

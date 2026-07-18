@@ -3,6 +3,7 @@ import { Target } from 'lucide-react'
 import type { Project } from '@shared/types'
 import { useStore } from '../../store/store'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
+import { recordDailyGoal } from '../achievements/achievements'
 
 /**
  * «Сегодня написано» + цель дня в статус-баре редактора (ФАЗА 24).
@@ -86,6 +87,11 @@ export function TodayWords(): React.JSX.Element | null {
       save({ date: localDate(), baseline: words, goal: state.goal })
     }
   }, [state, current, words, save])
+
+  React.useEffect(() => {
+    if (!current || !state || state.goal == null || words - state.baseline < state.goal) return
+    recordDailyGoal(current.id, state.date)
+  }, [current?.id, state, words])
 
   if (!current || !state) return null
 

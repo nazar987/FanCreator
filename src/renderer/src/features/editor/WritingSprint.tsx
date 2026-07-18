@@ -3,8 +3,7 @@ import { Timer } from 'lucide-react'
 import type { Project } from '@shared/types'
 import { useStore } from '../../store/store'
 import { openContextMenu } from '../../shared/ui/ContextMenu'
-
-export const SPRINT_COMPLETED_EVENT = 'fancreator:sprint-completed'
+import { recordSprintCompleted } from '../achievements/achievements'
 
 interface SprintState {
   startedAt: number
@@ -135,11 +134,7 @@ export function WritingSprint({
     setActive(null)
     setSummary(nextSummary)
     writeStored(projectId, { summary: nextSummary })
-    window.dispatchEvent(
-      new CustomEvent(SPRINT_COMPLETED_EVENT, {
-        detail: { projectId, ...nextSummary }
-      })
-    )
+    recordSprintCompleted()
   }, [active, clock, projectId, words])
 
   if (!current) return null

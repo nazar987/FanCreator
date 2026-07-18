@@ -12,8 +12,10 @@ import {
   Users,
   Clock3,
   Archive,
-  Keyboard
+  Keyboard,
+  Trophy
 } from 'lucide-react'
+import { AchievementGallery } from '../achievements/AchievementGallery'
 
 /**
  * Справочный центр (фидбэк: «детальный помощник, но без навязчивости»).
@@ -252,6 +254,13 @@ const TOPICS: HelpTopic[] = [
         </ul>
       </>
     )
+  },
+  {
+    id: 'achievements',
+    icon: <Trophy size={15} />,
+    title: 'Достижения',
+    keywords: 'достижение награда слова главы персонажи цель дня спринт доска дерево',
+    body: <AchievementGallery />
   },
   {
     id: 'hotkeys',

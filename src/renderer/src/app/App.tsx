@@ -20,6 +20,7 @@ import { HelpCenter } from '../features/help/HelpCenter'
 import { UpdateBanner } from '../features/updates/UpdateBanner'
 import { WhatsNew } from '../features/updates/WhatsNew'
 import { ProjectReplaceDialog } from '../features/library/ProjectReplaceDialog'
+import { AchievementHost } from '../features/achievements/AchievementHost'
 
 const SIDEBAR_STORAGE_KEY = 'fancreator.sidebarOpen'
 
@@ -122,6 +123,7 @@ export function App(): React.JSX.Element {
       <HelpTour />
       <HelpCenter />
       <ProjectReplaceDialog />
+      <AchievementHost />
       <UpdateBanner />
       <WhatsNew />
     </div>
