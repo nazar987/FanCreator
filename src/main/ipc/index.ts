@@ -512,6 +512,33 @@ export function registerIpc(): void {
     }
   )
 
+  ipcMain.handle('projectReplace:apply', async (_e, { projectId, changes }) => {
+    const project = await readProject(projectId)
+    if (!project || !Array.isArray(changes) || changes.length === 0) return project
+
+    const targets = changes.flatMap((change) => {
+      const story = project.stories.find((item) => item.id === change.storyId && !item.deletedAt)
+      const chapter = story?.chapters.find(
+        (item) => item.id === change.chapterId && !item.deletedAt
+      )
+      return story && chapter ? [{ change, story, chapter }] : []
+    })
+
+    // S-V1: массовая операция начинается только после успешных снапшотов
+    // всех затрагиваемых глав. Так частичная замена не останется без точки отката.
+    for (const { chapter } of targets) await snapshotChapter(projectId, chapter)
+
+    const changedAt = now()
+    for (const { change, story, chapter } of targets) {
+      chapter.content = change.content
+      chapter.plainText = change.plainText
+      chapter.wordCount = countWords(change.plainText)
+      chapter.updatedAt = changedAt
+      story.updatedAt = changedAt
+    }
+    return writeProject(project)
+  })
+
   // Удаление главы = в корзину (мягко, п.30)
   ipcMain.handle('chapters:delete', (_e, { projectId, storyId, chapterId }) =>
     mutate(projectId, (p) => {

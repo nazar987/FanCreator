@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Clock3,
   Plus,
+  Replace,
   Trash2,
   Users
 } from 'lucide-react'
@@ -21,6 +22,7 @@ import type { Folder, Story } from '@shared/types'
 import { ColorPalette } from '../../shared/ui/ColorPalette'
 import { ContinueWriting } from './ContinueWriting'
 import { pl, plural } from '../../shared/plural'
+import { openProjectReplace } from './ProjectReplaceDialog'
 
 type SortMode = 'updated' | 'title'
 
@@ -328,6 +330,9 @@ export function Shelf(): React.JSX.Element {
           </div>
           <div className="library-tools">
             <Input icon={<Search size={15} />} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти историю…" />
+            <Button variant="soft" size="sm" title="Найти и заменить в главах" onClick={openProjectReplace}>
+              <Replace size={15} /> Заменить
+            </Button>
             <select className="input library-sort" value={sort} onChange={(event) => setSort(event.target.value as SortMode)} aria-label="Сортировка">
               <option value="updated">Сначала недавние</option>
               <option value="title">По названию</option>

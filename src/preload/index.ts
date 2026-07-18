@@ -130,6 +130,9 @@ const api: FanCreatorApi = {
     snapshot: (input) => invoke('chapterVersions:snapshot', input),
     restore: (input) => invoke('chapterVersions:restore', input)
   },
+  projectReplace: {
+    apply: (input) => invoke('projectReplace:apply', input)
+  },
   shell: {
     openExternal: (url) => invoke('shell:openExternal', url)
   },

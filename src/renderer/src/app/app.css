@@ -29,6 +29,12 @@
   flex-direction: column;
   gap: 12px;
 }
+.sidebar-search-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-search-row .input-wrap { flex: 1; min-width: 0; }
 .brand {
   display: flex;
   align-items: center;

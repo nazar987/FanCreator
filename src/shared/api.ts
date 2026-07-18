@@ -285,6 +285,17 @@ export interface FanCreatorApi {
       versionId: string
     }): Promise<Project | null>
   }
+  projectReplace: {
+    apply(input: {
+      projectId: string
+      changes: {
+        storyId: string
+        chapterId: string
+        content: unknown
+        plainText: string
+      }[]
+    }): Promise<Project | null>
+  }
   shell: {
     /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
     openExternal(url: string): Promise<void>

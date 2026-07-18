@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Plus,
   Search,
+  Replace,
   BookOpen,
   FileText,
   ArrowLeft,
@@ -45,6 +46,7 @@ import { STATUS_LABEL } from '../shared/ui/components'
 import { StoryProperties } from '../features/library/StoryProperties'
 import { TrashView } from '../features/library/TrashView'
 import { openColorPicker } from '../shared/ui/ColorPalette'
+import { openProjectReplace } from '../features/library/ProjectReplaceDialog'
 
 export function Sidebar(): React.JSX.Element {
   const {
@@ -1405,12 +1407,24 @@ export function Sidebar(): React.JSX.Element {
           </span>
           <span className="truncate">{current.title}</span>
         </div>
-        <Input
-          icon={<Search size={16} />}
-          placeholder="Поиск по проекту…"
-          value={search}
-          onChange={(e) => doSearch(e.target.value)}
-        />
+        <div className="sidebar-search-row">
+          <Input
+            icon={<Search size={16} />}
+            placeholder="Поиск по проекту…"
+            value={search}
+            onChange={(e) => doSearch(e.target.value)}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
+            title="Найти и заменить в главах"
+            aria-label="Найти и заменить по всему проекту"
+            onClick={openProjectReplace}
+          >
+            <Replace size={16} />
+          </Button>
+        </div>
       </div>
 
       <div className="sidebar-scroll">
