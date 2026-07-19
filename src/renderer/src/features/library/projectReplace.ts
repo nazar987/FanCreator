@@ -23,6 +23,15 @@ export interface ChapterReplacePatch {
   count: number
 }
 
+/** Открытые редакторы обязаны перезагрузить документ заменённых глав —
+ * иначе их безусловный save() при размонтировании затрёт замену старым текстом. */
+export const CHAPTERS_REPLACED_EVENT = 'fancreator:chapters-replaced'
+
+export interface ChaptersReplacedDetail {
+  projectId: string
+  changes: { storyId: string; chapterId: string; content: unknown }[]
+}
+
 interface TextMatch {
   count: number
   firstIndex: number

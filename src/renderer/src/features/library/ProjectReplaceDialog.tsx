@@ -5,8 +5,10 @@ import { Button, Input } from '../../shared/ui/components'
 import { messageDialog } from '../../shared/ui/dialogs'
 import { plural } from '../../shared/plural'
 import {
+  CHAPTERS_REPLACED_EVENT,
   findProjectReplaceHits,
   replaceChapterContent,
+  type ChaptersReplacedDetail,
   type ReplaceOptions
 } from './projectReplace'
 
@@ -109,6 +111,18 @@ export function ProjectReplaceDialog(): React.JSX.Element | null {
     try {
       const updated = await window.api.projectReplace.apply({ projectId: current.id, changes })
       applyProject(updated)
+      window.dispatchEvent(
+        new CustomEvent<ChaptersReplacedDetail>(CHAPTERS_REPLACED_EVENT, {
+          detail: {
+            projectId: current.id,
+            changes: changes.map(({ storyId, chapterId, content }) => ({
+              storyId,
+              chapterId,
+              content
+            }))
+          }
+        })
+      )
       setResultMessage(
         `Заменено ${occurrenceCount} ${plural(occurrenceCount, 'вхождение', 'вхождения', 'вхождений')} в ${changes.length} ${plural(changes.length, 'главе', 'главах', 'главах')}. Снапшоты сохранены.`
       )

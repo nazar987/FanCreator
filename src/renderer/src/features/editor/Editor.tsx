@@ -16,6 +16,10 @@ import { openContextMenu, openContextMenuAt, type MenuItem } from '../../shared/
 import { setSpellMenuExtras } from '../../shared/ui/SpellMenu'
 import { tableMenuItems } from './tableMenu'
 import { promptText, confirmDialog } from '../../shared/ui/dialogs'
+import {
+  CHAPTERS_REPLACED_EVENT,
+  type ChaptersReplacedDetail
+} from '../library/projectReplace'
 import type { Chapter, Story } from '@shared/types'
 
 interface EditorProps {
@@ -893,6 +897,29 @@ export function Editor({ storyId, chapterId }: EditorProps): React.JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // T-U2: «замена по проекту» переписала и эту главу — перезагружаем документ.
+  // Без этого save() (безусловный, в т.ч. при размонтировании) затёр бы замену
+  // старым текстом из редактора.
+  React.useEffect(() => {
+    const onReplaced = (e: Event): void => {
+      const detail = (e as CustomEvent<ChaptersReplacedDetail>).detail
+      if (!editor || detail?.projectId !== projectId) return
+      const change = detail.changes.find(
+        (c) => c.storyId === storyId && c.chapterId === chapterId
+      )
+      if (!change) return
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      const content = change.content as { html?: unknown }
+      if (content && typeof content.html === 'string') editor.commands.setContent(content.html)
+      else editor.commands.setContent(change.content as Content)
+      setSaved(true)
+      setWordCount(editor.storage.characterCount.words())
+      schedulePageCount()
+    }
+    window.addEventListener(CHAPTERS_REPLACED_EVENT, onReplaced)
+    return () => window.removeEventListener(CHAPTERS_REPLACED_EVENT, onReplaced)
+  }, [editor, projectId, storyId, chapterId, schedulePageCount])
 
   // горячие клавиши: Ctrl+F — поиск, Ctrl+S — сохранить
   React.useEffect(() => {
