@@ -5,8 +5,10 @@ import mammoth from 'mammoth'
 import { importDocxToHtml } from '../docx/importDocx'
 import HTMLtoDOCX from 'html-to-docx'
 import { backupFileName, exportProjectBackup, importProjectBackup } from '../store/backup'
+import { readProfile, updateProfile, deleteProfile, backupAllProjects } from '../store/profile'
 import type { ProjectBackupResult } from '@shared/api'
 import type {
+  UserProfile,
   Project,
   Story,
   Chapter,
@@ -94,6 +96,47 @@ export function registerIpc(): void {
   })
   ipcMain.handle('spell:add', (e, word: string) => {
     if (typeof word === 'string' && word) e.sender.session.addWordToSpellCheckerDictionary(word)
+  })
+
+  // ---------- Профиль (ФАЗА 25, S-V2) ----------
+  ipcMain.handle('profile:get', () => readProfile())
+  ipcMain.handle('profile:update', (_e, patch: Partial<UserProfile>) => updateProfile(patch))
+
+  ipcMain.handle('profile:backupAll', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Папка для бэкапа всех проектов',
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (canceled || !filePaths[0]) return { status: 'cancelled' as const }
+    try {
+      const count = await backupAllProjects(filePaths[0])
+      return { status: 'success' as const, count, dir: filePaths[0] }
+    } catch (error) {
+      return {
+        status: 'error' as const,
+        message: error instanceof Error ? error.message : 'Не удалось сохранить бэкап.'
+      }
+    }
+  })
+
+  ipcMain.handle('profile:pickAutoBackupDir', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Папка автобэкапа при выходе из приложения',
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (canceled || !filePaths[0]) return null
+    return updateProfile({ autoBackupDir: filePaths[0] })
+  })
+
+  // «Подушка безопасности»: проекты удаляются ТОЛЬКО по явному флагу —
+  // UI открывает его после успешного полного бэкапа + подтверждения словом.
+  ipcMain.handle('profile:delete', async (_e, { deleteProjects }: { deleteProjects: boolean }) => {
+    if (deleteProjects) {
+      const summaries = [...(await listProjects(false)), ...(await listProjects(true))]
+      for (const summary of summaries) await purgeProject(summary.id)
+    }
+    await deleteProfile()
+    return true
   })
 
   // ---------- Projects ----------

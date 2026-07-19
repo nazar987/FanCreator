@@ -4,6 +4,7 @@ import { existsSync } from 'fs'
 import { pathToFileURL } from 'url'
 import Store from 'electron-store'
 import { initStore, resolveAssetUrl } from './store/store'
+import { autoBackupChangedProjects } from './store/profile'
 import { registerIpc } from './ipc'
 import { setupUpdater } from './updater'
 
@@ -125,4 +126,16 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+// ФАЗА 25 (S-V2): автобэкап изменённых проектов при выходе (если в профиле
+// выбрана папка). Задерживаем quit один раз, доделываем архивы и выходим.
+let quitBackupDone = false
+app.on('before-quit', (event) => {
+  if (quitBackupDone) return
+  event.preventDefault()
+  autoBackupChangedProjects().finally(() => {
+    quitBackupDone = true
+    app.quit()
+  })
 })

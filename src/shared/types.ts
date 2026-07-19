@@ -297,6 +297,19 @@ export interface ProjectSummary {
   deletedAt?: number | null
 }
 
+/** ФАЗА 25 (S-V2): локальный профиль писателя. Хранится в profile.json
+ * рядом с проектами; сервер и авторизация появятся позже. */
+export interface UserProfile {
+  name: string
+  /** Эмодзи-аватар (пока без картинок — просто и мило). */
+  emoji: string
+  createdAt: number
+  /** Когда последний раз делали полный бэкап всех проектов. */
+  lastBackupAt: number | null
+  /** Папка автобэкапа при выходе из приложения; null — автобэкап выключен. */
+  autoBackupDir: string | null
+}
+
 export interface SearchResult {
   type: 'project' | 'story' | 'chapter' | 'character'
   projectId: string

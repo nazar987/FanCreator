@@ -133,6 +133,13 @@ const api: FanCreatorApi = {
   projectReplace: {
     apply: (input) => invoke('projectReplace:apply', input)
   },
+  profile: {
+    get: () => invoke('profile:get'),
+    update: (patch) => invoke('profile:update', patch),
+    backupAll: () => invoke('profile:backupAll'),
+    pickAutoBackupDir: () => invoke('profile:pickAutoBackupDir'),
+    delete: (input) => invoke('profile:delete', input)
+  },
   shell: {
     openExternal: (url) => invoke('shell:openExternal', url)
   },

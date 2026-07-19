@@ -19,8 +19,9 @@ import { startHelpTour } from '../help/HelpTour'
 import { openHelpCenter } from '../help/HelpCenter'
 import { openWhatsNew } from '../updates/WhatsNew'
 import { plural } from '../../shared/plural'
-import type { ProjectSummary } from '@shared/types'
+import type { ProjectSummary, UserProfile } from '@shared/types'
 import { ProjectTrash } from './ProjectTrash'
+import { ProfileModal } from './Profile'
 
 const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''
 
@@ -28,6 +29,16 @@ export function Home(): React.JSX.Element {
   const { projects, refreshProjects, openProject } = useStore()
   const [deletedProjects, setDeletedProjects] = React.useState<ProjectSummary[]>([])
   const [trashOpen, setTrashOpen] = React.useState(false)
+  const [profileOpen, setProfileOpen] = React.useState(false)
+  const [profile, setProfile] = React.useState<UserProfile | null>(null)
+
+  const refreshProfile = React.useCallback(async (): Promise<void> => {
+    setProfile(await window.api.profile.get())
+  }, [])
+
+  React.useEffect(() => {
+    void refreshProfile()
+  }, [refreshProfile])
 
   const refreshDeletedProjects = React.useCallback(async (): Promise<void> => {
     setDeletedProjects(await window.api.projects.listDeleted())
@@ -147,6 +158,16 @@ export function Home(): React.JSX.Element {
             </div>
           </div>
           <div className="row">
+            {profile && (
+              <button
+                className="profile-chip"
+                title="Профиль писателя"
+                onClick={() => setProfileOpen(true)}
+              >
+                <span className="profile-chip-emoji">{profile.emoji}</span>
+                <span className="truncate">{profile.name}</span>
+              </button>
+            )}
             <ThemeSwitcher />
             <Button variant="soft" onClick={() => setTrashOpen(true)}>
               <Trash2 size={17} /> Корзина{deletedProjects.length ? ` · ${deletedProjects.length}` : ''}
@@ -222,6 +243,17 @@ export function Home(): React.JSX.Element {
           projects={deletedProjects}
           onChanged={refreshAllProjects}
           onClose={() => setTrashOpen(false)}
+        />
+      )}
+      {profileOpen && (
+        <ProfileModal
+          projects={projects}
+          deletedProjects={deletedProjects}
+          onProjectsChanged={refreshAllProjects}
+          onClose={() => {
+            setProfileOpen(false)
+            void refreshProfile()
+          }}
         />
       )}
     </div>

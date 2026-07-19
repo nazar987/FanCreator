@@ -14,7 +14,8 @@ import type {
   TimelineEvent,
   Hierarchy,
   HierarchyNode,
-  GenealogyNode
+  GenealogyNode,
+  UserProfile
 } from './types'
 
 /**
@@ -296,6 +297,17 @@ export interface FanCreatorApi {
       }[]
     }): Promise<Project | null>
   }
+  /** ФАЗА 25 (S-V2): локальный профиль писателя + «подушка безопасности». */
+  profile: {
+    get(): Promise<UserProfile>
+    update(patch: Partial<UserProfile>): Promise<UserProfile>
+    /** Полный бэкап всех проектов (включая корзину) в выбранную папку. */
+    backupAll(): Promise<ProfileBackupResult>
+    /** Выбрать папку автобэкапа при выходе; null — пользователь передумал. */
+    pickAutoBackupDir(): Promise<UserProfile | null>
+    /** Удалить профиль. Проекты удаляются ТОЛЬКО при deleteProjects: true. */
+    delete(input: { deleteProjects: boolean }): Promise<boolean>
+  }
   shell: {
     /** Открыть внешнюю ссылку (http/https) в браузере по умолчанию. */
     openExternal(url: string): Promise<void>
@@ -323,6 +335,11 @@ export interface FanCreatorApi {
 
 export type ProjectBackupResult =
   | { status: 'success'; project?: Project }
+  | { status: 'cancelled' }
+  | { status: 'error'; message: string }
+
+export type ProfileBackupResult =
+  | { status: 'success'; count: number; dir: string }
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
 
